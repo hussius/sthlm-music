@@ -77,33 +77,52 @@ After every code edit Claude makes:
 ## 🔧 Development Commands
 
 ```bash
-# Format code
-make format
+# Run backend server
+make dev-backend
 
-# Run type checking and linting
-make check
+# Run frontend dev server (after setting up frontend)
+make dev-frontend
 
-# Run tests
-make test
+# Run all tests
+make test-all
 
-# Run the application
-make run
+# Format all code
+make format-all
+
+# Run all checks
+make check-all
 
 # View all available commands
 make help
+```
+
+### Per-Directory Commands
+
+```bash
+# Backend
+cd backend && make help
+
+# Frontend
+cd frontend && make help
 ```
 
 ## 📁 Project Structure
 
 ```
 agents-hackathon/
-├── .claude/               # Claude Code configuration
-│   └── claude-settings.json
-├── src/                   # Main application code
-├── tests/                 # Test files
-├── tmp/                   # Scratch directory (git-ignored)
-├── Makefile              # Workshop + development commands
-└── README.md             # This file
+├── .claude/                    # Claude Code configuration
+│   ├── settings.json          # Sandbox config
+│   └── hooks/                 # Auto-format hook
+├── backend/                   # Python FastAPI backend
+│   ├── src/                   # Application code
+│   ├── tests/                 # Backend tests
+│   ├── pyproject.toml
+│   └── Makefile              # Backend commands
+├── frontend/                  # Frontend application
+│   └── README.md             # Frontend setup guide
+├── tmp/                       # Scratch directory (git-ignored)
+├── Makefile                   # Root orchestration commands
+└── README.md                  # This file
 ```
 
 ## 🆘 Troubleshooting

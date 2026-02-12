@@ -1,31 +1,24 @@
-# Agents Hackathon - Root Makefile
-# Orchestrates setup and commands across backend and frontend
-
+# TODO: replace with just? (https://github.com/casey/just)
 .PHONY: help
 help:
-	@echo "Agents Hackathon - Monorepo Commands"
+	@echo "Agents Hackathon - Workshop Commands"
 	@echo ""
-	@echo "🛡️  Safety Setup:"
+	@echo "Safety Setup:"
 	@echo "  make workshop-setup    - Complete safety setup (DCG + sandboxing + hooks)"
 	@echo "  make setup-dcg         - Install Destructive Command Guard"
 	@echo "  make setup-sandbox     - Configure Claude Code sandboxing"
 	@echo "  make setup-hooks       - Install auto-format hook"
 	@echo "  make verify-safety     - Verify all safety measures are active"
 	@echo ""
-	@echo "🚀 Development:"
-	@echo "  make dev-backend       - Run backend server"
-	@echo "  make dev-frontend      - Run frontend dev server"
-	@echo "  make test-all          - Run tests (backend + frontend)"
-	@echo "  make format-all        - Format all code"
-	@echo "  make check-all         - Run all checks"
-	@echo ""
-	@echo "📦 Per-Directory:"
-	@echo "  cd backend && make help"
-	@echo "  cd frontend && make help"
+	@echo "Development:"
+	@echo "  make run               - Run the application"
+	@echo "  make test              - Run tests"
+	@echo "  make format            - Format code with ruff"
+	@echo "  make check             - Run all checks (format, type, lint)"
 	@echo ""
 
 # ============================================================================
-# Workshop Safety Setup (applies to entire repo)
+# Workshop Safety Setup
 # ============================================================================
 
 .PHONY: workshop-setup
@@ -133,50 +126,23 @@ restore-claude-settings:
 	fi
 
 # ============================================================================
-# Development Commands (orchestrate backend + frontend)
+# Development Commands
 # ============================================================================
 
-.PHONY: dev-backend
-dev-backend:
-	@cd backend && make run
+.PHONY: format check test run
+format:
+	uv run ruff format .
+	uv run ruff check --fix .
+	uv run ruff check --select I --fix . 
 
-.PHONY: dev-frontend
-dev-frontend:
-	@if [ -f frontend/package.json ]; then \
-		cd frontend && npm run dev; \
-	else \
-		echo "⚠️  Frontend not set up yet. Initialize your frontend framework first:"; \
-		echo "  cd frontend && npm create vite@latest . -- --template react-ts"; \
-	fi
+check: 
+	uv run ruff format --check .
+	uv run ruff check --select I --fix --diff .
+	uv run ty check .
+	uv run ruff check
 
-.PHONY: test-all
-test-all:
-	@echo "Running backend tests..."
-	@cd backend && make test
-	@echo ""
-	@if [ -f frontend/package.json ]; then \
-		echo "Running frontend tests..."; \
-		cd frontend && npm test; \
-	else \
-		echo "⚠️  Frontend not set up, skipping frontend tests"; \
-	fi
+test:
+	uv run pytest
 
-.PHONY: format-all
-format-all:
-	@echo "Formatting backend..."
-	@cd backend && make format
-	@echo ""
-	@if [ -f frontend/package.json ]; then \
-		echo "Formatting frontend..."; \
-		cd frontend && npm run format 2>/dev/null || echo "No format script in frontend"; \
-	fi
-
-.PHONY: check-all
-check-all:
-	@echo "Checking backend..."
-	@cd backend && make check
-	@echo ""
-	@if [ -f frontend/package.json ]; then \
-		echo "Checking frontend..."; \
-		cd frontend && npm run lint 2>/dev/null || echo "No lint script in frontend"; \
-	fi
+run: 
+	uv run src/main.py
