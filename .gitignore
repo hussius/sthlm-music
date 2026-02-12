@@ -1,0 +1,22 @@
+# Python generated
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+
+# Virtual environment 
+.venv/
+
+# Linting, formatting, IDE
+.vscode/
+.ruff_cache/
+.pytest_cache/
+
+# Environment
+.env
+
+#custom macOs hidden files
+.DS_Store

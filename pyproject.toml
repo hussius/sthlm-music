@@ -1,0 +1,60 @@
+[project]
+name = "agents_hackathon"
+version = "0.1.0"
+description = "A forkable repo for the Codon codon agents internal hackathon"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.12.3",
+    "fastapi[standard]>=0.128.0",
+    "sqlmodel>=0.0.31",
+    
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.3.0",
+    "pytest>=8.0.0",
+    "ty>=0.0.15",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[tool.uv]
+package = true
+
+
+
+[tool.ruff]
+# Target version for the whole org
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+# E/F = core + pyflakes (includes unused imports), I = import sorting
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes errors
+    "I",   # isort (import sorting)
+    "UP",  # pyupgrade
+    "TC",   # typing issues
+    "N",   # naming
+    "S",   # security issues
+    "D",   # docstring issues
+    "ANN", # annotations
+]
+ignore = [
+    "D203",  # Incompatible with D211
+    "D212",  # Incompatible with D213
+    "ANN401",  # Allow use of 'Any' type.
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/*.py" = [
+    "S101", # asserts allowed in tests...
+]

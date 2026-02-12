@@ -1,0 +1,4 @@
+.gitlab/
+tests/
+.env
+.venv/
