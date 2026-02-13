@@ -8,6 +8,45 @@ Welcome to the Agents Hackathon! This guide establishes our development philosop
 
 This hackathon is about exploring what's possible when you combine human creativity with AI execution. Be ambitious, experiment fearlessly, and document your journey.
 
+## 🏗️ Project Structure
+
+This is a **full-stack application** with separate backend and frontend:
+
+### Backend (`/backend`)
+- **Framework:** FastAPI 0.115+
+- **Language:** Python 3.12+
+- **Package Manager:** uv (not pip!)
+- **Port:** 8098 (default)
+- **Commands:**
+  - `make install` - Install dependencies
+  - `make dev` - Start development server
+  - `make test` - Run tests
+- **Details:** See `backend/CLAUDE.md` for FastAPI patterns, code style, and backend-specific guidelines
+
+### Frontend (`/frontend`)
+- **Framework:** React 18 with TypeScript
+- **Build Tool:** Vite
+- **Port:** 3000 (default)
+- **Commands:**
+  - `npm install` - Install dependencies
+  - `npm run dev` - Start development server with HMR
+  - `npm test` - Run tests
+  - `npm run build` - Production build
+- **Details:** See `frontend/CLAUDE.md` for React patterns, component structure, and frontend-specific guidelines
+
+### Running the Full Stack
+1. **Backend:** `cd backend && make dev` (starts on port 8098)
+2. **Frontend:** `cd frontend && npm run dev` (starts on port 3000)
+3. **API Docs:** http://localhost:8098/docs (Swagger UI)
+4. **Frontend:** http://localhost:3000
+
+### Environment Variables
+Both services use `.env` files:
+- **Backend:** Copy `backend/.env.example` to `backend/.env`
+- **Frontend:** Copy `frontend/.env.example` to `frontend/.env`
+- Frontend API URL: Set `VITE_API_URL=http://localhost:8098`
+- Backend CORS: Set `CORS_ORIGINS=http://localhost:3000`
+
 ## 🎬 TAPE Workflow (Think → ADR → Plan → Execute)
 
 For significant features and architectural decisions, use the **TAPE methodology**:
@@ -74,8 +113,10 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - `docs(scope): update documentation`
 - `test(scope): add tests`
 
-**Examples:**
-- `feat(auth): add JWT token validation`
+**Scope examples for full-stack:**
+- `backend/` prefix: `feat(backend/auth): add JWT token validation`
+- `frontend/` prefix: `feat(frontend/login): add login form component`
+- Feature-based: `feat(auth): add JWT validation` (when touching both)
 - `fix(api): handle null user response`
 - `refactor(db): extract query builder to helper`
 
@@ -101,6 +142,29 @@ Within the hard rules, you have **complete creative freedom**:
 - Build something surprising
 
 **This is a hackathon** - take risks, learn fast, have fun!
+
+## 🔄 Full-Stack Development Tips
+
+### API Development Workflow
+1. **Define data models** - Start with TypeScript interfaces and Pydantic models
+2. **Implement backend endpoint** - FastAPI route with validation
+3. **Test in Swagger** - Use `/docs` to verify endpoint works
+4. **Add frontend service** - API client function in `frontend/src/services/`
+5. **Build UI component** - React component that calls the service
+6. **Test end-to-end** - Verify in browser with both services running
+
+### Common Patterns
+- **CORS:** Backend must allow frontend origin in `CORS_ORIGINS`
+- **Environment vars:** Frontend vars must start with `VITE_` prefix
+- **Type sharing:** Keep TypeScript/Pydantic models in sync manually
+- **Error handling:** Use try/catch in frontend, raise HTTPException in backend
+- **Loading states:** Always show loading/error states in UI
+
+### Debugging Tips
+- **API not reachable?** Check both services are running and CORS is configured
+- **Type errors?** Verify request/response types match between frontend/backend
+- **CORS errors?** Check browser console and backend logs
+- **Can't find endpoint?** Use `/docs` to see all available routes
 
 ## 📚 Additional Resources
 
