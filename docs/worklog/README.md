@@ -1,10 +1,10 @@
 # Worklog
 
-This directory contains your development journey throughout the hackathon.
+This directory contains the development journey throughout the hackathon.
 
 ## What's a Worklog?
 
-A worklog is an automated diary of your development progress. Each time you run `/checkpoint`, an entry is added with:
+A worklog is an automated diary of development progress. Each time you run `/checkpoint`, an entry is added with:
 - Timestamp
 - Commit message
 - Files changed
@@ -19,13 +19,14 @@ A worklog is an automated diary of your development progress. Each time you run 
 
 ## Structure
 
-Each participant/team gets their own worklog file:
+Global worklog files organized by project area:
 
 ```
 worklog/
 ├── README.md (this file)
-├── team-name.md
-└── your-name.md
+├── backend.md (backend changes)
+├── frontend.md (frontend changes)
+└── project.md (cross-cutting changes, optional)
 ```
 
 ## Example Entry
