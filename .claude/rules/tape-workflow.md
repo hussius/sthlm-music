@@ -26,6 +26,105 @@ This document provides detailed guidance for implementing the TAPE (Think → AD
 
 **Rule of thumb:** If you'd want to explain the decision to your team 6 months from now, use TAPE.
 
+## Talk Phase: Requirements Gathering
+
+**CRITICAL:** Before diving into technical exploration or design, you MUST understand what the user actually wants.
+
+### Required Questions to Ask
+
+When a user proposes a feature or project, **always start by asking:**
+
+1. **Goal & Purpose**
+   - What problem are you trying to solve?
+   - Who will use this? (yourself, team, demo, production users)
+   - What's the primary goal? (learning, productivity, portfolio, competition)
+
+2. **Scope & Priorities**
+   - What's the timeline? (hours, days, weeks)
+   - What features are must-have vs nice-to-have?
+   - If you could only build ONE thing, what would it be?
+
+3. **Technical Constraints**
+   - Any technology preferences or requirements?
+   - Any existing systems this needs to integrate with?
+   - Performance/scalability requirements?
+   - Mobile/desktop/both?
+
+4. **User Experience Expectations**
+   - Should this be simple and fast, or rich and polished?
+   - What's more important: functionality or visual appeal?
+   - Any accessibility requirements?
+
+5. **Success Criteria**
+   - How will you know this is "done"?
+   - What does success look like?
+   - What's the minimum viable version?
+
+### ❌ NEVER Skip Requirements Gathering
+
+**Bad approach:**
+```
+User: "I want a recipe timeline app"
+Claude: [Immediately explores codebase and designs complex system]
+```
+
+**Good approach:**
+```
+User: "I want a recipe timeline app"
+Claude: "That sounds great! Let me understand what you need:
+- Is this for your personal use or a portfolio demo?
+- What's your timeline - quick MVP or fully polished?
+- Which features matter most: shopping list, timeline, or progress tracking?
+- Any architectural preferences (database, etc.)?"
+```
+
+### Talk Phase Workflow
+
+1. **User describes idea** - Initial feature request
+2. **Ask clarifying questions** - Understand goals, priorities, constraints
+3. **Discuss alternatives** - Explore different approaches conversationally
+4. **Align on direction** - Confirm understanding before documenting
+5. **Move to ADR phase** - Only after you understand what to build
+
+### Common Talk Phase Mistakes
+
+❌ **Assuming complexity:** User says "timeline" → you design elaborate visual chart
+   - **Fix:** Ask if simple list view is sufficient first
+
+❌ **Assuming scope:** User says "shopping list" → you add category sorting, unit conversion, purchase tracking
+   - **Fix:** Ask what minimal version looks like
+
+❌ **Assuming tech stack:** Immediately choosing database/libraries without asking preferences
+   - **Fix:** Present options and ask user's preference
+
+❌ **Assuming priorities:** Treating all features as equally important
+   - **Fix:** Ask user to rank features by importance
+
+### Example Talk Phase Conversation
+
+**User:** "I want to build a recipe timeline app that creates shopping lists"
+
+**Claude:** "Great idea! Let me understand what you're looking for:
+
+**Purpose & Goal:**
+- Is this for your personal use when cooking, or a portfolio/demo project?
+- What's the main problem you're solving - forgetting ingredients, bad timing, or something else?
+
+**Scope & Timeline:**
+- How much time do you want to invest? (Quick prototype or fully featured app?)
+- If you had to pick ONE feature to get working first, what would it be?
+
+**Technical Preferences:**
+- Any strong preferences on database (SQLite vs PostgreSQL)?
+- Should this work offline or is internet connection fine?
+- Desktop-only or mobile support needed?
+
+**User Experience:**
+- Should this be dead simple (paste URL → get list) or rich/interactive?
+- Is visual appeal critical or is functionality the priority?
+
+Once I understand your priorities, we can design the right solution."
+
 ## ADR Format and Storage
 
 ### Naming Convention
@@ -266,10 +365,17 @@ After each checkpoint:
 
 ## Common Pitfalls
 
-### ❌ Skipping Talk Phase
-**Problem:** Jump straight to coding without exploration
-**Result:** Missing better alternatives, overlooking edge cases
-**Fix:** Spend 10-15 minutes discussing before creating ADR
+### ❌ Skipping Requirements Gathering (Talk Phase)
+**Problem:** Jump straight to technical design without understanding user needs
+**Example:** User says "recipe app" → Claude immediately designs database schema and complex algorithms
+**Result:** Building wrong thing, over-engineering, missing actual requirements
+**Fix:** ALWAYS ask questions about goals, priorities, and constraints BEFORE exploring code or designing solutions
+
+### ❌ Making Assumptions Without Asking
+**Problem:** Assuming user wants complex features, specific technologies, or particular UX
+**Example:** Assuming "timeline" means visual chart vs simple list, assuming PostgreSQL vs SQLite
+**Result:** Wasted effort building unwanted features, choosing wrong tools
+**Fix:** Present options and ask user preference. Ask "what's the minimal version?" Ask "which features matter most?"
 
 ### ❌ ADRs Too Detailed
 **Problem:** Including implementation details in ADR

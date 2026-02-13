@@ -68,11 +68,20 @@ Both services use `.env` files:
 For significant features and architectural decisions, use the **TAPE methodology**:
 
 ### 1️⃣ **Talk Phase**
-Discuss your idea conversationally with Claude:
+**Start with requirements gathering** - Claude should ask questions BEFORE designing:
+- What's your goal? (personal use, demo, learning, competition)
+- What's your timeline? (hours, days, weeks)
+- Which features are must-have vs nice-to-have?
+- Any technical preferences or constraints?
+- What does success look like?
+
+Then discuss your idea conversationally:
 - Explore different approaches and trade-offs
 - Consider alternatives and edge cases
 - Continue until you've explored all angles
 - **Goal:** Reach clarity on what you want to build
+
+**CRITICAL:** Never skip requirements gathering. Always ask questions about priorities and constraints before exploring technical solutions. See `.claude/rules/tape-workflow.md` for detailed guidance.
 
 ### 2️⃣ **ADR Phase**
 Run `/adr [title]` to create an Architecture Decision Record:
