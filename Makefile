@@ -6,8 +6,9 @@ help:
 	@echo "Agents Hackathon - Monorepo Commands"
 	@echo ""
 	@echo "🚀 Quick Start:"
-	@echo "  make install           - Complete setup (checks prereqs, installs deps, sets up env)"
-	@echo "  make check-prereqs     - Check system prerequisites"
+	@echo "  make install              - Complete setup (checks prereqs, installs deps, sets up env)"
+	@echo "  make check-prereqs        - Check system prerequisites"
+	@echo "  make setup-git-automation - Configure Claude Code git automation (commit/push)"
 	@echo ""
 	@echo "🛡️  Safety Setup:"
 	@echo "  make workshop-setup    - Complete safety setup (DCG + sandboxing + hooks)"
@@ -33,7 +34,7 @@ help:
 # ============================================================================
 
 .PHONY: install
-install: check-prereqs setup-env install-deps setup-pre-commit
+install: check-prereqs setup-env install-deps setup-pre-commit setup-git-automation
 	@echo ""
 	@echo "✅ Complete setup finished!"
 	@echo ""
@@ -149,6 +150,10 @@ setup-pre-commit:
 	@echo ""
 	@echo "✓ Pre-commit hooks installed"
 	@echo ""
+
+.PHONY: setup-git-automation
+setup-git-automation:
+	@./.claude/setup-git-permissions.sh
 
 # ============================================================================
 # Workshop Safety Setup (applies to entire repo)
