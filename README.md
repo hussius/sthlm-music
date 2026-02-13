@@ -81,12 +81,20 @@ The frontend will be available at `http://localhost:3000`
 **Frontend Environment Variables:**
 - `PORT` - Dev server port (default: 3000)
 - `VITE_API_URL` - Backend API URL (default: http://localhost:8098)
-- `CCL_NPM_TOKEN` - (OPTIONAL) Only needed for Codon Component Library
+- `CCL_NPM_TOKEN` - (OPTIONAL) GitLab token for Codon Component Library access
 
-**Note:** If you don't have access to the Codon Component Library, you can:
-1. Skip setting `CCL_NPM_TOKEN`
-2. Remove `@codongit/codon-component-library` from `package.json`
-3. Remove any imports of CCL components from the code
+**Codon Component Library Setup:**
+
+If you're on the Codon team and want to use CCL:
+1. Get your GitLab token from 1Password ("CCL NPM Token")
+2. OR create one at https://gitlab.com/-/user_settings/personal_access_tokens (scope: `read_api`)
+3. Add to `frontend/.env`: `CCL_NPM_TOKEN=glpat-your-token-here`
+4. Run `make install` (or `cd frontend && npm install`)
+
+If you don't have access to CCL:
+1. Remove it: `cd frontend && npm uninstall @codongit/codon-component-library`
+2. Remove any CCL imports from your code
+3. The app will work fine without it
 
 ### 4. Start Hacking!
 

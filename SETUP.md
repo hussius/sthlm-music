@@ -73,7 +73,49 @@ make install
 
 This runs `uv sync` to install Python packages.
 
-### 4. Install Frontend Dependencies
+### 4. Configure Codon Component Library Access (Optional)
+
+**Only needed if you want to use Codon's internal component library.**
+
+The frontend uses `@codongit/codon-component-library` which is a private npm package hosted on GitLab. To access it:
+
+#### Option A: Set Up GitLab Token (Recommended for Codon Team)
+
+1. **Get your GitLab Personal Access Token:**
+   - Check your password manager (1Password) for "CCL NPM Token"
+   - OR create a new one:
+     - Go to https://gitlab.com/-/user_settings/personal_access_tokens
+     - Create a token with **`read_api`** scope
+     - Name it "CCL NPM Access" or similar
+     - Copy the token (you won't see it again!)
+
+2. **Add token to frontend `.env` file:**
+   ```bash
+   # In frontend/.env, uncomment and add your token:
+   CCL_NPM_TOKEN=glpat-your-token-here
+   ```
+
+3. **Verify it works:**
+   ```bash
+   cd frontend
+   export $(grep -v '^#' .env | xargs)
+   npm install
+   # Should install without 401 errors
+   ```
+
+#### Option B: Skip CCL (If Not on Codon Team)
+
+If you don't have access to the Codon Component Library:
+
+1. **Remove CCL from package.json:**
+   ```bash
+   cd frontend
+   npm uninstall @codongit/codon-component-library
+   ```
+
+2. **Remove CCL imports from your code** (if any exist)
+
+### 5. Install Frontend Dependencies
 
 ```bash
 cd frontend
@@ -82,7 +124,9 @@ npm install
 
 This installs all Node.js packages including React, Vite, and dev tools.
 
-### 5. Set Up Pre-Commit Hooks
+**Note:** The Makefile will automatically load the `CCL_NPM_TOKEN` from `.env` if it exists.
+
+### 6. Set Up Pre-Commit Hooks
 
 ```bash
 # Backend
@@ -208,15 +252,44 @@ cd frontend
 npm run format
 ```
 
-### "Cannot find module '@codongit/codon-component-library'"
+### "Cannot find module '@codongit/codon-component-library'" or "401 Unauthorized"
 
-**Solution:** This is an optional Codon internal package. Either:
-1. Get `CCL_NPM_TOKEN` from 1Password and add to `frontend/.env`
-2. Or remove it from `frontend/package.json` if you don't need it:
+**Problem:** The Codon Component Library (CCL) is a private npm package requiring GitLab authentication.
+
+**Solution Option 1 - Add Token (Codon Team):**
+
+1. Get your GitLab token from 1Password ("CCL NPM Token") OR create one:
+   - Visit: https://gitlab.com/-/user_settings/personal_access_tokens
+   - Scope: `read_api`
+   - Copy the token
+
+2. Add to `frontend/.env`:
+   ```bash
+   CCL_NPM_TOKEN=glpat-your-token-here
+   ```
+
+3. Reinstall:
    ```bash
    cd frontend
-   npm uninstall @codongit/codon-component-library
+   export $(grep -v '^#' .env | xargs)
+   npm install
    ```
+
+4. Verify CCL is installed:
+   ```bash
+   ls node_modules/@codongit/codon-component-library
+   # Should show package contents
+   ```
+
+**Solution Option 2 - Remove CCL (Non-Codon Team):**
+
+```bash
+cd frontend
+npm uninstall @codongit/codon-component-library
+# Remove any imports of CCL components from your code
+```
+
+**Why this happens:** The `.npmrc` file configures GitLab as a registry for `@codongit` packages, requiring authentication via the `CCL_NPM_TOKEN` environment variable.
 
 ## Workshop Safety Setup (Optional)
 

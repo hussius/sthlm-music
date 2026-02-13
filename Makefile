@@ -42,6 +42,7 @@ install: check-prereqs setup-env install-deps setup-pre-commit setup-git-automat
 	@echo "  1. Review .env files and add any API keys you need:"
 	@echo "     - backend/.env"
 	@echo "     - frontend/.env"
+	@echo "     - ⚠️  If using Codon Component Library, add CCL_NPM_TOKEN to frontend/.env"
 	@echo "  2. Start backend: make dev-backend (in new terminal)"
 	@echo "  3. Start frontend: make dev-frontend (in new terminal)"
 	@echo "  4. Visit http://localhost:3000 in your browser"
@@ -133,7 +134,11 @@ install-deps:
 	@cd backend && uv sync
 	@echo ""
 	@echo "→ Frontend (Node.js via npm)..."
-	@cd frontend && npm install
+	@if [ -f frontend/.env ]; then \
+		cd frontend && export $$(grep -v '^#' .env | xargs) && npm install; \
+	else \
+		cd frontend && npm install; \
+	fi
 	@echo ""
 	@echo "✓ All dependencies installed"
 	@echo ""
@@ -153,6 +158,8 @@ setup-pre-commit:
 
 .PHONY: setup-git-automation
 setup-git-automation:
+	@echo "⚠️  Note: Close all Claude Code sessions before running this setup."
+	@echo ""
 	@./.claude/setup-git-permissions.sh
 
 # ============================================================================
