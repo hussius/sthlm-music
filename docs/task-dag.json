@@ -1,0 +1,507 @@
+{
+  "metadata": {
+    "project": "Recipe Timeline Meal Planner",
+    "created": "2026-02-13",
+    "target_duration": "60 minutes",
+    "phases": ["Phase 0: Setup", "Phase 1: CRUD", "Phase 2: LLM Extraction", "Phase 3: Timeline", "Phase 4: Recipe Gatherer", "Phase 5: Polish"]
+  },
+  "tasks": [
+    {
+      "id": "BE-001",
+      "title": "Install backend dependencies",
+      "description": "Install openai, httpx, sqlmodel using uv",
+      "branch": "setup/backend-deps",
+      "phase": "Phase 0: Setup",
+      "estimated_minutes": 2,
+      "depends_on": [],
+      "blocks": ["BE-002", "BE-003", "BE-004"],
+      "status": "pending",
+      "commands": [
+        "cd backend",
+        "uv add openai httpx sqlmodel"
+      ]
+    },
+    {
+      "id": "BE-002",
+      "title": "Create backend folder structure",
+      "description": "Create src/db/, src/models/, src/services/, src/routes/ directories",
+      "branch": "setup/backend-deps",
+      "phase": "Phase 0: Setup",
+      "estimated_minutes": 1,
+      "depends_on": ["BE-001"],
+      "blocks": ["BE-003", "BE-004", "BE-005", "BE-006"],
+      "status": "pending",
+      "commands": [
+        "mkdir -p backend/src/db",
+        "mkdir -p backend/src/models",
+        "mkdir -p backend/src/services",
+        "mkdir -p backend/src/routes"
+      ]
+    },
+    {
+      "id": "FE-001",
+      "title": "Create frontend folder structure",
+      "description": "Create component folders: shared/, meal-plans/, recipes/, timeline/, pages/",
+      "branch": "setup/frontend-structure",
+      "phase": "Phase 0: Setup",
+      "estimated_minutes": 2,
+      "depends_on": [],
+      "blocks": ["FE-002", "FE-005", "FE-006", "FE-007"],
+      "status": "pending",
+      "commands": [
+        "mkdir -p frontend/src/components/shared",
+        "mkdir -p frontend/src/components/meal-plans",
+        "mkdir -p frontend/src/components/recipes",
+        "mkdir -p frontend/src/components/timeline",
+        "mkdir -p frontend/src/pages",
+        "mkdir -p frontend/src/contexts",
+        "mkdir -p frontend/src/services"
+      ]
+    },
+    {
+      "id": "BE-003",
+      "title": "Create database models",
+      "description": "Create all SQLModel tables: MealPlan, Recipe, MealPlanRecipe, RecipeIngredient, RecipeStep, RecipeEquipment, TimelineInstance, ConsolidatedTask, ShoppingListItem",
+      "branch": "feature/database-models",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 15,
+      "depends_on": ["BE-001", "BE-002"],
+      "blocks": ["BE-005", "BE-006", "BE-007", "BE-008", "BE-009"],
+      "status": "pending",
+      "files": ["backend/src/db/models.py"],
+      "notes": "CRITICAL: Use absolute imports (from src.db.models import ...)"
+    },
+    {
+      "id": "BE-004",
+      "title": "Create Pydantic extraction models",
+      "description": "Create IngredientExtraction, StepExtraction, RecipeExtraction models for LLM parsing",
+      "branch": "feature/extraction-models",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 8,
+      "depends_on": ["BE-001", "BE-002"],
+      "blocks": ["BE-007"],
+      "status": "pending",
+      "files": ["backend/src/models/extraction.py"]
+    },
+    {
+      "id": "BE-005",
+      "title": "Initialize database and create engine",
+      "description": "Add database initialization to main.py with SQLModel.metadata.create_all",
+      "branch": "feature/database-models",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 5,
+      "depends_on": ["BE-003"],
+      "blocks": ["BE-006"],
+      "status": "pending",
+      "files": ["backend/src/main.py"],
+      "notes": "Add startup event handler, create SQLite engine"
+    },
+    {
+      "id": "BE-006",
+      "title": "Create meal plan CRUD routes",
+      "description": "Implement POST/GET/DELETE /api/meal-plans endpoints with mock data",
+      "branch": "feature/meal-plan-routes",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 12,
+      "depends_on": ["BE-003", "BE-005"],
+      "blocks": ["BE-010", "FE-008"],
+      "status": "pending",
+      "files": ["backend/src/routes/meal_plans.py"],
+      "notes": "Use absolute imports: from src.db.models import MealPlan"
+    },
+    {
+      "id": "BE-007",
+      "title": "Create LLM extraction service",
+      "description": "Implement extract_recipe() with OpenAI API, Pydantic validation, and webpage fetching",
+      "branch": "feature/llm-extraction",
+      "phase": "Phase 2: LLM Extraction",
+      "estimated_minutes": 15,
+      "depends_on": ["BE-004"],
+      "blocks": ["BE-010"],
+      "status": "pending",
+      "files": ["backend/src/services/llm_service.py"],
+      "notes": "Use gpt-4o-mini, JSON mode, 30s timeout"
+    },
+    {
+      "id": "BE-008",
+      "title": "Create timeline consolidation service",
+      "description": "Implement consolidate_tasks() with task merging, backwards scheduling, and shopping list generation",
+      "branch": "feature/timeline-service",
+      "phase": "Phase 3: Timeline",
+      "estimated_minutes": 20,
+      "depends_on": ["BE-003", "BE-004"],
+      "blocks": ["BE-011"],
+      "status": "pending",
+      "files": ["backend/src/services/timeline_service.py"],
+      "notes": "Handles guest count scaling, ingredient normalization, duration adjustments"
+    },
+    {
+      "id": "BE-009",
+      "title": "Add CORS configuration",
+      "description": "Configure CORS middleware in main.py to allow frontend origin",
+      "branch": "feature/meal-plan-routes",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 3,
+      "depends_on": ["BE-005"],
+      "blocks": ["FE-008"],
+      "status": "pending",
+      "files": ["backend/src/main.py"],
+      "notes": "Allow http://localhost:3000 origin"
+    },
+    {
+      "id": "BE-010",
+      "title": "Create recipe routes with LLM integration",
+      "description": "Implement POST/DELETE /api/meal-plans/{id}/recipes with LLM extraction and deduplication",
+      "branch": "feature/recipe-routes",
+      "phase": "Phase 2: LLM Extraction",
+      "estimated_minutes": 15,
+      "depends_on": ["BE-006", "BE-007"],
+      "blocks": ["FE-009"],
+      "status": "pending",
+      "files": ["backend/src/routes/recipes.py"],
+      "notes": "Check for existing recipe URLs to avoid re-scraping"
+    },
+    {
+      "id": "BE-011",
+      "title": "Create timeline routes",
+      "description": "Implement POST/GET /api/timelines and PATCH /tasks/{id} endpoints",
+      "branch": "feature/timeline-routes",
+      "phase": "Phase 3: Timeline",
+      "estimated_minutes": 12,
+      "depends_on": ["BE-008"],
+      "blocks": ["FE-011"],
+      "status": "pending",
+      "files": ["backend/src/routes/timelines.py"]
+    },
+    {
+      "id": "BE-012",
+      "title": "Create recipe gatherer service",
+      "description": "Implement suggest_recipes() LLM prompt to generate meal plans from themes",
+      "branch": "feature/recipe-gatherer",
+      "phase": "Phase 4: Recipe Gatherer",
+      "estimated_minutes": 10,
+      "depends_on": ["BE-007"],
+      "blocks": ["BE-013"],
+      "status": "pending",
+      "files": ["backend/src/services/llm_service.py"],
+      "notes": "Add to existing llm_service.py"
+    },
+    {
+      "id": "BE-013",
+      "title": "Create meal plan generation route",
+      "description": "Implement POST /api/meal-plans/generate endpoint",
+      "branch": "feature/recipe-gatherer",
+      "phase": "Phase 4: Recipe Gatherer",
+      "estimated_minutes": 8,
+      "depends_on": ["BE-012"],
+      "blocks": ["FE-012"],
+      "status": "pending",
+      "files": ["backend/src/routes/meal_plans.py"],
+      "notes": "Auto-extract suggested recipes after generation"
+    },
+    {
+      "id": "FE-002",
+      "title": "Create TypeScript type definitions",
+      "description": "Define interfaces for MealPlan, Recipe, Timeline, Task, ShoppingListItem",
+      "branch": "feature/frontend-types",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 8,
+      "depends_on": ["FE-001"],
+      "blocks": ["FE-003", "FE-005", "FE-006", "FE-007"],
+      "status": "pending",
+      "files": ["frontend/src/types/models.ts"]
+    },
+    {
+      "id": "FE-003",
+      "title": "Create API service client",
+      "description": "Implement fetch-based API client with all endpoint functions",
+      "branch": "feature/frontend-types",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 10,
+      "depends_on": ["FE-002"],
+      "blocks": ["FE-004", "FE-008", "FE-009", "FE-011"],
+      "status": "pending",
+      "files": ["frontend/src/services/api.ts"],
+      "notes": "Use VITE_API_URL environment variable"
+    },
+    {
+      "id": "FE-004",
+      "title": "Create MealPlanContext",
+      "description": "Set up Context API for global state management",
+      "branch": "feature/frontend-types",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 8,
+      "depends_on": ["FE-002", "FE-003"],
+      "blocks": ["FE-008", "FE-009", "FE-011"],
+      "status": "pending",
+      "files": ["frontend/src/contexts/MealPlanContext.tsx"]
+    },
+    {
+      "id": "FE-005",
+      "title": "Create shared components",
+      "description": "Build LoadingSpinner and ErrorMessage components using Codon UI",
+      "branch": "feature/shared-components",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 5,
+      "depends_on": ["FE-001", "FE-002"],
+      "blocks": ["FE-006", "FE-007", "FE-008", "FE-009", "FE-011"],
+      "status": "pending",
+      "files": [
+        "frontend/src/components/shared/LoadingSpinner.tsx",
+        "frontend/src/components/shared/ErrorMessage.tsx"
+      ]
+    },
+    {
+      "id": "FE-006",
+      "title": "Create meal plan components",
+      "description": "Build MealPlanList, MealPlanCard, CreateMealPlanModal",
+      "branch": "feature/meal-plan-ui",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 15,
+      "depends_on": ["FE-001", "FE-002", "FE-005"],
+      "blocks": ["FE-008"],
+      "status": "pending",
+      "files": [
+        "frontend/src/components/meal-plans/MealPlanList.tsx",
+        "frontend/src/components/meal-plans/MealPlanCard.tsx",
+        "frontend/src/components/meal-plans/CreateMealPlanModal.tsx"
+      ]
+    },
+    {
+      "id": "FE-007",
+      "title": "Create recipe components",
+      "description": "Build RecipeList, RecipeCard, AddRecipeForm with expandable details",
+      "branch": "feature/recipe-ui",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 18,
+      "depends_on": ["FE-001", "FE-002", "FE-005"],
+      "blocks": ["FE-009"],
+      "status": "pending",
+      "files": [
+        "frontend/src/components/recipes/RecipeList.tsx",
+        "frontend/src/components/recipes/RecipeCard.tsx",
+        "frontend/src/components/recipes/AddRecipeForm.tsx"
+      ],
+      "notes": "RecipeCard shows nickname prominently, expandable ingredients/steps"
+    },
+    {
+      "id": "FE-008",
+      "title": "Create MealPlansPage",
+      "description": "Build landing page with meal plan list and create button",
+      "branch": "feature/meal-plan-pages",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 10,
+      "depends_on": ["FE-003", "FE-004", "FE-006", "BE-006", "BE-009"],
+      "blocks": ["FE-010"],
+      "status": "pending",
+      "files": ["frontend/src/pages/MealPlansPage.tsx"]
+    },
+    {
+      "id": "FE-009",
+      "title": "Create MealPlanDetailPage",
+      "description": "Build detail page with recipe list and add recipe form",
+      "branch": "feature/meal-plan-pages",
+      "phase": "Phase 2: LLM Extraction",
+      "estimated_minutes": 12,
+      "depends_on": ["FE-003", "FE-004", "FE-007", "BE-010"],
+      "blocks": ["FE-010"],
+      "status": "pending",
+      "files": ["frontend/src/pages/MealPlanDetailPage.tsx"],
+      "notes": "Show loading spinner during recipe extraction"
+    },
+    {
+      "id": "FE-010",
+      "title": "Create timeline components",
+      "description": "Build TimelineView, TimelineConfig, TaskCard (expandable), TaskCheckbox",
+      "branch": "feature/timeline-ui",
+      "phase": "Phase 3: Timeline",
+      "estimated_minutes": 20,
+      "depends_on": ["FE-001", "FE-002", "FE-005"],
+      "blocks": ["FE-011"],
+      "status": "pending",
+      "files": [
+        "frontend/src/components/timeline/TimelineView.tsx",
+        "frontend/src/components/timeline/TimelineConfig.tsx",
+        "frontend/src/components/timeline/TaskCard.tsx",
+        "frontend/src/components/timeline/TaskCheckbox.tsx"
+      ],
+      "notes": "Use CodonExpandingBox for task cards"
+    },
+    {
+      "id": "FE-011",
+      "title": "Create TimelinePage",
+      "description": "Build timeline page with config form and task list",
+      "branch": "feature/timeline-pages",
+      "phase": "Phase 3: Timeline",
+      "estimated_minutes": 10,
+      "depends_on": ["FE-003", "FE-004", "FE-010", "BE-011"],
+      "blocks": ["FE-013"],
+      "status": "pending",
+      "files": ["frontend/src/pages/TimelinePage.tsx"]
+    },
+    {
+      "id": "FE-012",
+      "title": "Create GenerateMealPlanModal",
+      "description": "Build modal for theme-based meal plan generation",
+      "branch": "feature/recipe-gatherer-ui",
+      "phase": "Phase 4: Recipe Gatherer",
+      "estimated_minutes": 12,
+      "depends_on": ["FE-002", "FE-005", "BE-013"],
+      "blocks": ["FE-013"],
+      "status": "pending",
+      "files": ["frontend/src/components/meal-plans/GenerateMealPlanModal.tsx"],
+      "notes": "Show progress indicator during generation"
+    },
+    {
+      "id": "FE-013",
+      "title": "Set up routing",
+      "description": "Configure React Router with all page routes",
+      "branch": "feature/routing",
+      "phase": "Phase 1: CRUD",
+      "estimated_minutes": 8,
+      "depends_on": ["FE-008", "FE-009", "FE-011", "FE-012"],
+      "blocks": [],
+      "status": "pending",
+      "files": ["frontend/src/App.tsx"],
+      "notes": "Routes: /, /meal-plans/:id, /timelines/:id"
+    },
+    {
+      "id": "TEST-001",
+      "title": "Manual testing checklist",
+      "description": "Execute full test plan with real recipe URLs",
+      "branch": "main",
+      "phase": "Phase 5: Polish",
+      "estimated_minutes": 10,
+      "depends_on": ["FE-013", "BE-011"],
+      "blocks": [],
+      "status": "pending",
+      "notes": "Use AllRecipes URLs for turkey, cranberry, brussels sprouts"
+    },
+    {
+      "id": "POLISH-001",
+      "title": "UI polish and error handling",
+      "description": "Add confirmation dialogs, better error messages, visual improvements",
+      "branch": "feature/polish",
+      "phase": "Phase 5: Polish",
+      "estimated_minutes": 5,
+      "depends_on": ["TEST-001"],
+      "blocks": [],
+      "status": "pending",
+      "notes": "Final touches before demo"
+    }
+  ],
+  "work_streams": {
+    "stream_1_backend_foundation": {
+      "description": "Core backend database and models",
+      "tasks": ["BE-001", "BE-002", "BE-003", "BE-004", "BE-005"],
+      "can_run_parallel_with": ["stream_2_frontend_foundation"]
+    },
+    "stream_2_frontend_foundation": {
+      "description": "Core frontend types and structure",
+      "tasks": ["FE-001", "FE-002", "FE-003", "FE-004", "FE-005"],
+      "can_run_parallel_with": ["stream_1_backend_foundation"]
+    },
+    "stream_3_crud_backend": {
+      "description": "Meal plan CRUD routes",
+      "tasks": ["BE-006", "BE-009"],
+      "depends_on": ["stream_1_backend_foundation"]
+    },
+    "stream_4_crud_frontend": {
+      "description": "Meal plan UI components and pages",
+      "tasks": ["FE-006", "FE-008"],
+      "depends_on": ["stream_2_frontend_foundation"],
+      "can_run_parallel_with": ["stream_5_recipe_frontend"]
+    },
+    "stream_5_recipe_frontend": {
+      "description": "Recipe UI components",
+      "tasks": ["FE-007"],
+      "depends_on": ["stream_2_frontend_foundation"],
+      "can_run_parallel_with": ["stream_4_crud_frontend"]
+    },
+    "stream_6_llm_extraction": {
+      "description": "LLM extraction service and recipe routes",
+      "tasks": ["BE-007", "BE-010", "FE-009"],
+      "depends_on": ["stream_3_crud_backend", "stream_5_recipe_frontend"]
+    },
+    "stream_7_timeline": {
+      "description": "Timeline generation and UI",
+      "tasks": ["BE-008", "BE-011", "FE-010", "FE-011"],
+      "depends_on": ["stream_6_llm_extraction"],
+      "notes": "BE-008 and FE-010 can run in parallel"
+    },
+    "stream_8_recipe_gatherer": {
+      "description": "Theme-based meal plan generation",
+      "tasks": ["BE-012", "BE-013", "FE-012"],
+      "depends_on": ["stream_6_llm_extraction"]
+    },
+    "stream_9_integration": {
+      "description": "Routing, testing, polish",
+      "tasks": ["FE-013", "TEST-001", "POLISH-001"],
+      "depends_on": ["stream_7_timeline", "stream_8_recipe_gatherer"]
+    }
+  },
+  "branch_strategy": {
+    "main": "Stable baseline",
+    "setup/backend-deps": "BE-001, BE-002",
+    "setup/frontend-structure": "FE-001",
+    "feature/database-models": "BE-003, BE-005",
+    "feature/extraction-models": "BE-004",
+    "feature/meal-plan-routes": "BE-006, BE-009",
+    "feature/recipe-routes": "BE-010",
+    "feature/llm-extraction": "BE-007",
+    "feature/timeline-service": "BE-008",
+    "feature/timeline-routes": "BE-011",
+    "feature/recipe-gatherer": "BE-012, BE-013",
+    "feature/frontend-types": "FE-002, FE-003, FE-004",
+    "feature/shared-components": "FE-005",
+    "feature/meal-plan-ui": "FE-006",
+    "feature/recipe-ui": "FE-007",
+    "feature/meal-plan-pages": "FE-008, FE-009",
+    "feature/timeline-ui": "FE-010",
+    "feature/timeline-pages": "FE-011",
+    "feature/recipe-gatherer-ui": "FE-012",
+    "feature/routing": "FE-013",
+    "feature/polish": "POLISH-001"
+  },
+  "merge_order": [
+    "setup/backend-deps -> main",
+    "setup/frontend-structure -> main",
+    "feature/database-models -> main",
+    "feature/extraction-models -> main",
+    "feature/meal-plan-routes -> main",
+    "feature/frontend-types -> main",
+    "feature/shared-components -> main",
+    "feature/meal-plan-ui -> main",
+    "feature/recipe-ui -> main",
+    "feature/meal-plan-pages -> main",
+    "feature/llm-extraction -> main",
+    "feature/recipe-routes -> main",
+    "feature/timeline-service -> main",
+    "feature/timeline-ui -> main",
+    "feature/timeline-routes -> main",
+    "feature/timeline-pages -> main",
+    "feature/recipe-gatherer -> main",
+    "feature/recipe-gatherer-ui -> main",
+    "feature/routing -> main",
+    "feature/polish -> main"
+  ],
+  "critical_path": [
+    "BE-001",
+    "BE-002",
+    "BE-003",
+    "BE-005",
+    "BE-006",
+    "BE-007",
+    "BE-010",
+    "BE-008",
+    "BE-011",
+    "FE-001",
+    "FE-002",
+    "FE-003",
+    "FE-005",
+    "FE-010",
+    "FE-011",
+    "FE-013",
+    "TEST-001"
+  ]
+}
