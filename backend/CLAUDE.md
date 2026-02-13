@@ -11,6 +11,169 @@ Python FastAPI backend with uv package management.
 - **Type Checking:** ty (pyright)
 - **Python Version:** 3.12+
 
+## ⚠️ CRITICAL: Use uv for Everything
+
+**ALL Python operations must go through uv.** This is non-negotiable.
+
+### Correct Commands
+
+```bash
+# Running Python scripts
+uv run python src/main.py        # ✅ Correct
+python src/main.py               # ❌ WRONG - bypasses uv environment
+
+# Running tests
+uv run python -m pytest          # ✅ Correct
+pytest                           # ❌ WRONG - not in PATH
+make test                        # ✅ Correct - uses uv internally
+
+# Installing packages
+uv add fastapi                   # ✅ Correct
+pip install fastapi              # ❌ WRONG - don't use pip
+
+# Removing packages
+uv remove package                # ✅ Correct
+pip uninstall package            # ❌ WRONG
+
+# Syncing dependencies
+uv sync                          # ✅ Correct - installs from lock file
+```
+
+### Why uv?
+
+- Manages virtual environment automatically (no activation needed)
+- Ensures correct Python version (3.12+)
+- Faster dependency resolution than pip
+- Consistent environment across team and CI
+- Integrated with project configuration
+
+### Development Workflow
+
+```bash
+# Initial setup
+make install                     # Installs dependencies via uv
+
+# Daily development
+make dev                         # Runs server via uv
+make test                        # Runs tests via uv
+make format                      # Formats code via uv
+make check                       # Lints and type checks via uv
+```
+
+All Makefile commands use `uv run` internally - never call Python directly.
+
+## Import Best Practices
+
+**CRITICAL:** Use absolute imports from `src` to avoid import errors.
+
+### Project Structure
+
+```
+backend/
+├── src/                    # Python package root
+│   ├── __init__.py        # Makes src a package
+│   ├── main.py            # FastAPI app entry point
+│   ├── models/            # Pydantic models
+│   ├── routes/            # API route handlers
+│   ├── services/          # Business logic
+│   └── db/                # Database utilities
+├── tests/                 # Tests (separate from src)
+├── pyproject.toml         # Package config
+└── Makefile
+```
+
+The `pyproject.toml` configures package discovery:
+```toml
+[tool.setuptools]
+package-dir = {"" = "src"}
+```
+
+This means **all imports must start from `src.`**
+
+### Import Examples
+
+**✅ CORRECT - Absolute imports from src:**
+
+```python
+# In src/routes/users.py
+from src.models.user import User, UserCreate, UserResponse
+from src.services.auth import authenticate_user
+from src.db.connection import get_db
+from fastapi import APIRouter, Depends, HTTPException
+
+router = APIRouter()
+
+@router.post("/users", response_model=UserResponse)
+async def create_user(user: UserCreate, db = Depends(get_db)):
+    # Implementation
+    pass
+```
+
+**✅ CORRECT - Standard library and third-party first:**
+
+```python
+# Standard library imports
+from typing import List, Optional
+from datetime import datetime
+
+# Third-party imports
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+# Local imports (from src)
+from src.models.user import User
+from src.routes import users, auth
+```
+
+**❌ WRONG - Relative imports:**
+
+```python
+# DON'T DO THIS
+from models.user import User           # ❌ ModuleNotFoundError
+from ..models.user import User         # ❌ Fragile, breaks easily
+from .models import User               # ❌ Wrong relative path
+import models                          # ❌ Ambiguous
+```
+
+**❌ WRONG - Incorrect absolute imports:**
+
+```python
+from backend.src.models.user import User  # ❌ Wrong - no 'backend' in path
+from models.user import User              # ❌ Wrong - missing 'src'
+```
+
+### Testing Imports
+
+When creating a new Python file, **always test imports work:**
+
+```bash
+# Test import works
+uv run python -c "from src.models.user import User"
+
+# Should print nothing if successful
+# If it fails, check your import path
+```
+
+### Creating New Files Checklist
+
+1. ✅ Check existing files for import patterns
+2. ✅ Use absolute imports starting with `src.`
+3. ✅ Follow the project structure in `pyproject.toml`
+4. ✅ Test imports: `uv run python -c "from src.your.module import Thing"`
+5. ✅ Run type checker: `make check`
+6. ✅ Run tests: `make test`
+
+### Common Import Errors
+
+**Error:** `ModuleNotFoundError: No module named 'models'`
+**Fix:** Change `from models.user import User` to `from src.models.user import User`
+
+**Error:** `ImportError: attempted relative import with no known parent package`
+**Fix:** Use absolute imports: `from src.models.user import User`
+
+**Error:** `ModuleNotFoundError: No module named 'src'`
+**Fix:** Ensure you're running via `uv run python` and `pyproject.toml` is configured correctly
+
 ## Code Style
 
 ### Python Conventions
@@ -118,11 +281,18 @@ def test_create_user():
 
 ### Running Tests
 
+**Always use Makefile or uv:**
+
 ```bash
-make test              # Run all tests
-make test-verbose      # Run with verbose output
-pytest tests/test_routes.py  # Run specific test file
-pytest -k "test_user"  # Run tests matching pattern
+make test                                    # ✅ Run all tests (via uv)
+uv run python -m pytest                     # ✅ Direct pytest via uv
+uv run python -m pytest -v                  # ✅ Verbose output
+uv run python -m pytest tests/test_routes.py # ✅ Specific test file
+uv run python -m pytest -k "test_user"      # ✅ Pattern matching
+
+# ❌ NEVER use these:
+pytest                                       # ❌ Not in PATH
+python -m pytest                            # ❌ Bypasses uv
 ```
 
 ### Test Coverage
@@ -215,22 +385,43 @@ JWT_SECRET=your-secret-key-here
 
 ## Common Commands
 
+**Use Makefile commands (which use uv internally) or uv directly:**
+
 ```bash
+# Setup
+make install                    # Install all dependencies via uv
+make setup-pre-commit          # Install pre-commit hooks
+
 # Development
-make dev               # Start dev server with auto-reload
+make dev                       # Start dev server (via uv)
+make run                       # Run app (via uv)
 
 # Code Quality
-make format            # Format code with ruff
-make check             # Lint + type check
-make test              # Run tests
+make format                    # Format code with ruff (via uv)
+make check                     # Lint + type check (via uv)
+make test                      # Run tests (via uv)
+make pre-commit                # Run all pre-commit hooks
 
 # Dependencies
-uv add package-name    # Add dependency
-uv sync                # Install dependencies
+uv add package-name            # ✅ Add dependency
+uv add --dev package-name      # ✅ Add dev dependency
+uv remove package-name         # ✅ Remove dependency
+uv sync                        # ✅ Sync dependencies from lock file
+uv lock                        # ✅ Update lock file
+
+# ❌ NEVER use these:
+pip install package            # ❌ WRONG - use uv add
+pip uninstall package          # ❌ WRONG - use uv remove
+python src/main.py             # ❌ WRONG - use make run or uv run
+pytest                         # ❌ WRONG - use make test
+
+# Running Python scripts directly
+uv run python src/main.py      # ✅ Correct way to run scripts
+uv run python -m module        # ✅ Run Python modules
 
 # Database (if using Alembic)
-alembic revision --autogenerate -m "description"
-alembic upgrade head
+uv run alembic revision --autogenerate -m "description"
+uv run alembic upgrade head
 ```
 
 ## Performance

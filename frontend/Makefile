@@ -1,7 +1,7 @@
 include .env
 export $(shell sed -n 's/=.*//p' .env)
 
-run: 
+run:
 	npm run dev -- --port ${PORT}
 
 preview:
@@ -10,7 +10,7 @@ preview:
 link-ccl:
 	npm link @codongit/codon-component-library
 
-install-dependencies: 
+install-dependencies:
 	source .env && export CCL_NPM_TOKEN && npm install
 
 format:

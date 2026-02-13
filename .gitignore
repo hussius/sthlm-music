@@ -7,7 +7,7 @@ wheels/
 *.egg-info
 
 
-# Virtual environment 
+# Virtual environment
 .venv/
 
 # Linting, formatting, IDE

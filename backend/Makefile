@@ -3,6 +3,10 @@
 help:
 	@echo "Agents Hackathon - Workshop Commands"
 	@echo ""
+	@echo "Setup:"
+	@echo "  make install           - Install dependencies"
+	@echo "  make setup-pre-commit  - Install pre-commit git hooks"
+	@echo ""
 	@echo "Safety Setup:"
 	@echo "  make workshop-setup    - Complete safety setup (DCG + sandboxing + hooks)"
 	@echo "  make setup-dcg         - Install Destructive Command Guard"
@@ -15,6 +19,7 @@ help:
 	@echo "  make test              - Run tests"
 	@echo "  make format            - Format code with ruff"
 	@echo "  make check             - Run all checks (format, type, lint)"
+	@echo "  make pre-commit        - Run pre-commit hooks on all files"
 	@echo ""
 
 # ============================================================================
@@ -129,20 +134,46 @@ restore-claude-settings:
 # Development Commands
 # ============================================================================
 
-.PHONY: format check test run
+.PHONY: install setup-pre-commit format check test run
+
+install:
+	uv sync
+	@echo ""
+	@echo "📦 Dependencies installed! Next steps:"
+	@echo "  1. Run 'make setup-pre-commit' to install git hooks"
+	@echo "  2. Run 'make run' to start the server"
+	@echo ""
+
+setup-pre-commit:
+	@echo "🪝 Installing pre-commit hooks..."
+	uv run pre-commit install
+	@echo "✓ Pre-commit hooks installed"
+	@echo ""
+	@echo "Hooks will run automatically before each commit:"
+	@echo "  • Ruff formatting"
+	@echo "  • Ruff linting"
+	@echo "  • ty type checking"
+	@echo "  • Pytest tests"
+	@echo ""
+	@echo "To run manually: make pre-commit"
+	@echo ""
+
+pre-commit:
+	uv run pre-commit run --all-files
+
 format:
 	uv run ruff format .
 	uv run ruff check --fix .
-	uv run ruff check --select I --fix . 
+	uv run ruff check --select I --fix .
 
-check: 
+check:
 	uv run ruff format --check .
 	uv run ruff check --select I --fix --diff .
 	uv run ty check .
 	uv run ruff check
 
 test:
-	uv run pytest
+	uv run python -m pytest
 
-run: 
+run:
 	uv run src/main.py

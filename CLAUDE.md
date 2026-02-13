@@ -18,9 +18,14 @@ This is a **full-stack application** with separate backend and frontend:
 - **Package Manager:** uv (not pip!)
 - **Port:** 8098 (default)
 - **Commands:**
-  - `make install` - Install dependencies
+  - `make install` - Install dependencies with uv
   - `make dev` - Start development server
   - `make test` - Run tests
+- **IMPORTANT:** All Python commands must be run through `uv`:
+  - Use `uv run python script.py` NOT `python script.py`
+  - Use `uv run python -m pytest` NOT `pytest`
+  - Use `uv add package` NOT `pip install package`
+  - The uv environment is managed automatically - no need to activate virtualenvs
 - **Details:** See `backend/CLAUDE.md` for FastAPI patterns, code style, and backend-specific guidelines
 
 ### Frontend (`/frontend`)
@@ -132,6 +137,66 @@ Use `/checkpoint [message]` to automate:
 2. **ADRs for architectural decisions** - Document your reasoning
 3. **Test before committing** - Broken commits slow everyone down
 4. **Branch for experiments** - Keep main branch stable
+5. **Use uv for all Python operations** - Never use pip, python, or pytest directly
+6. **Smart imports in Python** - Use absolute imports from project root to avoid import errors
+
+## 📋 Coding Principles
+
+### Python Import Best Practices
+
+**CRITICAL:** Always use smart, absolute imports to avoid `ModuleNotFoundError` and import issues.
+
+**✅ Good - Absolute imports from project root:**
+```python
+# In backend/src/routes/users.py
+from src.models.user import User, UserCreate
+from src.services.auth import get_current_user
+from src.db.connection import get_db
+```
+
+**❌ Bad - Relative imports or incorrect paths:**
+```python
+# DON'T DO THIS
+from models.user import User  # Will fail - not found
+from ..models.user import User  # Fragile relative import
+import user  # Ambiguous
+```
+
+**Project structure assumptions:**
+- Backend uses `src/` as the package root
+- All imports should start from `src.`
+- Use `pyproject.toml` `[tool.setuptools]` configuration for package discovery
+
+**When creating new Python files:**
+1. Understand the project structure first (check existing files)
+2. Use absolute imports matching existing patterns
+3. Test imports work: `uv run python -c "from src.module import Class"`
+4. If imports fail, check `pyproject.toml` package configuration
+
+### Backend: Always Use uv
+
+**✅ Correct commands:**
+```bash
+uv run python script.py          # Run Python scripts
+uv run python -m pytest          # Run tests
+uv run python -m module          # Run modules
+uv add package                   # Add dependencies
+uv remove package                # Remove dependencies
+uv sync                          # Sync dependencies
+```
+
+**❌ Never use these:**
+```bash
+python script.py                 # ❌ Wrong - bypasses uv
+pytest                           # ❌ Wrong - not in PATH
+pip install package              # ❌ Wrong - use uv add
+```
+
+**Why?** uv manages the virtual environment automatically. Using `uv run` ensures:
+- Correct Python version (3.12+)
+- All dependencies available
+- Consistent environment across team
+- No need to manually activate virtualenvs
 
 ## 🎨 Creative Freedom
 

@@ -1,6 +1,6 @@
 # Codon Frontend Repo template
 
-## About 
+## About
 This repo is a minimal frontend application, supposed to act as a starting point for frontend projects.
 
 The code is assumed to be served vi a simple express web server `api.js`.
@@ -12,7 +12,7 @@ The code is assumed to be served vi a simple express web server `api.js`.
 - Prettier config file for code formatting
 - Eslint config file for linting
 
-## Installation 
+## Installation
 
 ### Developer
 
@@ -20,19 +20,19 @@ The code is assumed to be served vi a simple express web server `api.js`.
 * Node v20.x
 * npm v10.x
 
-#### Setting up the project 
+#### Setting up the project
 * Install the dependencies with `npm install`
 * - If running in to npm authentication issues: `source .env && export CCL_NPM_TOKEN && npm install` or `make install-dependencies`
 
-#### Running the project 
-* Setup the necessary environment variables in a .env file: 
+#### Running the project
+* Setup the necessary environment variables in a .env file:
 ```
 PORT=#port to run FE process on (for makefile)
 CCL_NPM_TOKEN=#found in 1Password
 CCL_PATH=#absolute path to CCL - for running dev mode in linked mode
 
 ```
-* Run `make run` to start the frontend 
+* Run `make run` to start the frontend
 * Run `make preview` to serve the bundled code via the web-server (mimics production).
 
 #### Contributing to the project
