@@ -31,7 +31,59 @@ You should see:
 - ✓ Scratch directory exists
 - ✓ Auto-format hook installed
 
-### 3. Start Hacking!
+### 3. Setup Backend & Frontend
+
+#### Backend Setup (Python FastAPI)
+
+```bash
+cd backend
+
+# Create your environment file
+cp .env.example .env
+
+# Install dependencies (uses uv)
+make install
+
+# Run the development server
+make dev
+```
+
+The backend will be available at `http://localhost:8098`
+
+**Backend Environment Variables:**
+- `PORT` - Server port (default: 8098)
+- `ENVIRONMENT` - development/production/test
+- `CORS_ORIGINS` - Allowed frontend origins
+- Add API keys as needed for your project
+
+#### Frontend Setup (React + TypeScript + Vite)
+
+```bash
+cd frontend
+
+# Create your environment file
+cp .env.example .env
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`
+
+**Frontend Environment Variables:**
+- `PORT` - Dev server port (default: 3000)
+- `VITE_API_URL` - Backend API URL (default: http://localhost:8098)
+- `CCL_NPM_TOKEN` - (OPTIONAL) Only needed for Codon Component Library
+
+**Note:** If you don't have access to the Codon Component Library, you can:
+1. Skip setting `CCL_NPM_TOKEN`
+2. Remove `@codongit/codon-component-library` from `package.json`
+3. Remove any imports of CCL components from the code
+
+### 4. Start Hacking!
 
 You're now protected and ready to build. Claude Code can:
 - ✅ Read/write files in this project
@@ -74,37 +126,84 @@ After every code edit Claude makes:
 - Git
 - Python 3.12+
 
-## 🔧 Development Commands
+## 🔧 Development Workflow
+
+### Quick Commands (Run from repo root)
 
 ```bash
-# Run backend server
-make dev-backend
+# Start both frontend and backend in one command
+make dev-all
 
-# Run frontend dev server (after setting up frontend)
-make dev-frontend
+# Or run them separately
+make dev-backend    # Start backend on :8098
+make dev-frontend   # Start frontend on :3000
 
-# Run all tests
-make test-all
+# Code quality
+make format-all     # Format all code (backend + frontend)
+make check-all      # Lint and typecheck everything
+make test-all       # Run all tests
 
-# Format all code
-make format-all
-
-# Run all checks
-make check-all
-
-# View all available commands
+# See all available commands
 make help
 ```
 
-### Per-Directory Commands
+### Backend Commands (run from ./backend/)
 
 ```bash
-# Backend
-cd backend && make help
+cd backend
 
-# Frontend
-cd frontend && make help
+make install        # Install Python dependencies with uv
+make dev           # Start FastAPI dev server with auto-reload
+make test          # Run pytest tests
+make format        # Format Python code with ruff
+make check         # Lint and typecheck Python code
+make help          # Show all backend commands
 ```
+
+### Frontend Commands (run from ./frontend/)
+
+```bash
+cd frontend
+
+npm install        # Install Node dependencies
+npm run dev        # Start Vite dev server with HMR
+npm run build      # Build for production
+npm run test       # Run tests
+npm run format     # Format code with Prettier
+npm run check      # Lint, typecheck, and test
+make help          # Show all frontend commands
+```
+
+### Typical Development Flow
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+make dev
+# Backend running on http://localhost:8098
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+# Frontend running on http://localhost:3000
+```
+
+**Terminal 3 - Your work:**
+```bash
+# Make changes, run tests, commit frequently
+git status
+make test-all
+git add .
+git commit -m "feat: add amazing feature"
+```
+
+**Claude Code Integration:**
+- Claude can read/write files in both frontend/ and backend/
+- Auto-format hook will format your code after Claude edits
+- Use `/checkpoint` frequently to save progress
+- Ask Claude to run tests after changes
 
 ## 📁 Project Structure
 
