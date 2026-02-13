@@ -106,25 +106,37 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ### 5. Update Worklog
 
-**Determine worklog file:**
-- Check if user has specified their name previously
-- If not, ask: "What should I name your worklog file? (e.g., 'your-name' or 'team-name')"
-- Use `/docs/worklog/[name].md`
+**This project uses three global worklog files:**
+
+1. **`/docs/worklog/backend.md`** - Backend-specific changes
+2. **`/docs/worklog/frontend.md`** - Frontend-specific changes
+3. **`/docs/worklog/project.md`** - Cross-cutting/infrastructure changes
+
+**Determine which worklog(s) to update:**
+- Changes ONLY in `backend/` → Update `backend.md`
+- Changes ONLY in `frontend/` → Update `frontend.md`
+- Changes in BOTH `backend/` AND `frontend/` → Update BOTH files
+- Root-level files (Makefile, README, CLAUDE.md, etc.) → Update `project.md`
+- Infrastructure files (docs/, .claude/, .github/) → Update `project.md`
 
 **Create worklog file if doesn't exist:**
 
 ```markdown
-# Worklog: [Name]
+# Backend Worklog
+# (or "Frontend Worklog" or "Project Worklog")
 
-Development journal for the Agents Hackathon.
+Development journal for backend/frontend/project changes in the Agents Hackathon.
 
 ---
 ```
 
-**Append entry:**
+**Append entry format:**
 
 ```markdown
-## [Timestamp] - [Commit message]
+## [YYYY-MM-DD HH:MM] - [Commit message]
+
+**Commit:** [7-char hash]
+**ADR:** [ADR-NNNN-title or N/A]
 
 **Files changed:**
 - [List of files from git diff]

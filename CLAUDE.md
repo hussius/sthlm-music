@@ -12,6 +12,17 @@ This hackathon is about exploring what's possible when you combine human creativ
 
 This is a **full-stack application** with separate backend and frontend:
 
+### Quick Setup for New Developers
+
+**One command to set up everything:**
+```bash
+make install
+```
+
+This checks prerequisites, sets up environment files, installs all dependencies, and configures pre-commit hooks.
+
+**Detailed setup guide:** See [SETUP.md](SETUP.md) for step-by-step instructions and troubleshooting.
+
 ### Backend (`/backend`)
 - **Framework:** FastAPI 0.115+
 - **Language:** Python 3.12+
@@ -125,11 +136,47 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - `fix(api): handle null user response`
 - `refactor(db): extract query builder to helper`
 
+### Worklog System
+
+**Three global worklog files track all development:**
+
+- **`docs/worklog/backend.md`** - Backend-specific changes
+  - Use when: Changes only affect `backend/` directory
+  - Examples: API endpoints, database models, Python utilities
+
+- **`docs/worklog/frontend.md`** - Frontend-specific changes
+  - Use when: Changes only affect `frontend/` directory
+  - Examples: React components, UI styling, frontend routing
+
+- **`docs/worklog/project.md`** - Cross-cutting and infrastructure changes
+  - Use when: Changes affect both services or project infrastructure
+  - Examples: Documentation, CI/CD, build system, root config files, setup scripts
+
+**Worklog entry format:**
+```markdown
+## YYYY-MM-DD HH:MM - commit message
+
+**Commit:** abc1234
+**ADR:** ADR-NNNN-title (or N/A if no related ADR)
+
+**Files changed:**
+- path/to/file1
+- path/to/file2
+
+**Summary:**
+Brief description of what changed and why.
+
+**Notes:**
+Additional context, learnings, or future work (optional).
+
+---
+```
+
 ### Automated Checkpoints
 Use `/checkpoint [message]` to automate:
 1. Run tests (if applicable)
 2. Stage and commit changes
-3. Append entry to worklog with timestamp and file list
+3. Append entry to appropriate worklog(s) with timestamp, commit hash, and ADR reference
 
 ## 🚫 Hard Rules (Non-Negotiable)
 

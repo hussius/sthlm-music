@@ -5,6 +5,10 @@
 help:
 	@echo "Agents Hackathon - Monorepo Commands"
 	@echo ""
+	@echo "🚀 Quick Start:"
+	@echo "  make install           - Complete setup (checks prereqs, installs deps, sets up env)"
+	@echo "  make check-prereqs     - Check system prerequisites"
+	@echo ""
 	@echo "🛡️  Safety Setup:"
 	@echo "  make workshop-setup    - Complete safety setup (DCG + sandboxing + hooks)"
 	@echo "  make setup-dcg         - Install Destructive Command Guard"
@@ -22,6 +26,128 @@ help:
 	@echo "📦 Per-Directory:"
 	@echo "  cd backend && make help"
 	@echo "  cd frontend && make help"
+	@echo ""
+
+# ============================================================================
+# Complete Setup (one command to rule them all)
+# ============================================================================
+
+.PHONY: install
+install: check-prereqs setup-env install-deps setup-pre-commit
+	@echo ""
+	@echo "✅ Complete setup finished!"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Review .env files and add any API keys you need:"
+	@echo "     - backend/.env"
+	@echo "     - frontend/.env"
+	@echo "  2. Start backend: make dev-backend (in new terminal)"
+	@echo "  3. Start frontend: make dev-frontend (in new terminal)"
+	@echo "  4. Visit http://localhost:3000 in your browser"
+	@echo ""
+	@echo "Optional: Run 'make workshop-setup' for additional safety features"
+	@echo ""
+
+.PHONY: check-prereqs
+check-prereqs:
+	@echo "🔍 Checking system prerequisites..."
+	@echo ""
+	@MISSING=""; \
+	if ! command -v uv >/dev/null 2>&1; then \
+		echo "✗ uv not found"; \
+		echo "  Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+		MISSING="$$MISSING uv"; \
+	else \
+		echo "✓ uv installed: $$(uv --version)"; \
+	fi; \
+	if ! command -v node >/dev/null 2>&1; then \
+		echo "✗ Node.js not found"; \
+		echo "  Install: https://nodejs.org/ or use nvm/fnm"; \
+		MISSING="$$MISSING node"; \
+	else \
+		NODE_VERSION=$$(node --version | sed 's/v//'); \
+		echo "✓ Node.js installed: v$$NODE_VERSION"; \
+		MAJOR=$$(echo $$NODE_VERSION | cut -d. -f1); \
+		if [ "$$MAJOR" -lt 18 ]; then \
+			echo "  ⚠️  Node.js 18+ recommended (you have $$MAJOR)"; \
+		fi; \
+	fi; \
+	if ! command -v npm >/dev/null 2>&1; then \
+		echo "✗ npm not found"; \
+		MISSING="$$MISSING npm"; \
+	else \
+		echo "✓ npm installed: $$(npm --version)"; \
+	fi; \
+	PYTHON_VERSION=$$(uv run python --version 2>/dev/null | sed 's/Python //'); \
+	if [ -z "$$PYTHON_VERSION" ]; then \
+		if ! command -v python3 >/dev/null 2>&1; then \
+			echo "✗ Python 3 not found"; \
+			MISSING="$$MISSING python3"; \
+		else \
+			echo "✓ Python installed: $$(python3 --version | sed 's/Python //')"; \
+		fi; \
+	else \
+		echo "✓ Python (via uv): $$PYTHON_VERSION"; \
+		MAJOR=$$(echo $$PYTHON_VERSION | cut -d. -f1); \
+		MINOR=$$(echo $$PYTHON_VERSION | cut -d. -f2); \
+		if [ "$$MAJOR" -lt 3 ] || [ "$$MAJOR" -eq 3 -a "$$MINOR" -lt 12 ]; then \
+			echo "  ⚠️  Python 3.12+ required (you have $$PYTHON_VERSION)"; \
+			MISSING="$$MISSING python3.12"; \
+		fi; \
+	fi; \
+	echo ""; \
+	if [ -n "$$MISSING" ]; then \
+		echo "❌ Missing prerequisites:$$MISSING"; \
+		echo ""; \
+		echo "Install missing tools and run 'make check-prereqs' again"; \
+		exit 1; \
+	else \
+		echo "✅ All prerequisites satisfied!"; \
+		echo ""; \
+	fi
+
+.PHONY: setup-env
+setup-env:
+	@echo "📝 Setting up environment files..."
+	@echo ""
+	@if [ ! -f backend/.env ]; then \
+		cp backend/.env.example backend/.env; \
+		echo "✓ Created backend/.env from backend/.env.example"; \
+	else \
+		echo "✓ backend/.env already exists"; \
+	fi
+	@if [ ! -f frontend/.env ]; then \
+		cp frontend/.env.example frontend/.env; \
+		echo "✓ Created frontend/.env from frontend/.env.example"; \
+	else \
+		echo "✓ frontend/.env already exists"; \
+	fi
+	@echo ""
+
+.PHONY: install-deps
+install-deps:
+	@echo "📦 Installing dependencies..."
+	@echo ""
+	@echo "→ Backend (Python via uv)..."
+	@cd backend && uv sync
+	@echo ""
+	@echo "→ Frontend (Node.js via npm)..."
+	@cd frontend && npm install
+	@echo ""
+	@echo "✓ All dependencies installed"
+	@echo ""
+
+.PHONY: setup-pre-commit
+setup-pre-commit:
+	@echo "🪝 Setting up pre-commit hooks..."
+	@echo ""
+	@echo "→ Backend pre-commit hooks..."
+	@cd backend && uv run pre-commit install
+	@echo ""
+	@echo "→ Frontend Husky hooks (via npm prepare)..."
+	@cd frontend && npm run prepare 2>/dev/null || echo "  (Husky already initialized)"
+	@echo ""
+	@echo "✓ Pre-commit hooks installed"
 	@echo ""
 
 # ============================================================================

@@ -4,47 +4,51 @@ A forkable repo for the Codon agents internal hackathon. Build with Claude Code 
 
 ## 🚀 Quick Start
 
-### 1. Safety Setup (Required - Do This First!)
+**New here?** Complete setup guide: **[SETUP.md](SETUP.md)**
 
-Protect yourself from accidental disasters while working with Claude Code:
-
-```bash
-make workshop-setup
-```
-
-This installs three layers of protection:
-- **DCG (Destructive Command Guard)** - Blocks dangerous git/filesystem commands before they execute
-- **Filesystem Sandboxing** - Restricts Claude Code to this project directory only
-- **Auto-format Hook** - Automatically formats code after Claude edits (keeps code style consistent)
-
-**Takes ~2 minutes. Seriously, do this first!**
-
-### 2. Verify Protection
+### One-Command Setup
 
 ```bash
-make verify-safety
+make install
 ```
 
-You should see:
-- ✓ DCG installed
-- ✓ Sandboxing is enabled
-- ✓ Scratch directory exists
-- ✓ Auto-format hook installed
+This will:
+- ✅ Check prerequisites (uv, Node.js, Python 3.12+)
+- ✅ Set up environment files (.env)
+- ✅ Install backend dependencies (Python via uv)
+- ✅ Install frontend dependencies (Node.js via npm)
+- ✅ Configure pre-commit hooks
 
-### 3. Setup Backend & Frontend
+### Start Development
 
-#### Backend Setup (Python FastAPI)
+```bash
+# Terminal 1: Start backend
+make dev-backend
+
+# Terminal 2: Start frontend
+make dev-frontend
+
+# Visit http://localhost:3000
+```
+
+### Manual Setup
+
+If you prefer step-by-step or need to troubleshoot:
+
+#### 1. Check Prerequisites
+
+```bash
+make check-prereqs
+```
+
+Required: Python 3.12+, uv, Node.js 18+, npm
+
+#### 2. Backend Setup (Python FastAPI)
 
 ```bash
 cd backend
-
-# Create your environment file
 cp .env.example .env
-
-# Install dependencies (uses uv)
 make install
-
-# Run the development server
 make dev
 ```
 
