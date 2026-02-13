@@ -1,4 +1,5 @@
 # Agents Hackathon
+<!-- Test commit for autonomous push verification -->
 
 A forkable repo for the Codon agents internal hackathon. Build with Claude Code in a safe, sandboxed environment!
 
