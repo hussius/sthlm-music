@@ -1,19 +1,49 @@
 {
   "sandboxing": {
     "enabled": true,
-    "allowedPaths": [
-      "${PROJECT_DIR}"
-    ],
-    "allowedNetworkHosts": [
-      "api.anthropic.com",
-      "*.anthropic.com"
-    ],
-    "blockMessage": "🚫 Blocked: This operation would access files outside the project directory.\n\nFor workshop safety, Claude Code is restricted to:\n  ${PROJECT_DIR}\n\nIf you need to access other files, please:\n  1. Copy them into your project directory, or\n  2. Disable sandboxing in ~/.claude/settings.json (not recommended during workshop)\n\nThis protection helps prevent accidental changes to your system files."
+    "allowedPaths": ["${PROJECT_DIR}"],
+    "allowedNetworkHosts": ["api.anthropic.com", "*.anthropic.com"],
+    "blockMessage": "🚫 Blocked: This operation would access files outside the project directory.\n\nFor workshop safety, Claude Code is restricted to:\n
+${PROJECT_DIR}\n\nIf you need to access other files, please:\n  1. Copy them into your project directory, or\n  2. Disable sandboxing in ~/.claude/settings.json
+ (not recommended during workshop)\n\nThis protection helps prevent accidental changes to your system files."
   },
   "permissions": {
     "bash": "allowed",
     "edit": "allowed",
     "write": "allowed",
     "read": "allowed"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-tool-use.sh"
+          }
+        ]
+      }
+    ]
   }
 }
