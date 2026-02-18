@@ -38,9 +38,11 @@ DCG is pre-configured as a Claude Code `PreToolUse` hook. After `make install`, 
 
 ### Sandboxing
 
-Claude Code has native sandboxing that restricts filesystem writes and outbound network access at the OS level. Enable it by running `/sandbox` inside Claude Code.
+Claude Code has native OS-level sandboxing that restricts filesystem writes and outbound network access. **You need to enable this yourself** by running `/sandbox` inside Claude Code at the start of your session.
 
-**macOS:** Works out of the box — no setup needed.
+We don't enable it by default in this repo because it conflicts with standard dev tooling caches (`uv`, `npm`, `pre-commit`) that write outside the project directory. Configuring those exceptions adds meaningful complexity. For a hackathon, DCG covers the most dangerous cases and sandbox is a valuable extra layer if you want it — just be prepared for some tool friction.
+
+**macOS:** Works out of the box — no setup needed beyond the `/sandbox` command.
 
 **Linux / WSL2:** Requires two packages first:
 

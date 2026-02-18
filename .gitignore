@@ -25,3 +25,4 @@ wheels/
 .claude/bin/dcg
 .claude/node_modules/
 .claude/package-lock.json
+.pre-commit-cache/
