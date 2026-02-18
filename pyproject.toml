@@ -1,7 +1,7 @@
 [project]
 name = "agents_hackathon"
 version = "0.1.0"
-description = "A forkable repo for the Codon codon agents internal hackathon"
+description = "Template Repo for Codon's agentic coding hackathon"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -16,6 +16,7 @@ dev = [
     "ruff>=0.3.0",
     "pytest>=8.0.0",
     "ty>=0.0.15",
+    "pre-commit>=4.5.1",
 ]
 
 [tool.setuptools]

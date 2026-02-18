@@ -3,6 +3,7 @@
 
 install:
 	uv sync
+	uv run pre-commit install
 	$(MAKE) install-dcg
 	$(MAKE) install-playwright-mcp
 
