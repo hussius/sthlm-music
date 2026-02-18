@@ -16,5 +16,8 @@
     "playwright": {
       "command": ".claude/node_modules/.bin/playwright-mcp"
     }
+  },
+  "sandbox": {
+    "allowUnsandboxedCommands": false
   }
 }

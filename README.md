@@ -36,6 +36,24 @@ Nothing is written to your machine outside the project directory.
 
 DCG is pre-configured as a Claude Code `PreToolUse` hook. After `make install`, Claude Code automatically intercepts potentially destructive shell commands before they run. The binary lives at `.claude/bin/dcg` and is gitignored — each developer installs it locally.
 
+### Sandboxing
+
+Claude Code has native sandboxing that restricts filesystem writes and outbound network access at the OS level. Enable it by running `/sandbox` inside Claude Code.
+
+**macOS:** Works out of the box — no setup needed.
+
+**Linux / WSL2:** Requires two packages first:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install bubblewrap socat
+
+# Fedora
+sudo dnf install bubblewrap socat
+```
+
+> WSL1 is not supported. WSL2 only.
+
 ## A note on tooling philosophy
 
 DCG and Playwright MCP are scoped to this repo intentionally. In normal practice you'd install these once on your machine — DCG globally via its install script, and Playwright MCP as a global Claude Code MCP server — and they'd be available across all your projects.
