@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/bin/dcg"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": ".claude/node_modules/.bin/playwright-mcp"
+    }
+  }
+}
