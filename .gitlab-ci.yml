@@ -19,6 +19,6 @@ lint:
   script:
     - uv run --frozen ruff format --check .
     - uv run --frozen ruff check --select I --fix --diff .
-    - uv run --frozen pyright .
+    - uv run --frozen ty check .
     - uv run --frozen ruff check 
 

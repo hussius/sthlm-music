@@ -27,4 +27,9 @@ wheels/
 .claude/package-lock.json
 .claude/gsd/
 .claude/commands/gsd
+.claude/agents/
+.claude/get-shit-done/
+.claude/hooks/
+.claude/gsd-file-manifest.json
+.claude/gsd-local-patches/
 .pre-commit-cache/
