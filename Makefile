@@ -14,37 +14,14 @@ format:
 	uv run ruff check --fix .
 	uv run ruff check --select I --fix . 
 
-.PHONY: help
-help:
-	@echo "Agents Hackathon - Monorepo Commands"
-	@echo ""
-	@echo "🚀 Quick Start:"
-	@echo "  make install              - Complete setup (checks prereqs, installs deps, sets up env)"
-	@echo "  make check-prereqs        - Check system prerequisites"
-	@echo "  make setup-git-automation - Configure Claude Code git automation (commit/push)"
-	@echo ""
-	@echo "🛡️  Safety Setup:"
-	@echo "  make workshop-setup    - Complete safety setup (DCG + sandboxing + hooks)"
-	@echo "  make setup-dcg         - Install Destructive Command Guard"
-	@echo "  make setup-sandbox     - Configure Claude Code sandboxing"
-	@echo "  make setup-hooks       - Install auto-format hook"
-	@echo "  make verify-safety     - Verify all safety measures are active"
-	@echo ""
-	@echo "🚀 Development:"
-	@echo "  make dev-backend       - Run backend server"
-	@echo "  make dev-frontend      - Run frontend dev server"
-	@echo "  make test-all          - Run tests (backend + frontend)"
-	@echo "  make format-all        - Format all code"
-	@echo "  make check-all         - Run all checks"
-	@echo ""
-	@echo "📦 Per-Directory:"
-	@echo "  cd backend && make help"
-	@echo "  cd frontend && make help"
-	@echo ""
+check: 
+	uv run ruff format --check .
+	uv run ruff check --select I --fix --diff .
+	uv run ty check .
+	uv run ruff check
 
-# ============================================================================
-# Complete Setup (one command to rule them all)
-# ============================================================================
+test:
+	uv run pytest
 
 run:
 	uv run src/main.py
