@@ -21,6 +21,10 @@ wheels/
 #custom macOs hidden files
 .DS_Store
 
-# Workshop scratch directory
-tmp/
-!tmp/.gitkeep
+# Local tools (installed per-project, not committed)
+.claude/bin/dcg
+.claude/node_modules/
+.claude/package-lock.json
+.claude/gsd/
+.claude/commands/gsd
+.pre-commit-cache/

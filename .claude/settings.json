@@ -1,35 +1,34 @@
 {
-  "sandboxing": {
-    "enabled": true,
-    "allowedPaths": [
-      "${PROJECT_DIR}"
-    ],
-    "allowedNetworkHosts": [
-      "api.anthropic.com",
-      "*.anthropic.com"
-    ],
-    "blockMessage": "\ud83d\udeab Blocked: This operation would access files outside the project directory. For workshop safety, Claude Code is restricted to: ${PROJECT_DIR}\nIf you need to access other files, please:\n  1. Copy them into your project directory, or\n  2. Disable sandboxing in ~/.claude/settings.json (not recommended during workshop)\nThis protection helps prevent accidental changes to your system files."
-  },
-  "permissions": {
-    "defaultMode": "bypassPermissions"
-  },
   "hooks": {
     "SessionStart": [
       {
+        "matcher": "startup|clear|compact",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh"
+            "command": "node \".claude/mem-lite/hook.mjs\" session-start",
+            "timeout": 10
           }
         ]
       }
     ],
-    "SessionEnd": [
+    "PreToolUse": [
       {
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.sh"
+            "command": ".claude/bin/dcg"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \".claude/mem-lite/hook.mjs\" pre-tool-use",
+            "timeout": 2
           }
         ]
       }
@@ -40,10 +39,66 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-tool-use.sh"
+            "command": "cd backend && uv run ruff check --fix $CLAUDE_FILE_PATHS 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "cd backend && uv run ty check $CLAUDE_FILE_PATHS 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \".claude/mem-lite/scripts/post-tool-use.sh\"",
+            "timeout": 5
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \".claude/mem-lite/hook.mjs\" stop",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \".claude/mem-lite/hook.mjs\" user-prompt",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": ".claude/node_modules/.bin/playwright-mcp"
+    },
+    "mem": {
+      "command": "node",
+      "args": [".claude/mem-lite/server.mjs"]
+    }
+  },
+  "sandbox": {
+    "allowUnsandboxedCommands": false
+  },
+  "permissions": {
+      "deny": [
+        "Read(.env)",
+        "Write(.env)"
     ]
   }
 }
