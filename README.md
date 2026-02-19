@@ -66,13 +66,6 @@ For a full command reference: `/gsd:help`
 
 ---
 
-| Command | Description |
-|---|---|
-| `make run` | Start the server |
-| `make test` | Run tests |
-| `make format` | Format code |
-| `make check` | Lint and type check |
-
 ## Workflow tooling
 
 This repo bundles two tools for managing AI context across sessions:
