@@ -5,9 +5,9 @@ install:
 	uv sync
 	uv run pre-commit install
 	$(MAKE) install-dcg
+	$(MAKE) install-gsd
 	$(MAKE) install-playwright-mcp
 	$(MAKE) install-mem-lite
-	$(MAKE) install-gsd
 
 format:
 	uv run ruff format .
@@ -52,8 +52,11 @@ install-gsd:
 	else \
 		git clone https://github.com/gsd-build/get-shit-done.git .claude/gsd; \
 	fi
-	@mkdir -p .claude/commands
-	@if [ ! -e ".claude/commands/gsd" ]; then \
-		ln -s ../gsd/commands/gsd .claude/commands/gsd; \
-	fi
-	@echo "GSD installed at .claude/gsd, commands linked at .claude/commands/gsd (project-local, gitignored)"
+	@# Remove old symlink if present — installer creates a real directory
+	@if [ -L ".claude/commands/gsd" ]; then rm ".claude/commands/gsd"; fi
+	@# Copy hooks from git clone into .claude/hooks/ (installer expects hooks/dist/ which only exists in the npm package)
+	@mkdir -p .claude/hooks
+	@cp .claude/gsd/hooks/*.js .claude/hooks/
+	@# Run the GSD installer: processes path refs, copies agents, commands, get-shit-done dir, configures settings.json
+	node .claude/gsd/bin/install.js --local --claude
+	@echo "GSD installed with full functionality (agents, commands, hooks, statusline)"
