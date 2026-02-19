@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \".claude/mem-lite/hook.mjs\" session-start",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -7,6 +19,16 @@
           {
             "type": "command",
             "command": ".claude/bin/dcg"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \".claude/mem-lite/hook.mjs\" pre-tool-use",
+            "timeout": 2
           }
         ]
       }
@@ -24,21 +46,59 @@
             "command": "cd backend && uv run ty check $CLAUDE_FILE_PATHS 2>/dev/null || true"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \".claude/mem-lite/scripts/post-tool-use.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \".claude/mem-lite/hook.mjs\" stop",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \".claude/mem-lite/hook.mjs\" user-prompt",
+            "timeout": 5
+          }
+        ]
       }
     ]
   },
   "mcpServers": {
     "playwright": {
       "command": ".claude/node_modules/.bin/playwright-mcp"
+    },
+    "mem": {
+      "command": "node",
+      "args": [".claude/mem-lite/server.mjs"]
     }
   },
   "sandbox": {
     "allowUnsandboxedCommands": false
   },
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
-  "preferences": {
-    "tmuxSplitPanes": true
+  "permissions": {
+      "deny": [
+        "Read(.env)",
+        "Write(.env)"
+    ]
   }
 }
