@@ -10,6 +10,21 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd backend && uv run ruff check --fix $CLAUDE_FILE_PATHS 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "cd backend && uv run ty check $CLAUDE_FILE_PATHS 2>/dev/null || true"
+          }
+        ]
+      }
     ]
   },
   "mcpServers": {
@@ -19,5 +34,11 @@
   },
   "sandbox": {
     "allowUnsandboxedCommands": false
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "preferences": {
+    "tmuxSplitPanes": true
   }
 }
