@@ -15,7 +15,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div>
+        <div className="text-blue-500">
           <header
             style={{
               backgroundColor: '#fff',
