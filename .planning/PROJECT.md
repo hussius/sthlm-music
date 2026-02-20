@@ -54,6 +54,12 @@ Comprehensive event coverage - capture all Stockholm music events in one place s
 - Nalen
 - Fylkingen
 - Slakthuset
+- Fållan
+- Landet
+- Mosebacke
+- Kägelbanan (if still exists)
+- Pet Sounds
+- Debaser
 
 ## Constraints
 
