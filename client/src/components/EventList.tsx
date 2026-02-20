@@ -12,12 +12,14 @@
 import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useEvents } from '../hooks/useEvents';
+import { useFilterState } from '../hooks/useFilterState';
 import { formatEventDate } from '../lib/date';
 import { SkeletonCard } from './SkeletonCard';
 import type { EventResponse } from '../types/events';
 
 export function EventList() {
   const { ref, inView } = useInView();
+  const { filters } = useFilterState();
   const {
     data,
     isLoading,
@@ -26,7 +28,7 @@ export function EventList() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useEvents({});
+  } = useEvents(filters);
 
   // Trigger next page load when scroll trigger is in view
   useEffect(() => {
@@ -87,6 +89,7 @@ export function EventList() {
         }}
       >
         <p style={{ color: '#666', fontSize: '18px' }}>No events found</p>
+        <p style={{ color: '#999', fontSize: '14px' }}>Try adjusting your filters or date range</p>
       </div>
     );
   }
