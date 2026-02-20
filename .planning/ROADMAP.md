@@ -28,10 +28,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Duplicate events across platforms are merged into single entries with multiple ticket links
   4. Database contains only events within 12-month rolling window (older events automatically removed)
   5. Scraper failures trigger alerts within 5 minutes of detection
-**Plans**: TBD
+**Plans**: 8 plans across 4 waves
 
 Plans:
-- [ ] TBD after phase planning
+- [ ] 01-01-PLAN.md — Database & crawler infrastructure (Node.js, PostgreSQL, Drizzle)
+- [ ] 01-02-PLAN.md — Data normalization layer (Zod schemas, venue/genre mappings)
+- [ ] 01-03-PLAN.md — Ticketmaster Discovery API crawler
+- [ ] 01-04-PLAN.md — AXS/Live Nation Playwright crawler
+- [ ] 01-05-PLAN.md — DICE Playwright crawler
+- [ ] 01-06-PLAN.md — Priority venue website crawlers (13 venues)
+- [ ] 01-07-PLAN.md — Multi-stage deduplication engine (exact + fuzzy matching)
+- [ ] 01-08-PLAN.md — Job scheduling with BullMQ (daily crawls, cleanup, monitoring)
 
 ### Phase 2: API Layer & Performance
 **Goal**: API serves filtered event data with sub-200ms response times for any query
@@ -70,6 +77,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation & Multi-Platform Aggregation | 0/TBD | Not started | - |
+| 1. Data Foundation & Multi-Platform Aggregation | 0/8 | Ready to execute | - |
 | 2. API Layer & Performance | 0/TBD | Not started | - |
 | 3. Calendar UI & Public Launch | 0/TBD | Not started | - |
