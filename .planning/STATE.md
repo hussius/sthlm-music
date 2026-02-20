@@ -10,24 +10,24 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 1 of 3 (Data Foundation & Multi-Platform Aggregation)
-Plan: 6 of 8 in current phase
+Plan: 7 of 8 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Completed 01-06-PLAN.md (Venue direct crawlers)
+Last activity: 2026-02-20 — Completed 01-07-PLAN.md (Multi-stage deduplication engine)
 
-Progress: [███████░░░] 75%
+Progress: [████████░░] 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 4.7 minutes
-- Total execution time: 0.47 hours
+- Total plans completed: 7
+- Average duration: 4.6 minutes
+- Total execution time: 0.53 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| Phase 01 | 6 | 28 min | 4.7 min |
+| Phase 01 | 7 | 32 min | 4.6 min |
 
 **Recent Plans:**
 | Plan | Duration | Tasks | Files |
@@ -38,6 +38,7 @@ Progress: [███████░░░] 75%
 | Phase 01 P04 | 3 min | 2 | 2 |
 | Phase 01 P05 | 5 min | 2 | 2 |
 | Phase 01 P06 | 4 | 3 tasks | 17 files |
+| Phase 01 P07 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,11 @@ Recent decisions affecting current work:
 - [Phase 01]: Health checks based on event count in last 30 days assuming weekly crawls
 - [Phase 01]: Sequential venue crawling to avoid overwhelming small venue websites
 - [Phase 01]: VenueConfig pattern enables easy selector updates when venue sites change
+- Use token_set_ratio over simple Levenshtein for word order insensitivity (01-07)
+- Weighted similarity: 60% artist, 40% event name for fuzzy matching (01-07)
+- Deduplication thresholds: >90/85 = duplicate, >75/70 = manual review (01-07)
+- 24-hour window for fuzzy matching handles timezone differences (01-07)
+- Save events immediately even if queued for manual review (01-07)
 
 ### Pending Todos
 
@@ -82,5 +88,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 01-06-PLAN.md (Venue direct crawlers)
+Stopped at: Completed 01-07-PLAN.md (Multi-stage deduplication engine)
 Resume file: None

@@ -13,7 +13,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DATA-02**: System crawls AXS/Live Nation daily for Stockholm music events
 - [x] **DATA-03**: System crawls DICE daily for Stockholm music events
 - [x] **DATA-04**: System crawls priority venue websites directly (Kollektivet Livet, Slaktkyrkan, Hus 7, Fasching, Nalen, Fylkingen, Slakthuset, Fållan, Landet, Mosebacke, Kägelbanan, Pet Sounds, Debaser)
-- [ ] **DATA-05**: System deduplicates events across all sources (same event shown once)
+- [x] **DATA-05**: System deduplicates events across all sources (same event shown once)
 - [x] **DATA-06**: System maintains 12-month rolling window (events within next year only)
 - [x] **DATA-07**: System normalizes event data to common schema (venue, date, genre, artist)
 
@@ -42,7 +42,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **PERF-01**: Search results return in under 200ms
 - [ ] **PERF-02**: Page loads work smoothly with 10,000+ events in database
-- [ ] **QUAL-01**: Events are deduplicated with >95% accuracy (minimal false positives/negatives)
+- [x] **QUAL-01**: Events are deduplicated with >95% accuracy (minimal false positives/negatives)
 
 ## v2 Requirements
 
@@ -101,10 +101,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Complete |
 | DATA-04 | Phase 1 | Complete |
-| DATA-05 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Complete |
 | DATA-06 | Phase 1 | Complete |
 | DATA-07 | Phase 1 | Complete |
-| QUAL-01 | Phase 1 | Pending |
+| QUAL-01 | Phase 1 | Complete |
 | FILT-01 | Phase 2 | Pending |
 | FILT-02 | Phase 2 | Pending |
 | FILT-03 | Phase 2 | Pending |
