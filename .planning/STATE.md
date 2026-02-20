@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 3 of 3 (Calendar UI & Public Launch)
-Plan: 2 of 3 in current phase
-Status: Active
-Last activity: 2026-02-20 — Completed 03-01-PLAN.md (React Foundation with Infinite Scroll)
+Plan: 3 of 3 in current phase
+Status: Complete
+Last activity: 2026-02-20 — Completed 03-03-PLAN.md (Comprehensive Filtering UI with URL State Management)
 
-Progress: [██████████] 33% (Phase 3: 1 of 3 complete)
+Progress: [██████████] 100% (Phase 3: 3 of 3 complete)
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Progress: [██████████] 33% (Phase 3: 1 of 3 complete)
 | Phase 02 P03 | 2 min | 3 | 5 |
 | Phase 02 P04 | 4 min | 3 | 4 |
 | Phase 03 P01 | 3 | 3 tasks | 21 files |
+| Phase 03 P03 | 3 | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,10 @@ Recent decisions affecting current work:
 - [Phase 03]: TanStack Query with 60s staleTime for efficient data caching (03-01)
 - [Phase 03]: Proxy /api requests through Vite dev server to avoid CORS in development (03-01)
 - [Phase 03]: Stockholm timezone (Europe/Stockholm) for all date displays using date-fns-tz (03-01)
+- [Phase 03]: URL search params as single source of truth for filter state - enables shareable and bookmark-able filtered views (03-03)
+- [Phase 03]: 300ms debounce delay for search inputs - balance between responsiveness and API load (03-03)
+- [Phase 03]: Separate immediate input state from debounced state - input feels instant while API calls are throttled (03-03)
+- [Phase 03]: Genre and venue filters update immediately without debouncing - dropdowns don't need throttling (03-03)
 
 ### Pending Todos
 
@@ -122,5 +127,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 02-04-PLAN.md (Load Testing & Performance Validation) - Phase 2 complete
+Stopped at: Completed 03-03-PLAN.md (Comprehensive Filtering UI with URL State Management) - Phase 3 complete
 Resume file: None

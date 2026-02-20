@@ -7,67 +7,11 @@
 
 export function SkeletonCard() {
   return (
-    <div
-      style={{
-        border: '1px solid #e0e0e0',
-        borderRadius: '8px',
-        padding: '16px',
-        marginBottom: '12px',
-        backgroundColor: '#fff',
-        height: '200px',
-      }}
-    >
-      <div
-        style={{
-          width: '70%',
-          height: '24px',
-          backgroundColor: '#e0e0e0',
-          borderRadius: '4px',
-          marginBottom: '12px',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          width: '50%',
-          height: '18px',
-          backgroundColor: '#e0e0e0',
-          borderRadius: '4px',
-          marginBottom: '12px',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          width: '40%',
-          height: '18px',
-          backgroundColor: '#e0e0e0',
-          borderRadius: '4px',
-          marginBottom: '12px',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          width: '60%',
-          height: '18px',
-          backgroundColor: '#e0e0e0',
-          borderRadius: '4px',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
-      <style>
-        {`
-          @keyframes pulse {
-            0%, 100% {
-              opacity: 1;
-            }
-            50% {
-              opacity: 0.5;
-            }
-          }
-        `}
-      </style>
+    <div className="border border-gray-200 rounded-lg p-4 bg-white h-[200px]">
+      <div className="w-[70%] h-6 bg-gray-200 rounded animate-pulse mb-3" />
+      <div className="w-[50%] h-4 bg-gray-200 rounded animate-pulse mb-3" />
+      <div className="w-[40%] h-4 bg-gray-200 rounded animate-pulse mb-3" />
+      <div className="w-[60%] h-4 bg-gray-200 rounded animate-pulse" />
     </div>
   );
 }

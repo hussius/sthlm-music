@@ -28,15 +28,15 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Display & UI
 
 - [x] **DISP-01**: User can view events in chronological list view
-- [ ] **DISP-02**: User sees event details: name, date, time, venue, genre, artist(s)
-- [ ] **DISP-03**: User sees ticket availability status for each event
-- [ ] **DISP-04**: Calendar is mobile-responsive (works on phones and tablets)
+- [x] **DISP-02**: User sees event details: name, date, time, venue, genre, artist(s)
+- [x] **DISP-03**: User sees ticket availability status for each event
+- [x] **DISP-04**: Calendar is mobile-responsive (works on phones and tablets)
 - [x] **DISP-05**: Calendar displays in Stockholm local time (Europe/Stockholm timezone)
 
 ### Integration
 
-- [ ] **INTG-01**: User can click through to original ticket platform (Ticketmaster SE, AXS, DICE, or venue website) to purchase tickets
-- [ ] **INTG-02**: Ticket links are deep links (direct to event page, not homepage)
+- [x] **INTG-01**: User can click through to original ticket platform (Ticketmaster SE, AXS, DICE, or venue website) to purchase tickets
+- [x] **INTG-02**: Ticket links are deep links (direct to event page, not homepage)
 
 ### Performance & Quality
 
@@ -113,12 +113,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-01 | Phase 2 | Complete |
 | PERF-02 | Phase 2 | Complete |
 | DISP-01 | Phase 3 | Complete |
-| DISP-02 | Phase 3 | Pending |
-| DISP-03 | Phase 3 | Pending |
-| DISP-04 | Phase 3 | Pending |
+| DISP-02 | Phase 3 | Complete |
+| DISP-03 | Phase 3 | Complete |
+| DISP-04 | Phase 3 | Complete |
 | DISP-05 | Phase 3 | Complete |
-| INTG-01 | Phase 3 | Pending |
-| INTG-02 | Phase 3 | Pending |
+| INTG-01 | Phase 3 | Complete |
+| INTG-02 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 22 total
