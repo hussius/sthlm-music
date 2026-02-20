@@ -10,24 +10,24 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 1 of 3 (Data Foundation & Multi-Platform Aggregation)
-Plan: 5 of 8 in current phase
+Plan: 6 of 8 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Completed 01-05-PLAN.md (DICE crawler with infinite scroll)
+Last activity: 2026-02-20 — Completed 01-06-PLAN.md (Venue direct crawlers)
 
-Progress: [██████░░░░] 62%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 4.8 minutes
-- Total execution time: 0.40 hours
+- Total plans completed: 6
+- Average duration: 4.7 minutes
+- Total execution time: 0.47 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| Phase 01 | 5 | 24 min | 4.8 min |
+| Phase 01 | 6 | 28 min | 4.7 min |
 
 **Recent Plans:**
 | Plan | Duration | Tasks | Files |
@@ -37,6 +37,7 @@ Progress: [██████░░░░] 62%
 | Phase 01 P03 | 5 min | 2 | 3 |
 | Phase 01 P04 | 3 min | 2 | 2 |
 | Phase 01 P05 | 5 min | 2 | 2 |
+| Phase 01 P06 | 4 | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,10 @@ Recent decisions affecting current work:
 - Network-idle with 2s fallback — faster than fixed timeouts while ensuring progress (01-05)
 - DEBUG mode via environment variable — troubleshooting without code changes (01-05)
 - Enhanced date parsing for club events — handles ISO, relative, and 'FRI 15 JUN' formats (01-05)
+- [Phase 01]: Placeholder selectors require manual refinement - each venue has unique HTML structure
+- [Phase 01]: Health checks based on event count in last 30 days assuming weekly crawls
+- [Phase 01]: Sequential venue crawling to avoid overwhelming small venue websites
+- [Phase 01]: VenueConfig pattern enables easy selector updates when venue sites change
 
 ### Pending Todos
 
@@ -77,5 +82,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 01-05-PLAN.md (DICE Crawler with Infinite Scroll)
+Stopped at: Completed 01-06-PLAN.md (Venue direct crawlers)
 Resume file: None
