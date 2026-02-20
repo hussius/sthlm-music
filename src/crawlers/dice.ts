@@ -4,12 +4,13 @@ import { upsertEvent } from '../repositories/event-repository.js';
 import { config } from '../config/env.js';
 
 const DICE_STOCKHOLM_URL = 'https://dice.fm/city/stockholm/events';
+const DEBUG = process.env.DEBUG === 'true';
 
 /**
- * Helper function to parse DICE date formats
+ * Helper function to parse DICE date formats with time
  */
-function parseDICEDate(dateStr: string): Date | null {
-  // ISO 8601
+function parseDICEDateTime(dateStr: string, timeStr?: string): Date {
+  // Already ISO format
   if (dateStr.includes('T')) {
     return new Date(dateStr);
   }
@@ -28,12 +29,34 @@ function parseDICEDate(dateStr: string): Date | null {
     return tomorrow;
   }
 
-  // Standard date parsing
-  try {
-    return new Date(dateStr);
-  } catch {
-    return null;
+  // Parse "FRI 15 JUN" format with optional time
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const parts = dateStr.toLowerCase().match(/(\d+)\s+(\w+)/);
+
+  if (parts) {
+    const day = parseInt(parts[1]);
+    const monthIndex = months.findIndex(m => parts[2].startsWith(m));
+    const year = new Date().getFullYear();
+
+    if (monthIndex !== -1) {
+      const date = new Date(year, monthIndex, day);
+
+      // Add time if provided
+      if (timeStr) {
+        const timeMatch = timeStr.match(/(\d+):(\d+)/);
+        if (timeMatch) {
+          const hours = parseInt(timeMatch[1]);
+          const minutes = parseInt(timeMatch[2]);
+          date.setHours(hours, minutes);
+        }
+      }
+
+      return date;
+    }
   }
+
+  // Standard date parsing
+  return new Date(dateStr);
 }
 
 /**
@@ -82,8 +105,11 @@ export async function crawlDICE(): Promise<{ success: number; failed: number }> 
         // Scroll to bottom
         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-        // Wait for new events to load
-        await page.waitForTimeout(2000);  // Give time for AJAX requests
+        // Wait for new events to load - use network idle or fallback to timeout
+        await Promise.race([
+          page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {}),
+          page.waitForTimeout(2000)  // Fallback
+        ]);
 
         // Check for "loading" indicator
         const isLoading = await page.locator('.loading, .spinner, [data-testid="loading"]').count();
@@ -96,10 +122,21 @@ export async function crawlDICE(): Promise<{ success: number; failed: number }> 
           });
         }
 
+        // Debug mode: take screenshot
+        if (DEBUG) {
+          await page.screenshot({ path: `./storage/dice-scroll-${scrollAttempts}.png` });
+        }
+
         scrollAttempts++;
       }
 
       log.info(`Finished scrolling. Total events loaded: ${currentEventCount}`);
+
+      // Debug mode: log first event HTML
+      if (DEBUG) {
+        const firstEventHTML = await page.$eval('[data-testid="event-card"], .event-card, .event-item', el => el.outerHTML).catch(() => 'No events found');
+        log.debug('First event HTML:', { html: firstEventHTML });
+      }
 
       // Extract all events
       const rawEvents = await page.$$eval(
