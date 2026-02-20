@@ -52,10 +52,13 @@ Plans:
   3. API endpoint returns events filtered by venue within 200ms
   4. API endpoint returns events matching artist/event name search within 200ms
   5. API handles database with 10,000+ events without performance degradation
-**Plans**: TBD
+**Plans**: 4 plans across 3 waves
 
 Plans:
-- [ ] TBD after phase planning
+- [ ] 02-01-PLAN.md — Fastify server foundation with response time monitoring
+- [ ] 02-02-PLAN.md — GIN trigram indexes and events repository with comprehensive filtering
+- [ ] 02-03-PLAN.md — API layer (service, controller, routes) with Zod validation
+- [ ] 02-04-PLAN.md — Load testing with autocannon and performance validation
 
 ### Phase 3: Calendar UI & Public Launch
 **Goal**: Public can browse Stockholm music events on mobile and desktop, click through to buy tickets
@@ -80,5 +83,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation & Multi-Platform Aggregation | 3/10 | In progress (gap closure pending) | - |
-| 2. API Layer & Performance | 0/TBD | Not started | - |
+| 2. API Layer & Performance | 0/4 | Not started | - |
 | 3. Calendar UI & Public Launch | 0/TBD | Not started | - |
