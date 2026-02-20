@@ -70,10 +70,12 @@ Plans:
   3. User can apply filters (date/genre/venue/artist) and see results update immediately
   4. User can click event and be taken directly to ticket purchase page on original platform
   5. Calendar displays times in Stockholm local timezone (Europe/Stockholm)
-**Plans**: TBD
+**Plans**: 3 plans across 2 waves
 
 Plans:
-- [ ] TBD after phase planning
+- [ ] 03-01-PLAN.md — React app foundation with data fetching and infinite scroll
+- [ ] 03-02-PLAN.md — Event cards with Tailwind styling and ticket integration
+- [ ] 03-03-PLAN.md — Filter UI with URL state management and debounced search
 
 ## Progress
 
@@ -84,4 +86,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Data Foundation & Multi-Platform Aggregation | 9/10 | In progress (gap closure pending) | - |
 | 2. API Layer & Performance | 3/4 | In progress | - |
-| 3. Calendar UI & Public Launch | 0/TBD | Not started | - |
+| 3. Calendar UI & Public Launch | 0/3 | Not started | - |
