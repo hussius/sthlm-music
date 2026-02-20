@@ -10,30 +10,31 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 1 of 3 (Data Foundation & Multi-Platform Aggregation)
-Plan: 2 of 8 in current phase
+Plan: 4 of 8 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Completed 01-02-PLAN.md (data normalization layer)
+Last activity: 2026-02-20 — Completed 01-04-PLAN.md (AXS crawler with Playwright)
 
-Progress: [███░░░░░░░] 25%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 5.5 minutes
-- Total execution time: 0.18 hours
+- Total plans completed: 3
+- Average duration: 4.7 minutes
+- Total execution time: 0.23 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| Phase 01 | 2 | 11 min | 5.5 min |
+| Phase 01 | 3 | 14 min | 4.7 min |
 
 **Recent Plans:**
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 5 min | 3 | 11 |
 | Phase 01 P02 | 6 min | 3 | 3 |
+| Phase 01 P04 | 3 min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -54,6 +55,10 @@ Recent decisions affecting current work:
 - Date validation requires future dates — catches parsing errors and wrong timezones early (01-02)
 - Venue normalization as Zod transform — automatic for all events, enables exact match deduplication (01-02)
 - Platform transformers delegate validation — separation of extraction logic from validation logic (01-02)
+- Multiple selector fallbacks instead of hardcoded selectors — resilience to page structure changes (01-04)
+- Default relative dates to 8 PM — sensible default when specific time unavailable (01-04)
+- Skip TBA/TBD dates rather than parsing — prevents validation errors for unparseable dates (01-04)
+- Use repositories/ directory instead of storage/ — storage/ reserved for Crawlee file storage (01-04)
 
 ### Pending Todos
 
@@ -66,5 +71,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 01-02-PLAN.md (Data Normalization Layer)
+Stopped at: Completed 01-04-PLAN.md (AXS Crawler with Playwright)
 Resume file: None

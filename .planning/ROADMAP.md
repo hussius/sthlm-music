@@ -31,10 +31,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 8 plans across 4 waves
 
 Plans:
-- [ ] 01-01-PLAN.md — Database & crawler infrastructure (Node.js, PostgreSQL, Drizzle)
-- [ ] 01-02-PLAN.md — Data normalization layer (Zod schemas, venue/genre mappings)
+- [x] 01-01-PLAN.md — Database & crawler infrastructure (Node.js, PostgreSQL, Drizzle)
+- [x] 01-02-PLAN.md — Data normalization layer (Zod schemas, venue/genre mappings)
 - [ ] 01-03-PLAN.md — Ticketmaster Discovery API crawler
-- [ ] 01-04-PLAN.md — AXS/Live Nation Playwright crawler
+- [x] 01-04-PLAN.md — AXS/Live Nation Playwright crawler
 - [ ] 01-05-PLAN.md — DICE Playwright crawler
 - [ ] 01-06-PLAN.md — Priority venue website crawlers (13 venues)
 - [ ] 01-07-PLAN.md — Multi-stage deduplication engine (exact + fuzzy matching)
@@ -77,6 +77,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation & Multi-Platform Aggregation | 0/8 | Ready to execute | - |
+| 1. Data Foundation & Multi-Platform Aggregation | 3/8 | In progress | - |
 | 2. API Layer & Performance | 0/TBD | Not started | - |
 | 3. Calendar UI & Public Launch | 0/TBD | Not started | - |

@@ -10,7 +10,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Data Collection
 
 - [ ] **DATA-01**: System crawls Ticketmaster SE daily for Stockholm music events
-- [ ] **DATA-02**: System crawls AXS/Live Nation daily for Stockholm music events
+- [x] **DATA-02**: System crawls AXS/Live Nation daily for Stockholm music events
 - [ ] **DATA-03**: System crawls DICE daily for Stockholm music events
 - [ ] **DATA-04**: System crawls priority venue websites directly (Kollektivet Livet, Slaktkyrkan, Hus 7, Fasching, Nalen, Fylkingen, Slakthuset, Fållan, Landet, Mosebacke, Kägelbanan, Pet Sounds, Debaser)
 - [ ] **DATA-05**: System deduplicates events across all sources (same event shown once)
