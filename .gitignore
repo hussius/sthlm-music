@@ -7,8 +7,14 @@ wheels/
 *.egg-info
 
 
-# Virtual environment 
+# Virtual environment
 .venv/
+
+# Node.js
+node_modules/
+dist/
+storage/
+playwright-state/
 
 # Linting, formatting, IDE
 .vscode/
