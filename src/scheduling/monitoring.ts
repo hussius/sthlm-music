@@ -76,10 +76,11 @@ export async function checkJobHealth(): Promise<JobHealthStatus[]> {
  * Start monitoring jobs for failures and completion.
  *
  * Listens to job events:
- * - 'failed': Logs failure, sends alert if all retries exhausted
+ * - 'failed': Logs failure, sends alert immediately on first failure
  * - 'completed': Logs success with result
  *
- * Alerts are sent after 3rd retry failure (all retries exhausted).
+ * Alerts are sent immediately on first failure (attempts >= 1).
+ * Retries continue in background after alert is sent.
  */
 export async function monitorJobs(): Promise<void> {
   // Listen for job failures and alert
@@ -87,17 +88,18 @@ export async function monitorJobs(): Promise<void> {
     const job = await crawlQueue.getJob(jobId);
     const attempts = job?.attemptsMade || 0;
 
-    console.error(`JOB FAILED: ${job?.name} (attempt ${attempts}/3)`);
+    console.error(`JOB FAILED: ${job?.name} (attempt ${attempts}/2)`);
     console.error(`Reason: ${failedReason}`);
 
-    // If all retries exhausted, send alert
-    if (attempts >= 3) {
+    // Send alert immediately on first failure (don't wait for retries)
+    if (attempts >= 1) {
       await sendAlert({
         type: 'job_failure',
         jobName: job?.name || 'unknown',
         jobId,
         reason: failedReason,
-        timestamp: new Date()
+        timestamp: new Date(),
+        attemptsRemaining: 2 - attempts
       });
     }
   });
@@ -120,6 +122,7 @@ interface Alert {
   jobId?: string;
   reason?: string;
   timestamp: Date;
+  attemptsRemaining?: number;
 }
 
 /**
@@ -137,7 +140,8 @@ async function sendAlert(alert: Alert): Promise<void> {
   console.error(`Job: ${alert.jobName}`);
   console.error(`Reason: ${alert.reason}`);
   console.error(`Time: ${alert.timestamp.toISOString()}`);
-  console.error('Action required: Investigate job failure');
+  console.error(`Retries remaining: ${alert.attemptsRemaining || 0}`);
+  console.error('Action: Monitoring for automatic retry...');
   console.error('========================================');
 
   // TODO: Integrate with actual alerting system (Slack, email, etc.)

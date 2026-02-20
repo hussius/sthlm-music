@@ -18,10 +18,10 @@ export const crawlQueue = new Queue('event-crawls', {
     port: parseInt(new URL(config.REDIS_URL).port) || 6379
   },
   defaultJobOptions: {
-    attempts: 3,
+    attempts: 2,
     backoff: {
       type: 'exponential',
-      delay: 60000  // Start with 1 minute, exponential backoff
+      delay: 30000  // Start with 30 seconds, exponential backoff
     },
     removeOnComplete: {
       age: 86400  // Keep completed jobs for 24 hours
