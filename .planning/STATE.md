@@ -10,30 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 2 of 3 (API Layer & Performance)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Completed 02-01-PLAN.md (API Server Foundation)
+Last activity: 2026-02-20 — Completed 02-03-PLAN.md (Events API Layer)
 
-Progress: [█████░░░░░] 50%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 18.3 minutes
-- Total execution time: 3.32 hours
+- Total plans completed: 12
+- Average duration: 16.8 minutes
+- Total execution time: 3.4 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | Phase 01 | 9 | 194 min | 21.6 min |
-| Phase 02 | 2 | 5 min | 2.5 min |
+| Phase 02 | 3 | 7 min | 2.3 min |
 
 **Recent Plans:**
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
-| Phase 01 P01 | 5 min | 3 | 11 |
 | Phase 01 P02 | 6 min | 3 | 3 |
 | Phase 01 P04 | 3 min | 2 | 2 |
 | Phase 01 P05 | 5 min | 2 | 2 |
@@ -43,6 +42,7 @@ Progress: [█████░░░░░] 50%
 | Phase 01 P10 | 2 min | 1 | 2 |
 | Phase 02 P02 | 2 min | 2 | 2 |
 | Phase 02 P01 | 3 min | 3 | 5 |
+| Phase 02 P03 | 2 min | 3 | 5 |
 
 ## Accumulated Context
 
@@ -96,6 +96,10 @@ Recent decisions affecting current work:
 - Cursor-based pagination with composite key (date, id) for consistent ordering and O(1) performance (02-02)
 - Repository exports singleton instance for convenience while maintaining testability (02-02)
 - Select all columns for API completeness rather than subset projection (02-02)
+- Zod schemas provide single source of truth for validation and TypeScript types (02-03)
+- Layered architecture separates HTTP concerns (controller) from business logic (service) from data access (repository) (02-03)
+- Controller binds methods to preserve 'this' context when passed to Fastify routes (02-03)
+- Service layer validates limit bounds before calling repository (02-03)
 
 ### Pending Todos
 
@@ -108,5 +112,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 02-01-PLAN.md (API Server Foundation)
+Stopped at: Completed 02-03-PLAN.md (Events API Layer)
 Resume file: None
