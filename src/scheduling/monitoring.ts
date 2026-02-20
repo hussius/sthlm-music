@@ -40,6 +40,9 @@ export async function checkJobHealth(): Promise<JobHealthStatus[]> {
   const statuses: JobHealthStatus[] = [];
 
   for (const job of repeatableJobs) {
+    // Skip jobs without ID
+    if (!job.id) continue;
+
     // Get completed jobs for this repeatable job
     const completed = await crawlQueue.getJobs(['completed'], 0, 10, false);
     const failed = await crawlQueue.getJobs(['failed'], 0, 10, false);

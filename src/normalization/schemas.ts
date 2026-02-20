@@ -25,6 +25,15 @@ import { CANONICAL_GENRES, mapGenre } from './genre-mappings.js';
 import { normalizeVenueName } from './venue-mappings.js';
 
 /**
+ * Ticket source schema - validates individual ticket platform entries
+ */
+export const TicketSourceSchema = z.object({
+  platform: z.string().min(1, 'Platform required'),
+  url: z.string().url('Invalid ticket URL'),
+  addedAt: z.string().datetime('Invalid timestamp'),
+});
+
+/**
  * Event schema with validation and transformation.
  *
  * Validation rules:
@@ -34,7 +43,7 @@ import { normalizeVenueName } from './venue-mappings.js';
  * - date: Must be in future (prevents parsing errors)
  * - time: Optional (not all events have specific time)
  * - genre: Must be canonical genre OR transformed via mapGenre
- * - ticketUrl: Valid URL
+ * - ticketSources: Array of ticket source objects (platform, url, addedAt)
  * - price: Optional (not always available)
  * - sourceId: Required (for deduplication)
  * - sourcePlatform: One of 4 supported platforms
@@ -65,7 +74,7 @@ export const EventSchema = z.object({
   genre: z
     .enum(CANONICAL_GENRES)
     .or(z.string().transform(mapGenre)),
-  ticketUrl: z.string().url('Invalid ticket URL'),
+  ticketSources: z.array(TicketSourceSchema).min(1, 'At least one ticket source required'),
   price: z.string().optional(),
   sourceId: z.string().min(1, 'Source ID required'),
   sourcePlatform: z.enum(['ticketmaster', 'axs', 'dice', 'venue-direct']),

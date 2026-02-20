@@ -1,5 +1,14 @@
-import { pgTable, uuid, text, timestamp, index, uniqueIndex, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, index, uniqueIndex, integer, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+
+/**
+ * Ticket source entry - represents one platform's ticket purchase URL for an event.
+ */
+export type TicketSource = {
+  platform: string;  // "ticketmaster", "axs", "dice", "venue-direct"
+  url: string;       // Ticket purchase URL
+  addedAt: string;   // ISO timestamp when source was added
+};
 
 /**
  * Events table - stores all music events from multiple platforms
@@ -27,7 +36,7 @@ export const events = pgTable(
     genre: text('genre').notNull(), // Canonical genre (e.g., "rock", "electronic")
 
     // Ticketing
-    ticketUrl: text('ticket_url').notNull(),
+    ticketSources: jsonb('ticket_sources').notNull().$type<TicketSource[]>(),
     price: text('price'), // Optional price info (e.g., "250 SEK", "Free")
 
     // Source tracking

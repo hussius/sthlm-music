@@ -138,7 +138,14 @@ export class BaseVenueCrawler {
             const urlEl = await el.$(this.config.selectors.eventUrl);
             const url = urlEl ? await urlEl.getAttribute('href') : null;
 
-            rawEvents.push({ name, date, url, venue: this.config.name });
+            const genre = this.config.selectors.eventGenre
+              ? await el.$eval(this.config.selectors.eventGenre, (e: any) => e.textContent?.trim()).catch(() => undefined)
+              : undefined;
+            const price = this.config.selectors.eventPrice
+              ? await el.$eval(this.config.selectors.eventPrice, (e: any) => e.textContent?.trim()).catch(() => undefined)
+              : undefined;
+
+            rawEvents.push({ name, date, url, venue: this.config.name, genre, price });
           }
         }
 
@@ -179,7 +186,9 @@ export class BaseVenueCrawler {
             await upsertEvent(normalized.data as any);
             success++;
           } catch (error) {
-            log.error(`Failed to save event from ${this.config.name}:`, error);
+            log.error(`Failed to save event from ${this.config.name}:`, {
+              error: error instanceof Error ? error.message : String(error)
+            });
             failed++;
           }
         }

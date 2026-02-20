@@ -40,7 +40,11 @@ export function transformTicketmasterEvent(raw: any) {
     date: raw.dates?.start?.dateTime,
     time: raw.dates?.start?.localTime,
     genre: raw.classifications?.[0]?.genre?.name || 'other',
-    ticketUrl: raw.url,
+    ticketSources: [{
+      platform: 'ticketmaster',
+      url: raw.url,
+      addedAt: new Date().toISOString()
+    }],
     price: raw.priceRanges?.[0]
       ? `${raw.priceRanges[0].min}-${raw.priceRanges[0].max} ${raw.priceRanges[0].currency}`
       : undefined,
@@ -70,7 +74,11 @@ export function transformAXSEvent(raw: any) {
     date: raw.date || raw.eventDate,
     time: raw.time,
     genre: raw.genre || raw.category || 'other',
-    ticketUrl: raw.url || raw.ticketLink,
+    ticketSources: [{
+      platform: 'axs',
+      url: raw.url || raw.ticketLink,
+      addedAt: new Date().toISOString()
+    }],
     price: raw.price,
     sourceId: raw.id || raw.eventId,
     sourcePlatform: 'axs',
@@ -98,7 +106,11 @@ export function transformDICEEvent(raw: any) {
     date: raw.date,
     time: raw.time,
     genre: raw.genre || 'other',
-    ticketUrl: raw.url,
+    ticketSources: [{
+      platform: 'dice',
+      url: raw.url,
+      addedAt: new Date().toISOString()
+    }],
     price: raw.price,
     sourceId: raw.id,
     sourcePlatform: 'dice',
@@ -130,7 +142,11 @@ export function transformVenueEvent(raw: any) {
     date: raw.date,
     time: raw.time,
     genre: raw.genre || 'other',
-    ticketUrl: raw.url,
+    ticketSources: [{
+      platform: 'venue-direct',
+      url: raw.url,
+      addedAt: new Date().toISOString()
+    }],
     price: raw.price,
     sourceId: raw.id || `${raw.venue}-${raw.date}`, // Generate ID if missing
     sourcePlatform: 'venue-direct',
