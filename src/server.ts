@@ -4,6 +4,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { responseTimePlugin } from './api/middleware/response-time.js';
 import { healthRoutes } from './api/routes/health.js';
+import { eventsRoutes } from './api/routes/events.js';
 
 /**
  * Build and configure Fastify server
@@ -42,6 +43,7 @@ export async function buildServer() {
 
   // Register routes
   await fastify.register(healthRoutes);
+  await fastify.register(eventsRoutes);
 
   return fastify;
 }
