@@ -64,3 +64,47 @@ export async function upsertEvent(event: NewEvent) {
     throw error;
   }
 }
+
+/**
+ * Save an event to the database (wrapper around upsertEvent).
+ *
+ * @param event - Normalized event data to store
+ * @returns true if saved successfully, false on error
+ */
+export async function saveEvent(event: NewEvent): Promise<boolean> {
+  try {
+    await upsertEvent(event);
+    return true;
+  } catch (error) {
+    log.error('Failed to save event:', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return false;
+  }
+}
+
+/**
+ * Check if an event exists by source ID and platform.
+ *
+ * Used for:
+ * - Avoiding unnecessary API calls for known events
+ * - Checking if event has been deleted on source platform
+ *
+ * @param sourceId - Platform-specific event ID
+ * @param sourcePlatform - Platform name (ticketmaster, axs, dice, venue-direct)
+ * @returns true if event exists in database
+ */
+export async function eventExists(sourceId: string, sourcePlatform: string): Promise<boolean> {
+  const result = await db
+    .select()
+    .from(events)
+    .where(
+      and(
+        eq(events.sourceId, sourceId),
+        eq(events.sourcePlatform, sourcePlatform)
+      )
+    )
+    .limit(1);
+
+  return result.length > 0;
+}

@@ -20,7 +20,7 @@
 
 import { PlaywrightCrawler, log } from 'crawlee';
 import { transformAXSEvent } from '../normalization/transformers.js';
-import { upsertEvent } from '../storage/event-repository.js';
+import { upsertEvent } from '../repositories/event-repository.js';
 import { config } from '../config/env.js';
 
 /**
