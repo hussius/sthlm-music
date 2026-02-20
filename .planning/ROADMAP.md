@@ -55,8 +55,8 @@ Plans:
 **Plans**: 4 plans across 3 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — Fastify server foundation with response time monitoring
-- [ ] 02-02-PLAN.md — GIN trigram indexes and events repository with comprehensive filtering
+- [x] 02-01-PLAN.md — Fastify server foundation with response time monitoring
+- [x] 02-02-PLAN.md — GIN trigram indexes and events repository with comprehensive filtering
 - [ ] 02-03-PLAN.md — API layer (service, controller, routes) with Zod validation
 - [ ] 02-04-PLAN.md — Load testing with autocannon and performance validation
 
@@ -82,6 +82,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation & Multi-Platform Aggregation | 3/10 | In progress (gap closure pending) | - |
-| 2. API Layer & Performance | 0/4 | Not started | - |
+| 1. Data Foundation & Multi-Platform Aggregation | 9/10 | In progress (gap closure pending) | - |
+| 2. API Layer & Performance | 2/4 | In progress | - |
 | 3. Calendar UI & Public Launch | 0/TBD | Not started | - |
