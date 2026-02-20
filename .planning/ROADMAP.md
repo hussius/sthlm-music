@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Duplicate events across platforms are merged into single entries with multiple ticket links
   4. Database contains only events within 12-month rolling window (older events automatically removed)
   5. Scraper failures trigger alerts within 5 minutes of detection
-**Plans**: 8 plans across 4 waves
+**Plans**: 10 plans across 1 wave (8 standard + 2 gap closure)
 
 Plans:
 - [x] 01-01-PLAN.md — Database & crawler infrastructure (Node.js, PostgreSQL, Drizzle)
@@ -39,6 +39,8 @@ Plans:
 - [ ] 01-06-PLAN.md — Priority venue website crawlers (13 venues)
 - [ ] 01-07-PLAN.md — Multi-stage deduplication engine (exact + fuzzy matching)
 - [ ] 01-08-PLAN.md — Job scheduling with BullMQ (daily crawls, cleanup, monitoring)
+- [ ] 01-09-PLAN.md — Gap closure: Implement ticket URL merging across duplicate events
+- [ ] 01-10-PLAN.md — Gap closure: Reduce alert timing to meet 5-minute requirement
 
 ### Phase 2: API Layer & Performance
 **Goal**: API serves filtered event data with sub-200ms response times for any query
@@ -77,6 +79,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation & Multi-Platform Aggregation | 3/8 | In progress | - |
+| 1. Data Foundation & Multi-Platform Aggregation | 3/10 | In progress (gap closure pending) | - |
 | 2. API Layer & Performance | 0/TBD | Not started | - |
 | 3. Calendar UI & Public Launch | 0/TBD | Not started | - |
