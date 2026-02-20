@@ -46,6 +46,15 @@ Comprehensive event coverage - capture all Stockholm music events in one place s
 
 **Crawling approach:** Automated daily updates to keep calendar current as new events are announced.
 
+**Priority venues to track:**
+- Kollektivet Livet
+- Slaktkyrkan
+- Hus 7
+- Fasching
+- Nalen
+- Fylkingen
+- Slakthuset
+
 ## Constraints
 
 - **Timeline**: 12-month rolling window (hard limit) — only show events within next year
