@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { BrowserRouter } from 'react-router-dom'
+import { EventList } from './components/EventList'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,8 +16,19 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <div>
-          <h1>Stockholm Events Calendar</h1>
-          <p>Events app coming soon...</p>
+          <header
+            style={{
+              backgroundColor: '#fff',
+              borderBottom: '1px solid #e0e0e0',
+              padding: '20px',
+              textAlign: 'center',
+            }}
+          >
+            <h1 style={{ margin: 0, fontSize: '32px', color: '#1a1a1a' }}>
+              Stockholm Events Calendar
+            </h1>
+          </header>
+          <EventList />
         </div>
       </BrowserRouter>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
