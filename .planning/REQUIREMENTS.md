@@ -27,11 +27,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Display & UI
 
-- [ ] **DISP-01**: User can view events in chronological list view
+- [x] **DISP-01**: User can view events in chronological list view
 - [ ] **DISP-02**: User sees event details: name, date, time, venue, genre, artist(s)
 - [ ] **DISP-03**: User sees ticket availability status for each event
 - [ ] **DISP-04**: Calendar is mobile-responsive (works on phones and tablets)
-- [ ] **DISP-05**: Calendar displays in Stockholm local time (Europe/Stockholm timezone)
+- [x] **DISP-05**: Calendar displays in Stockholm local time (Europe/Stockholm timezone)
 
 ### Integration
 
@@ -112,11 +112,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FILT-05 | Phase 2 | Complete |
 | PERF-01 | Phase 2 | Complete |
 | PERF-02 | Phase 2 | Complete |
-| DISP-01 | Phase 3 | Pending |
+| DISP-01 | Phase 3 | Complete |
 | DISP-02 | Phase 3 | Pending |
 | DISP-03 | Phase 3 | Pending |
 | DISP-04 | Phase 3 | Pending |
-| DISP-05 | Phase 3 | Pending |
+| DISP-05 | Phase 3 | Complete |
 | INTG-01 | Phase 3 | Pending |
 | INTG-02 | Phase 3 | Pending |
 
