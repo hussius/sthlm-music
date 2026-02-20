@@ -30,7 +30,7 @@
 
 import autocannon from 'autocannon';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
 /**
  * Run load test against Events API
@@ -94,14 +94,22 @@ async function runLoadTest(): Promise<void> {
 
   autocannon.printResult(result);
 
+  // Check if we got valid results
+  if (!result.latency || typeof result.latency.mean === 'undefined') {
+    throw new Error('Failed to get latency metrics. Server may not be responding.');
+  }
+
   // Check performance targets
   console.log('\n' + '='.repeat(60));
   console.log('PERFORMANCE TARGET VALIDATION');
   console.log('='.repeat(60) + '\n');
 
-  const avgLatency = result.latency.mean;
-  const p95Latency = result.latency.p95;
-  const p99Latency = result.latency.p99;
+  const latency = result.latency as any;
+  const requests = result.requests as any;
+
+  const avgLatency = latency.mean || 0;
+  const p95Latency = latency.p95 || latency.p97_5 || 0;
+  const p99Latency = latency.p99 || latency.p99_9 || 0;
 
   const avgPass = avgLatency < 200;
   const p95Pass = p95Latency < 300;
@@ -111,17 +119,23 @@ async function runLoadTest(): Promise<void> {
   console.log(`  Target: < 200ms`);
   console.log(`  Status: ${avgPass ? '✓ PASS' : '✗ FAIL'}\n`);
 
-  console.log(`p95 Latency: ${p95Latency.toFixed(2)}ms`);
-  console.log(`  Target: < 300ms`);
-  console.log(`  Status: ${p95Pass ? '✓ PASS' : '✗ FAIL'}\n`);
+  if (p95Latency > 0) {
+    console.log(`p95 Latency: ${p95Latency.toFixed(2)}ms`);
+    console.log(`  Target: < 300ms`);
+    console.log(`  Status: ${p95Pass ? '✓ PASS' : '✗ FAIL'}\n`);
+  }
 
-  console.log(`p99 Latency: ${p99Latency.toFixed(2)}ms`);
-  console.log(`  Target: < 500ms`);
-  console.log(`  Status: ${p99Pass ? '✓ PASS' : '✗ FAIL'}\n`);
+  if (p99Latency > 0) {
+    console.log(`p99 Latency: ${p99Latency.toFixed(2)}ms`);
+    console.log(`  Target: < 500ms`);
+    console.log(`  Status: ${p99Pass ? '✓ PASS' : '✗ FAIL'}\n`);
+  }
 
-  console.log(`Total Requests: ${result.requests.total}`);
-  console.log(`Requests/sec: ${result.requests.average.toFixed(2)}`);
-  console.log(`Errors: ${result.errors}`);
+  console.log(`Total Requests: ${requests.total || 0}`);
+  if (requests.average) {
+    console.log(`Requests/sec: ${requests.average.toFixed(2)}`);
+  }
+  console.log(`Errors: ${result.errors || 0}`);
 
   // Exit with error if targets not met
   if (!avgPass || !p95Pass || !p99Pass) {

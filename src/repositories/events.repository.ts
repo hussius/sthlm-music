@@ -166,8 +166,20 @@ export class EventsRepository {
       ? buildCursor(items[items.length - 1].date, items[items.length - 1].id)
       : null;
 
+    // Transform Date objects to ISO strings for API response
+    const transformedEvents = items.map(event => ({
+      ...event,
+      date: event.date.toISOString(),
+      ticketSources: Array.isArray(event.ticketSources)
+        ? event.ticketSources.map((source: any) => ({
+            ...source,
+            addedAt: typeof source.addedAt === 'string' ? source.addedAt : new Date(source.addedAt).toISOString()
+          }))
+        : []
+    })) as any; // Type assertion: we transform Date to string for API compatibility
+
     return {
-      events: items,
+      events: transformedEvents,
       nextCursor,
     };
   }

@@ -372,3 +372,16 @@ export async function crawlAXS(): Promise<{ success: number; failed: number }> {
   log.info(`AXS crawl complete: ${success} success, ${failed} failed`);
   return { success, failed };
 }
+
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  crawlAXS()
+    .then(result => {
+      log.info(`Crawl finished: ${result.success} events saved, ${result.failed} failed`);
+      process.exit(result.failed > 0 && result.success === 0 ? 1 : 0);
+    })
+    .catch(error => {
+      log.error('Crawl failed with error:', error);
+      process.exit(1);
+    });
+}
