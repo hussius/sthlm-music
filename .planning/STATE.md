@@ -5,29 +5,30 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Comprehensive event coverage - capture all Stockholm music events in one place so people don't miss shows scattered across multiple platforms.
-**Current focus:** Phase 1 - Data Foundation & Multi-Platform Aggregation
+**Current focus:** Phase 2 - API Layer & Performance
 
 ## Current Position
 
-Phase: 1 of 3 (Data Foundation & Multi-Platform Aggregation)
-Plan: 9 of 10 in current phase
+Phase: 2 of 3 (API Layer & Performance)
+Plan: 1 of 4 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Completed 01-09-PLAN.md (Ticket URL merging across duplicate events)
+Last activity: 2026-02-20 — Completed 02-02-PLAN.md (Database filtering & indexes)
 
-Progress: [█████████░] 90%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 21.6 minutes
-- Total execution time: 3.24 hours
+- Total plans completed: 10
+- Average duration: 19.6 minutes
+- Total execution time: 3.27 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | Phase 01 | 9 | 194 min | 21.6 min |
+| Phase 02 | 1 | 2 min | 2.0 min |
 
 **Recent Plans:**
 | Plan | Duration | Tasks | Files |
@@ -41,6 +42,7 @@ Progress: [█████████░] 90%
 | Phase 01 P09 | 128 min | 2 | 8 |
 | Phase 01 P10 | 2 min | 1 | 2 |
 | Phase 01 P10 | 2 | 1 tasks | 2 files |
+| Phase 02 P02 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -85,6 +87,10 @@ Recent decisions affecting current work:
 - Deduplicate ticket sources by platform — same platform keeps existing URL, different platform adds to array (01-09)
 - Automatic ticket source merging on duplicate — seamless UX, users see all platform options (01-09)
 - Timestamp tracking per ticket source — addedAt field tracks when platform discovered (01-09)
+- Use GIN trigram indexes over full-text search for simpler query patterns with existing text columns (02-02)
+- Cursor-based pagination with composite key (date, id) for consistent ordering and O(1) performance (02-02)
+- Repository exports singleton instance for convenience while maintaining testability (02-02)
+- Select all columns for API completeness rather than subset projection (02-02)
 
 ### Pending Todos
 
@@ -97,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 01-09-PLAN.md (Ticket URL merging across duplicate events)
+Stopped at: Completed 02-02-PLAN.md (Database filtering & indexes)
 Resume file: None

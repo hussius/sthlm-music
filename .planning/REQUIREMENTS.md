@@ -19,11 +19,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Discovery & Filtering
 
-- [ ] **FILT-01**: User can filter events by date range (month/week/day selection)
-- [ ] **FILT-02**: User can filter events by genre (5-10 core genres: Rock, Pop, Electronic, Jazz, Hip-hop, Metal, Indie, Folk, Classical, World)
-- [ ] **FILT-03**: User can filter events by venue (all venues from all sources)
-- [ ] **FILT-04**: User can search for events by artist/band name
-- [ ] **FILT-05**: User can search for events by event name
+- [x] **FILT-01**: User can filter events by date range (month/week/day selection)
+- [x] **FILT-02**: User can filter events by genre (5-10 core genres: Rock, Pop, Electronic, Jazz, Hip-hop, Metal, Indie, Folk, Classical, World)
+- [x] **FILT-03**: User can filter events by venue (all venues from all sources)
+- [x] **FILT-04**: User can search for events by artist/band name
+- [x] **FILT-05**: User can search for events by event name
 
 ### Display & UI
 
@@ -40,8 +40,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Performance & Quality
 
-- [ ] **PERF-01**: Search results return in under 200ms
-- [ ] **PERF-02**: Page loads work smoothly with 10,000+ events in database
+- [x] **PERF-01**: Search results return in under 200ms
+- [x] **PERF-02**: Page loads work smoothly with 10,000+ events in database
 - [x] **QUAL-01**: Events are deduplicated with >95% accuracy (minimal false positives/negatives)
 
 ## v2 Requirements
@@ -105,13 +105,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-06 | Phase 1 | Complete |
 | DATA-07 | Phase 1 | Complete |
 | QUAL-01 | Phase 1 | Complete |
-| FILT-01 | Phase 2 | Pending |
-| FILT-02 | Phase 2 | Pending |
-| FILT-03 | Phase 2 | Pending |
-| FILT-04 | Phase 2 | Pending |
-| FILT-05 | Phase 2 | Pending |
-| PERF-01 | Phase 2 | Pending |
-| PERF-02 | Phase 2 | Pending |
+| FILT-01 | Phase 2 | Complete |
+| FILT-02 | Phase 2 | Complete |
+| FILT-03 | Phase 2 | Complete |
+| FILT-04 | Phase 2 | Complete |
+| FILT-05 | Phase 2 | Complete |
+| PERF-01 | Phase 2 | Complete |
+| PERF-02 | Phase 2 | Complete |
 | DISP-01 | Phase 3 | Pending |
 | DISP-02 | Phase 3 | Pending |
 | DISP-03 | Phase 3 | Pending |
