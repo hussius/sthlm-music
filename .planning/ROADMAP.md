@@ -35,12 +35,12 @@ Plans:
 - [x] 01-02-PLAN.md — Data normalization layer (Zod schemas, venue/genre mappings)
 - [ ] 01-03-PLAN.md — Ticketmaster Discovery API crawler
 - [x] 01-04-PLAN.md — AXS/Live Nation Playwright crawler
-- [ ] 01-05-PLAN.md — DICE Playwright crawler
-- [ ] 01-06-PLAN.md — Priority venue website crawlers (13 venues)
-- [ ] 01-07-PLAN.md — Multi-stage deduplication engine (exact + fuzzy matching)
+- [x] 01-05-PLAN.md — DICE Playwright crawler
+- [x] 01-06-PLAN.md — Priority venue website crawlers (13 venues)
+- [x] 01-07-PLAN.md — Multi-stage deduplication engine (exact + fuzzy matching)
 - [ ] 01-08-PLAN.md — Job scheduling with BullMQ (daily crawls, cleanup, monitoring)
-- [ ] 01-09-PLAN.md — Gap closure: Implement ticket URL merging across duplicate events
-- [ ] 01-10-PLAN.md — Gap closure: Reduce alert timing to meet 5-minute requirement
+- [x] 01-09-PLAN.md — Gap closure: Implement ticket URL merging across duplicate events
+- [x] 01-10-PLAN.md — Gap closure: Reduce alert timing to meet 5-minute requirement
 
 ### Phase 2: API Layer & Performance
 **Goal**: API serves filtered event data with sub-200ms response times for any query

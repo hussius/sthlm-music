@@ -10,35 +10,35 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 1 of 3 (Data Foundation & Multi-Platform Aggregation)
-Plan: 8 of 10 in current phase
+Plan: 9 of 10 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Completed 01-10-PLAN.md (Fast scraper failure alerts)
+Last activity: 2026-02-20 — Completed 01-09-PLAN.md (Ticket URL merging across duplicate events)
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 4.3 minutes
-- Total execution time: 0.57 hours
+- Total plans completed: 9
+- Average duration: 21.6 minutes
+- Total execution time: 3.24 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| Phase 01 | 8 | 34 min | 4.3 min |
+| Phase 01 | 9 | 194 min | 21.6 min |
 
 **Recent Plans:**
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 5 min | 3 | 11 |
 | Phase 01 P02 | 6 min | 3 | 3 |
-| Phase 01 P03 | 5 min | 2 | 3 |
 | Phase 01 P04 | 3 min | 2 | 2 |
 | Phase 01 P05 | 5 min | 2 | 2 |
-| Phase 01 P06 | 4 | 3 tasks | 17 files |
-| Phase 01 P07 | 4 | 2 tasks | 5 files |
+| Phase 01 P06 | 4 min | 3 | 17 |
+| Phase 01 P07 | 4 min | 2 | 5 |
+| Phase 01 P09 | 128 min | 2 | 8 |
 | Phase 01 P10 | 2 min | 1 | 2 |
 | Phase 01 P10 | 2 | 1 tasks | 2 files |
 
@@ -81,6 +81,10 @@ Recent decisions affecting current work:
 - Alert immediately on first failure rather than after all retries — humans notified early while system recovers automatically (01-10)
 - Reduced retry attempts (3→2) and backoff (60s→30s) — faster recovery or escalation (01-10)
 - Include retry count in alerts — provides context about system state (01-10)
+- JSONB array for ticket sources over separate table — simpler queries (no JOIN), typical event has 1-3 sources, avoids N+1 problem (01-09)
+- Deduplicate ticket sources by platform — same platform keeps existing URL, different platform adds to array (01-09)
+- Automatic ticket source merging on duplicate — seamless UX, users see all platform options (01-09)
+- Timestamp tracking per ticket source — addedAt field tracks when platform discovered (01-09)
 
 ### Pending Todos
 
@@ -93,5 +97,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 01-10-PLAN.md (Fast scraper failure alerts)
+Stopped at: Completed 01-09-PLAN.md (Ticket URL merging across duplicate events)
 Resume file: None
