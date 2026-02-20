@@ -35,10 +35,10 @@
  * - Manual review catches edge cases that would be false positives/negatives
  */
 
-import { checkExactMatch } from './exact-match.js';
+import { checkExactMatch, mergeEventData } from './exact-match.js';
 import { findFuzzyCandidates, isDuplicateMatch } from './fuzzy-match.js';
 import { addToReviewQueue } from './manual-review-queue.js';
-import { upsertEvent } from '../repositories/event-repository.js';
+import { upsertEvent, getEventById } from '../repositories/event-repository.js';
 import type { Event, NewEvent } from '../db/schema.js';
 
 /**
@@ -129,11 +129,21 @@ export async function deduplicateAndSave(event: NewEvent): Promise<Event> {
 
   switch (result.status) {
     case 'duplicate':
-      console.log(`Skipping duplicate event: ${event.name}`);
-      // Return existing event (TODO: optionally merge ticket URLs)
-      // For now, just skip - the existing event already has a ticket URL
-      // A future enhancement would store multiple ticket URLs per event
-      throw new Error('Duplicate event - use existing event ID: ' + result.existingEventId);
+      // Fetch existing event and merge ticket sources
+      const existing = await getEventById(result.existingEventId);
+      if (!existing) {
+        // Edge case: existing event was deleted between deduplication check and now
+        // Treat as unique and insert
+        const saved = await upsertEvent(event);
+        console.log(`Saved event (original duplicate was deleted): ${event.name}`);
+        return saved;
+      }
+
+      // Merge ticket sources from both events
+      const merged = await mergeEventData(existing, event);
+      const updated = await upsertEvent(merged);
+      console.log(`Merged ticket source into existing event: ${updated.name}`);
+      return updated;
 
     case 'unique':
       // Save event as new

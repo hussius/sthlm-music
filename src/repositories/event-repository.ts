@@ -6,8 +6,8 @@
  */
 
 import { db } from '../db/client.js';
-import { events, type NewEvent } from '../db/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { events, type NewEvent, type TicketSource } from '../db/schema.js';
+import { eq, and, sql } from 'drizzle-orm';
 import { log } from 'crawlee';
 
 /**
@@ -35,11 +35,17 @@ export async function upsertEvent(event: NewEvent) {
       .limit(1);
 
     if (existing.length > 0) {
-      // Update existing event
+      // Update existing event with ticket source merging
+      // Merge ticket sources: keep existing, add new platforms
+      const existingPlatforms = new Set(existing[0].ticketSources.map((s: TicketSource) => s.platform));
+      const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
+      const mergedTicketSources = [...existing[0].ticketSources, ...newSources];
+
       const [updated] = await db
         .update(events)
         .set({
           ...event,
+          ticketSources: mergedTicketSources,
           updatedAt: new Date(),
         })
         .where(eq(events.id, existing[0].id))
@@ -81,6 +87,24 @@ export async function saveEvent(event: NewEvent): Promise<boolean> {
     });
     return false;
   }
+}
+
+/**
+ * Get an event by its ID.
+ *
+ * Used by deduplication pipeline to fetch existing event for ticket source merging.
+ *
+ * @param id - Event UUID
+ * @returns Event if found, null otherwise
+ */
+export async function getEventById(id: string) {
+  const result = await db
+    .select()
+    .from(events)
+    .where(eq(events.id, id))
+    .limit(1);
+
+  return result[0] || null;
 }
 
 /**

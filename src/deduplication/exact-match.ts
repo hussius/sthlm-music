@@ -60,24 +60,31 @@ export async function checkExactMatch(event: Partial<Event>): Promise<Event | nu
  * Strategy:
  * - Keep existing core data (name, artist, venue, date)
  * - Use incoming data if better quality (non-'other' genre, price if missing)
+ * - Merge ticket sources arrays (deduplicate by platform)
  * - Update timestamp to reflect latest data refresh
  *
- * Note: Current schema stores one ticket URL per event.
- * A future enhancement would store ticket URLs in separate table
- * with foreign key to events, allowing multiple platforms per event.
+ * Ticket source merging:
+ * - Combine ticketSources arrays from both events
+ * - Deduplicate by platform (same platform = keep existing URL)
+ * - Different platform = add new source to array
  *
  * @param existing - Event already in database
  * @param incoming - New event data from crawler
  * @returns Merged event data
  */
 export async function mergeEventData(existing: Event, incoming: Partial<Event>): Promise<Event> {
-  // Merge logic: keep existing core data, append new ticket link if better
+  // Merge ticket sources (deduplicate by platform)
+  const existingPlatforms = new Set(existing.ticketSources.map(s => s.platform));
+  const newSources = incoming.ticketSources?.filter(s => !existingPlatforms.has(s.platform)) || [];
+
   return {
     ...existing,
     // If incoming has better genre data, use it
     genre: incoming.genre && incoming.genre !== 'other' ? incoming.genre : existing.genre,
     // If incoming has price and existing doesn't, use it
     price: incoming.price || existing.price,
+    // Merge ticket sources arrays
+    ticketSources: [...existing.ticketSources, ...newSources],
     // Update timestamp to reflect latest data refresh
     updatedAt: new Date()
   };
