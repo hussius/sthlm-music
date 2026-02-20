@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, index, uniqueIndex, integer } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -58,3 +58,50 @@ export const events = pgTable(
 // Export type for use in application code
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+
+/**
+ * Review queue table - stores potential duplicate events for manual review
+ *
+ * Purpose:
+ * - Captures edge cases where fuzzy matching is uncertain (70-90% similarity)
+ * - Allows human review to confirm or reject duplicate classification
+ * - Tracks review status to prevent re-queuing same candidates
+ *
+ * Workflow:
+ * 1. Deduplication pipeline finds potential duplicate (isDuplicateMatch = 'maybe')
+ * 2. Add to review queue with similarity scores
+ * 3. Admin reviews and marks as 'merged' or 'not_duplicate'
+ * 4. Reviewed items excluded from future deduplication runs
+ */
+export const reviewQueue = pgTable('review_queue', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+
+  // Event pair being reviewed
+  eventId1: uuid('event_id_1')
+    .notNull()
+    .references(() => events.id, { onDelete: 'cascade' }),
+  eventId2: uuid('event_id_2')
+    .notNull()
+    .references(() => events.id, { onDelete: 'cascade' }),
+
+  // Similarity scores (0-100)
+  artistSimilarity: integer('artist_similarity').notNull(),
+  nameSimilarity: integer('name_similarity').notNull(),
+
+  // Review status
+  status: text('status')
+    .notNull()
+    .default('pending'), // 'pending', 'merged', 'not_duplicate'
+
+  // Metadata
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .default(sql`now()`),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  reviewedBy: text('reviewed_by')
+});
+
+export type ReviewQueueItem = typeof reviewQueue.$inferSelect;
+export type NewReviewQueueItem = typeof reviewQueue.$inferInsert;
