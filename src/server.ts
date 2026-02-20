@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import { responseTimePlugin } from './api/middleware/response-time.js';
 import { healthRoutes } from './api/routes/health.js';
 
 /**
@@ -12,6 +13,7 @@ import { healthRoutes } from './api/routes/health.js';
  * - Security headers via @fastify/helmet
  * - CORS via @fastify/cors
  * - Zod validation for type-safe routes
+ * - Response time monitoring with X-Response-Time header
  * - Health check endpoint
  *
  * @returns Configured Fastify instance ready to start
@@ -34,6 +36,9 @@ export async function buildServer() {
   // Zod validation integration
   fastify.setValidatorCompiler(validatorCompiler);
   fastify.setSerializerCompiler(serializerCompiler);
+
+  // Response time monitoring
+  await fastify.register(responseTimePlugin);
 
   // Register routes
   await fastify.register(healthRoutes);
