@@ -31,13 +31,48 @@ const AXS_STOCKHOLM_URL = 'https://www.axs.com/se/stockholm/events/music';
 
 /**
  * Helper function to parse AXS date formats.
- * Handles both ISO 8601 and human-readable formats.
+ * Handles ISO 8601, human-readable formats, and relative dates.
+ *
+ * Supported formats:
+ * - ISO 8601: "2026-06-15T19:00:00Z"
+ * - Human-readable: "Jun 15, 2026" or "June 15, 2026"
+ * - Relative: "Tonight", "Tomorrow", "This Weekend"
  *
  * @param dateStr - Date string from AXS page
  * @returns Date object or null if parsing fails
  */
 function parseAXSDate(dateStr: string): Date | null {
   if (!dateStr) return null;
+
+  const normalized = dateStr.trim().toLowerCase();
+
+  // Handle relative dates
+  if (normalized.includes('tonight')) {
+    const tonight = new Date();
+    tonight.setHours(20, 0, 0, 0); // Default to 8 PM
+    return tonight;
+  }
+
+  if (normalized.includes('tomorrow')) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(20, 0, 0, 0); // Default to 8 PM
+    return tomorrow;
+  }
+
+  if (normalized.includes('this weekend') || normalized.includes('weekend')) {
+    const today = new Date();
+    const daysUntilSaturday = (6 - today.getDay() + 7) % 7 || 7;
+    const saturday = new Date();
+    saturday.setDate(today.getDate() + daysUntilSaturday);
+    saturday.setHours(20, 0, 0, 0); // Default to 8 PM Saturday
+    return saturday;
+  }
+
+  // Handle "TBA" or "TBD" dates - return null to skip these events
+  if (normalized.includes('tba') || normalized.includes('tbd') || normalized.includes('to be announced')) {
+    return null;
+  }
 
   // Handle ISO 8601 format (with time)
   if (dateStr.includes('T')) {
