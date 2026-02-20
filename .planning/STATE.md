@@ -10,26 +10,30 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 1 of 3 (Data Foundation & Multi-Platform Aggregation)
-Plan: 1 of 8 in current phase
+Plan: 2 of 8 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Completed 01-01-PLAN.md (database schema & project foundation)
+Last activity: 2026-02-20 — Completed 01-02-PLAN.md (data normalization layer)
 
-Progress: [██░░░░░░░░] 12.5%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 5 minutes
-- Total execution time: 0.08 hours
+- Total plans completed: 2
+- Average duration: 5.5 minutes
+- Total execution time: 0.18 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| Phase 01 | 1 | 5 min | 5 min |
+| Phase 01 | 2 | 11 min | 5.5 min |
 
-| Phase 01 P01 | 5 | 3 tasks | 11 files |
+**Recent Plans:**
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 5 min | 3 | 11 |
+| Phase 01 P02 | 6 min | 3 | 3 |
 
 ## Accumulated Context
 
@@ -46,6 +50,10 @@ Recent decisions affecting current work:
 - Use ES modules — modern Node.js patterns with cleaner imports (01-01)
 - Connection pool max 10 — suitable for crawler workload (01-01)
 - Unique index on (venue, date) — exact match deduplication strategy (01-01)
+- 11 canonical genres with 'other' fallback — balance specificity and maintainability (01-02)
+- Date validation requires future dates — catches parsing errors and wrong timezones early (01-02)
+- Venue normalization as Zod transform — automatic for all events, enables exact match deduplication (01-02)
+- Platform transformers delegate validation — separation of extraction logic from validation logic (01-02)
 
 ### Pending Todos
 
@@ -58,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 01-01-PLAN.md (Database Schema & Project Foundation)
+Stopped at: Completed 01-02-PLAN.md (Data Normalization Layer)
 Resume file: None
