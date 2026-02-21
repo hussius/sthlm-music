@@ -13,7 +13,7 @@ This roadmap takes the Stockholm Music Events Calendar from concept to public la
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Foundation & Multi-Platform Aggregation** - Build scraping infrastructure for all 3 ticket platforms with deduplication (completed 2026-02-21)
-- [ ] **Phase 2: API Layer & Performance** - Create REST API with server-side filtering and pagination
+- [x] **Phase 2: API Layer & Performance** - Create REST API with server-side filtering and pagination (completed 2026-02-20)
 - [x] **Phase 3: Calendar UI & Public Launch** - Build mobile-responsive calendar with filters and ticket links (completed 2026-02-20)
 
 ## Phase Details
@@ -58,7 +58,7 @@ Plans:
 - [x] 02-01-PLAN.md — Fastify server foundation with response time monitoring
 - [x] 02-02-PLAN.md — GIN trigram indexes and events repository with comprehensive filtering
 - [x] 02-03-PLAN.md — API layer (service, controller, routes) with Zod validation
-- [ ] 02-04-PLAN.md — Load testing with autocannon and performance validation
+- [x] 02-04-PLAN.md — Load testing with autocannon and performance validation
 
 ### Phase 3: Calendar UI & Public Launch
 **Goal**: Public can browse Stockholm music events on mobile and desktop, click through to buy tickets
@@ -85,5 +85,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation & Multi-Platform Aggregation | 10/10 | Complete | 2026-02-21 |
-| 2. API Layer & Performance | 3/4 | In progress | - |
+| 2. API Layer & Performance | 4/4 | Complete | 2026-02-20 |
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
