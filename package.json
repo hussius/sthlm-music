@@ -16,7 +16,10 @@
     "db:studio": "drizzle-kit studio",
     "seed:test": "tsx src/scripts/seed-test-data.ts",
     "test:load": "tsx src/scripts/load-test.ts",
-    "verify:indexes": "tsx src/scripts/verify-indexes.ts"
+    "verify:indexes": "tsx src/scripts/verify-indexes.ts",
+    "clear-db": "node clear-db.js",
+    "crawl-all": "node crawl-all.js",
+    "refresh-data": "node clear-db.js && node crawl-all.js"
   },
   "keywords": [
     "crawler",

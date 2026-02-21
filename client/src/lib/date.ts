@@ -23,3 +23,18 @@ export function formatEventDate(isoDate: string): string {
     'EEE, MMM d, yyyy • HH:mm'
   );
 }
+
+/**
+ * Format event date to compact format for card display.
+ *
+ * @param isoDate - ISO 8601 date string from API
+ * @returns Compact date string: "MMM d"
+ * @example formatCompactDate("2026-02-21T18:30:00Z") // "Feb 21"
+ */
+export function formatCompactDate(isoDate: string): string {
+  return formatInTimeZone(
+    new Date(isoDate),
+    STOCKHOLM_TZ,
+    'MMM d'
+  );
+}

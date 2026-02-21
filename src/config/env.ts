@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import * as dotenv from 'dotenv';
 
-// Load environment variables from .env file
-dotenv.config();
+// Load environment variables from .env.local file
+dotenv.config({ path: '.env.local' });
 
 /**
  * Environment variable schema with validation

@@ -16,7 +16,6 @@ import { TicketmasterClient } from './ticketmaster-api-client.js';
 import { transformTicketmasterEvent } from '../normalization/transformers.js';
 import { upsertEvent } from '../repositories/event-repository.js';
 import { config } from '../config/env.js';
-import { log } from 'crawlee';
 
 /**
  * Crawl result summary.
@@ -24,6 +23,14 @@ import { log } from 'crawlee';
 export interface CrawlResult {
   success: number;
   failed: number;
+}
+
+/**
+ * Format date for Ticketmaster API (without milliseconds).
+ * Ticketmaster requires: YYYY-MM-DDTHH:mm:ssZ
+ */
+function formatTicketmasterDate(date: Date): string {
+  return date.toISOString().split('.')[0] + 'Z';
 }
 
 /**
@@ -61,8 +68,8 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
   let page = 0;
   const pageSize = 200; // Max allowed by Ticketmaster API
 
-  log.info(`Starting Ticketmaster crawl for Stockholm music events`);
-  log.info(`Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+  console.log(`🚀 Starting Ticketmaster crawl for Stockholm music events`);
+  console.log(`📅 Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
   try {
     while (true) {
@@ -71,8 +78,8 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
         city: 'Stockholm',
         countryCode: 'SE',
         classificationName: 'Music',
-        startDateTime: startDate.toISOString(),
-        endDateTime: endDate.toISOString(),
+        startDateTime: formatTicketmasterDate(startDate),
+        endDateTime: formatTicketmasterDate(endDate),
         page,
         size: pageSize,
       });
@@ -81,11 +88,11 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
 
       // No more events - pagination complete
       if (rawEvents.length === 0) {
-        log.info(`No more events found on page ${page}. Pagination complete.`);
+        console.log(`✅ No more events found on page ${page}. Pagination complete.`);
         break;
       }
 
-      log.info(`Processing page ${page}: ${rawEvents.length} events`);
+      console.log(`📄 Processing page ${page}: ${rawEvents.length} events`);
 
       // Process each event on this page
       for (const rawEvent of rawEvents) {
@@ -94,9 +101,7 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
           const normalized = transformTicketmasterEvent(rawEvent);
 
           if (!normalized.success) {
-            log.warning(`Failed to normalize event ${rawEvent.id}:`, {
-              errors: normalized.errors
-            });
+            console.warn(`⚠️  Failed to normalize event ${rawEvent.id}:`, normalized.errors);
             failed++;
             continue;
           }
@@ -105,9 +110,7 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
           await upsertEvent(normalized.data);
           success++;
         } catch (error) {
-          log.error(`Failed to process event ${rawEvent.id || 'unknown'}:`, {
-            error: error instanceof Error ? error.message : String(error)
-          });
+          console.error(`❌ Failed to process event ${rawEvent.id || 'unknown'}:`, error instanceof Error ? error.message : String(error));
           failed++;
         }
       }
@@ -115,12 +118,12 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
       // Progress logging every 10 pages
       if (page > 0 && page % 10 === 0) {
         const quota = client.getQuotaUsage();
-        log.info(`Progress: ${success} saved, ${failed} failed (page ${page}). API quota: ${quota.used}/${quota.total} (${quota.percentUsed}%)`);
+        console.log(`📊 Progress: ${success} saved, ${failed} failed (page ${page}). API quota: ${quota.used}/${quota.total} (${quota.percentUsed}%)`);
       }
 
       // Check if more pages exist
       if (page >= response.page.totalPages - 1) {
-        log.info(`Reached last page (${page + 1} of ${response.page.totalPages}). Crawl complete.`);
+        console.log(`✅ Reached last page (${page + 1} of ${response.page.totalPages}). Crawl complete.`);
         break;
       }
 
@@ -128,17 +131,13 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
     }
 
     const quota = client.getQuotaUsage();
-    log.info(`Ticketmaster crawl complete: ${success} success, ${failed} failed`);
-    log.info(`API quota used: ${quota.used}/${quota.total} requests (${quota.percentUsed}%)`);
+    console.log(`\n✅ Ticketmaster crawl complete: ${success} success, ${failed} failed`);
+    console.log(`📊 API quota used: ${quota.used}/${quota.total} requests (${quota.percentUsed}%)`);
 
     return { success, failed };
   } catch (error) {
-    log.error('Ticketmaster crawl failed:', {
-      error: error instanceof Error ? error.message : String(error),
-      page,
-      successSoFar: success,
-      failedSoFar: failed
-    });
+    console.error('❌ Ticketmaster crawl failed:', error instanceof Error ? error.message : String(error));
+    console.error('Details:', { page, successSoFar: success, failedSoFar: failed });
     throw error;
   }
 }

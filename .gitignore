@@ -39,3 +39,8 @@ playwright-state/
 .claude/gsd-file-manifest.json
 .claude/gsd-local-patches/
 .pre-commit-cache/
+.env.local
+.env.local~
+.claude/mem-lite/
+debug/
+test-results/

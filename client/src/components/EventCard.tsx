@@ -1,16 +1,15 @@
 /**
- * Event card component displaying full event details with ticket purchase links.
+ * Compact event card component for grid display.
  *
  * Features:
- * - Displays all event information: name, artist, date/time, venue, genre, price
- * - Primary ticket button for first ticket source
- * - Badge showing additional platform count
- * - Mobile-responsive design (320px to 1920px+)
- * - Accessibility-first with ARIA labels and semantic HTML
- * - Deep links to ticket platform event pages
+ * - Compact design showing only essential info (name, date, venue, time)
+ * - Click to open modal with full details
+ * - Hover states for interactivity
+ * - Keyboard accessible
+ * - Truncated event names (max 2 lines)
  */
 
-import { formatEventDate } from '@/lib/date';
+import { formatCompactDate } from '@/lib/date';
 import type { EventResponse } from '@/types/events';
 
 interface EventCardProps {
@@ -18,66 +17,56 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
-  const primaryTicket = event.ticketSources[0];
-  const additionalPlatforms = event.ticketSources.length - 1;
+  // Safely handle event name that might be an object
+  const eventName = typeof event.name === 'string' ? event.name : '[Invalid Event Name]';
+  const ticketUrl = event.ticketSources[0]?.url;
 
-  return (
-    <article className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-blue-500">
-      {/* Event name */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-        {event.name}
-      </h3>
-
-      {/* Artist */}
-      <p className="text-sm text-gray-600 mb-3">
-        {event.artist}
-      </p>
-
-      {/* Metadata row: date, venue, genre */}
-      <div className="flex flex-col gap-2 mb-3 text-sm text-gray-700">
-        <div className="flex items-center gap-1">
-          <span aria-label="Date">📅</span>
-          <span>{formatEventDate(event.date)}</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <span aria-label="Venue">📍</span>
-          <span>{event.venue}</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <span aria-label="Genre">🎵</span>
-          <span>{event.genre}</span>
-        </div>
+  const cardContent = (
+    <>
+      {/* Date badge and event name */}
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1">
+          {eventName}
+        </h3>
+        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2 whitespace-nowrap flex-shrink-0">
+          {formatCompactDate(event.date)}
+        </span>
       </div>
 
-      {/* Price */}
-      {event.price && (
-        <p className="text-sm font-medium text-gray-700 mb-3">
-          {event.price}
-        </p>
-      )}
-
-      {/* Ticket section */}
-      {primaryTicket && (
-        <div className="flex items-center gap-2 mt-4">
-          <a
-            href={primaryTicket.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Buy tickets on ${primaryTicket.platform}`}
-            className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Buy Tickets on {primaryTicket.platform}
-          </a>
-
-          {additionalPlatforms > 0 && (
-            <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-              +{additionalPlatforms} more platform{additionalPlatforms > 1 ? 's' : ''}
-            </span>
-          )}
+      {/* Venue and time */}
+      <div className="text-xs text-gray-600 space-y-1">
+        <div className="flex items-center gap-1">
+          <span aria-label="Venue">📍</span>
+          <span className="truncate">{event.venue}</span>
         </div>
-      )}
-    </article>
+        {event.time && (
+          <div className="flex items-center gap-1">
+            <span aria-label="Time">🕐</span>
+            <span>{event.time}</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  // If no ticket URL, render as non-clickable article
+  if (!ticketUrl) {
+    return (
+      <article className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
+        {cardContent}
+      </article>
+    );
+  }
+
+  // Render as clickable link
+  return (
+    <a
+      href={ticketUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block border border-gray-200 rounded-lg p-3 bg-white shadow-sm hover:shadow-md hover:border-blue-400 transition-all"
+    >
+      {cardContent}
+    </a>
   );
 }

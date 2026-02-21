@@ -2,14 +2,15 @@
  * Event list component with infinite scroll pagination.
  *
  * Features:
- * - Displays events in chronological order
+ * - Displays events in compact grid layout (1-3 columns responsive)
+ * - Click event card to open modal with full details
  * - Automatic infinite scroll using intersection observer
  * - Loading states with skeleton cards
  * - Error handling with user-friendly messages
  * - Stockholm timezone for all dates
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useEvents } from '../hooks/useEvents';
 import { useFilterState } from '../hooks/useFilterState';
@@ -40,8 +41,15 @@ export function EventList() {
   // Loading state - show skeleton cards
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4" role="list">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div
+        className="gap-4"
+        role="list"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
+        }}
+      >
+        {Array.from({ length: 9 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
       </div>
@@ -71,19 +79,33 @@ export function EventList() {
     );
   }
 
-  // Success state - render event list
+  // Success state - render event grid
   return (
-    <div className="flex flex-col gap-4" role="list">
-      {allEvents.map((event: EventResponse) => (
-        <EventCard key={event.id} event={event} />
-      ))}
+    <>
+      <div
+        className="gap-4"
+        role="list"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
+        }}
+      >
+        {allEvents.map((event: EventResponse) => (
+          <EventCard key={event.id} event={event} />
+        ))}
+      </div>
 
       {/* Infinite scroll trigger */}
-      <div ref={ref} className="py-5 text-center">
+      <div ref={ref} className="py-5 text-center bg-yellow-100">
+        <p className="text-xs text-gray-500">
+          hasNextPage: {String(hasNextPage)} | isFetchingNextPage: {String(isFetchingNextPage)}
+        </p>
         {isFetchingNextPage && (
           <p className="text-gray-600">Loading more events...</p>
         )}
       </div>
-    </div>
+
+      {/* Modal disabled for now */}
+    </>
   );
 }

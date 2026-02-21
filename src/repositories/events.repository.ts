@@ -10,7 +10,7 @@
  * - Cursor-based pagination (O(1) performance at any depth)
  */
 
-import { eq, gte, lte, ilike, and, or, gt } from 'drizzle-orm';
+import { eq, gte, lte, ilike, and, or, gt, asc } from 'drizzle-orm';
 import { events, type Event } from '../db/schema.js';
 import { db } from '../db/client.js';
 
@@ -156,7 +156,7 @@ export class EventsRepository {
       .select()
       .from(events)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(events.date, events.id) // Consistent ordering for pagination
+      .orderBy(asc(events.date), asc(events.name), asc(events.id)) // Chronological, then alphabetic, then ID
       .limit(limit + 1); // Fetch extra to check if more exist
 
     // Build response with pagination metadata

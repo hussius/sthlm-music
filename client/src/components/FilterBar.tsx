@@ -20,19 +20,21 @@ export function FilterBar() {
   const debouncedArtist = useDebounce(artistInput, 300);
   const debouncedEvent = useDebounce(eventInput, 300);
 
-  // Set default date range on mount if not already set
+  // Set default date filter to show events from today to 3 months out
   useEffect(() => {
-    if (!filters.dateFrom && !filters.dateTo) {
+    // Only set default if NO filters are present at all
+    const hasAnyFilter = filters.dateFrom || filters.dateTo || filters.genre || filters.venue;
+    if (!hasAnyFilter) {
       const today = new Date();
-      const threeMonthsLater = new Date(today);
-      threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+      const threeMonths = new Date();
+      threeMonths.setMonth(threeMonths.getMonth() + 3);
 
       updateFilters({
         dateFrom: today.toISOString(),
-        dateTo: threeMonthsLater.toISOString(),
+        dateTo: threeMonths.toISOString(),
       });
     }
-  }, []); // Only run once on mount
+  }, [filters, updateFilters]);
 
   // Sync debounced values to URL (triggers API refetch)
   useEffect(() => {
@@ -44,12 +46,16 @@ export function FilterBar() {
   }, [debouncedEvent]);
 
   const handleClearFilters = () => {
-    // Clear URL params
+    // Reset to default date range (today to 3 months out)
+    const today = new Date();
+    const threeMonths = new Date();
+    threeMonths.setMonth(threeMonths.getMonth() + 3);
+
     updateFilters({
       genre: undefined,
       venue: undefined,
-      dateFrom: undefined,
-      dateTo: undefined,
+      dateFrom: today.toISOString(),
+      dateTo: threeMonths.toISOString(),
       artistSearch: undefined,
       eventSearch: undefined,
     });
@@ -60,16 +66,24 @@ export function FilterBar() {
   };
 
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = e.target.value;
-    // Convert to ISO datetime (start of day)
-    const isoDate = date ? `${date}T00:00:00` : undefined;
+    const dateStr = e.target.value;
+    if (!dateStr) {
+      updateFilters({ dateFrom: undefined });
+      return;
+    }
+    // Convert to ISO datetime - use UTC midnight to avoid timezone issues
+    const isoDate = `${dateStr}T00:00:00.000Z`;
     updateFilters({ dateFrom: isoDate });
   };
 
   const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = e.target.value;
-    // Convert to ISO datetime (end of day)
-    const isoDate = date ? `${date}T23:59:59` : undefined;
+    const dateStr = e.target.value;
+    if (!dateStr) {
+      updateFilters({ dateTo: undefined });
+      return;
+    }
+    // Convert to ISO datetime - use UTC end of day
+    const isoDate = `${dateStr}T23:59:59.999Z`;
     updateFilters({ dateTo: isoDate });
   };
 
@@ -78,7 +92,7 @@ export function FilterBar() {
       {/* Title */}
       <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
 
-      {/* Genre Filter */}
+      {/* Genre Filter - Hidden (not useful with current data)
       <div className="flex flex-col gap-2">
         <label htmlFor="genre" className="text-sm font-medium text-gray-700">
           Genre
@@ -92,19 +106,9 @@ export function FilterBar() {
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Genres</option>
-          <option value="Rock">Rock</option>
-          <option value="Pop">Pop</option>
-          <option value="Electronic">Electronic</option>
-          <option value="Jazz">Jazz</option>
-          <option value="Hip Hop">Hip Hop</option>
-          <option value="Metal">Metal</option>
-          <option value="Indie">Indie</option>
-          <option value="Folk">Folk</option>
-          <option value="Classical">Classical</option>
-          <option value="World">World</option>
-          <option value="Other">Other</option>
         </select>
       </div>
+      */}
 
       {/* Venue Filter */}
       <div className="flex flex-col gap-2">
@@ -121,30 +125,33 @@ export function FilterBar() {
         >
           <option value="">All Venues</option>
           <option value="Kollektivet Livet">Kollektivet Livet</option>
+          <option value="Debaser Nova">Debaser Nova</option>
+          <option value="Debaser Strand">Debaser Strand</option>
           <option value="Slaktkyrkan">Slaktkyrkan</option>
           <option value="Hus 7">Hus 7</option>
+          <option value="Terrassen">Terrassen</option>
           <option value="Fasching">Fasching</option>
           <option value="Nalen">Nalen</option>
           <option value="Fylkingen">Fylkingen</option>
-          <option value="Slakthuset">Slakthuset</option>
-          <option value="Fållan">Fållan</option>
-          <option value="Landet">Landet</option>
-          <option value="Mosebacke">Mosebacke</option>
-          <option value="Kägelbanan">Kägelbanan</option>
           <option value="Pet Sounds">Pet Sounds</option>
-          <option value="Debaser">Debaser</option>
+          <option value="Fållan">Fållan</option>
+          <option value="Södra Teatern">Södra Teatern</option>
+          <option value="Landet">Landet</option>
+          <option value="Rönnells Antikvariat">Rönnells Antikvariat</option>
+          <option value="Banankompaniet">Banankompaniet</option>
+          <option value="Under Bron">Under Bron</option>
         </select>
       </div>
 
       {/* Date Range */}
       <div className="flex flex-col gap-2">
         <label htmlFor="dateFrom" className="text-sm font-medium text-gray-700">
-          Date From
+          Date From (click to open calendar)
         </label>
         <input
           id="dateFrom"
           type="date"
-          value={filters.dateFrom?.split('T')[0] || ''}
+          value={filters.dateFrom ? filters.dateFrom.split('T')[0] : new Date().toISOString().split('T')[0]}
           onChange={handleDateFromChange}
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
@@ -152,12 +159,16 @@ export function FilterBar() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="dateTo" className="text-sm font-medium text-gray-700">
-          Date To
+          Date To (click to open calendar)
         </label>
         <input
           id="dateTo"
           type="date"
-          value={filters.dateTo?.split('T')[0] || ''}
+          value={filters.dateTo ? filters.dateTo.split('T')[0] : (() => {
+            const threeMonths = new Date();
+            threeMonths.setMonth(threeMonths.getMonth() + 3);
+            return threeMonths.toISOString().split('T')[0];
+          })()}
           onChange={handleDateToChange}
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
