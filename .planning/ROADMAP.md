@@ -12,7 +12,7 @@ This roadmap takes the Stockholm Music Events Calendar from concept to public la
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Data Foundation & Multi-Platform Aggregation** - Build scraping infrastructure for all 3 ticket platforms with deduplication
+- [x] **Phase 1: Data Foundation & Multi-Platform Aggregation** - Build scraping infrastructure for all 3 ticket platforms with deduplication (completed 2026-02-21)
 - [ ] **Phase 2: API Layer & Performance** - Create REST API with server-side filtering and pagination
 - [x] **Phase 3: Calendar UI & Public Launch** - Build mobile-responsive calendar with filters and ticket links (completed 2026-02-20)
 
@@ -33,12 +33,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Database & crawler infrastructure (Node.js, PostgreSQL, Drizzle)
 - [x] 01-02-PLAN.md — Data normalization layer (Zod schemas, venue/genre mappings)
-- [ ] 01-03-PLAN.md — Ticketmaster Discovery API crawler
+- [x] 01-03-PLAN.md — Ticketmaster Discovery API crawler
 - [x] 01-04-PLAN.md — AXS/Live Nation Playwright crawler
 - [x] 01-05-PLAN.md — DICE Playwright crawler
 - [x] 01-06-PLAN.md — Priority venue website crawlers (13 venues)
 - [x] 01-07-PLAN.md — Multi-stage deduplication engine (exact + fuzzy matching)
-- [ ] 01-08-PLAN.md — Job scheduling with BullMQ (daily crawls, cleanup, monitoring)
+- [x] 01-08-PLAN.md — Job scheduling with BullMQ (daily crawls, cleanup, monitoring)
 - [x] 01-09-PLAN.md — Gap closure: Implement ticket URL merging across duplicate events
 - [x] 01-10-PLAN.md — Gap closure: Reduce alert timing to meet 5-minute requirement
 
@@ -84,6 +84,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation & Multi-Platform Aggregation | 9/10 | In progress (gap closure pending) | - |
+| 1. Data Foundation & Multi-Platform Aggregation | 10/10 | Complete | 2026-02-21 |
 | 2. API Layer & Performance | 3/4 | In progress | - |
-| 3. Calendar UI & Public Launch | 0/3 | Complete    | 2026-02-20 |
+| 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
