@@ -10,7 +10,7 @@
  * - Stockholm timezone for all dates
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useEvents } from '../hooks/useEvents';
 import { useFilterState } from '../hooks/useFilterState';
