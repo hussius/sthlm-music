@@ -119,7 +119,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+1. **Expand crawler coverage with new APIs and venues** (crawlers)
+   - Fix Nalen scraper (no hits) and verify Kollektivet Livet coverage
+   - Integrate Tickster API (pending key) and evaluate Eventbrite API
+   - Add 20+ venue scrapers: Gamla Enskede Bryggeri, Gröna Lund, Cirkus, Kraken, Göta Lejon, Rosettas, Slakthuset, Yttons, Alcazar, Tre Backar, Tranan, Konserthuset, Snövit, Cafe 44, Kolingsborg, Fryshuset, Klubben, Studion, Sofia Common, Fredagsmangel
+   - See: .planning/todos/pending/2026-02-21-expand-crawler-coverage-with-new-apis-and-venues.md
 
 ### Blockers/Concerns
 
