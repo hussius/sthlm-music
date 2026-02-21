@@ -117,6 +117,10 @@ Recent decisions affecting current work:
 - [Phase 03]: Separate immediate input state from debounced state - input feels instant while API calls are throttled (03-03)
 - [Phase 03]: Genre and venue filters update immediately without debouncing - dropdowns don't need throttling (03-03)
 
+### Roadmap Evolution
+
+- Phase 4 added: Crawler Expansion & Coverage Enhancement (2026-02-21)
+
 ### Pending Todos
 
 1. **Expand crawler coverage with new APIs and venues** (crawlers)

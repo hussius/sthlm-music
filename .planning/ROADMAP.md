@@ -87,3 +87,12 @@ Phases execute in numeric order: 1 → 2 → 3
 | 1. Data Foundation & Multi-Platform Aggregation | 10/10 | Complete | 2026-02-21 |
 | 2. API Layer & Performance | 4/4 | Complete | 2026-02-20 |
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
+
+### Phase 4: Crawler Expansion & Coverage Enhancement
+
+**Goal:** [To be planned]
+**Depends on:** Phase 3
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 4 to break down)
