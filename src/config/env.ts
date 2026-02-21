@@ -12,7 +12,7 @@ dotenv.config({ path: '.env.local' });
  */
 const envSchema = z.object({
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid PostgreSQL URL'),
-  REDIS_URL: z.string().url('REDIS_URL must be a valid Redis URL'),
+  REDIS_URL: z.string().url('REDIS_URL must be a valid Redis URL').default('redis://localhost:6379'),
   TICKETMASTER_API_KEY: z.string().min(1, 'TICKETMASTER_API_KEY is required'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
