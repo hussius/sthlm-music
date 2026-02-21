@@ -20,6 +20,20 @@ export function FilterBar() {
   const debouncedArtist = useDebounce(artistInput, 300);
   const debouncedEvent = useDebounce(eventInput, 300);
 
+  // Set default date range on mount if not already set
+  useEffect(() => {
+    if (!filters.dateFrom && !filters.dateTo) {
+      const today = new Date();
+      const threeMonthsLater = new Date(today);
+      threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+
+      updateFilters({
+        dateFrom: today.toISOString(),
+        dateTo: threeMonthsLater.toISOString(),
+      });
+    }
+  }, []); // Only run once on mount
+
   // Sync debounced values to URL (triggers API refetch)
   useEffect(() => {
     updateFilters({ artistSearch: debouncedArtist });
