@@ -140,6 +140,10 @@ export function FilterBar() {
           <option value="Stampen">Stampen</option>
           <option value="Gamla Enskede Bryggeri">Gamla Enskede Bryggeri</option>
           <option value="Reimersholme">Reimersholme</option>
+          <option value="Rosettas">Rosettas</option>
+          <option value="Slakthusetclub">Slakthusetclub</option>
+          <option value="Gröna Lund">Gröna Lund</option>
+          <option value="Geronimos FGT">Geronimos FGT</option>
         </select>
       </div>
 
