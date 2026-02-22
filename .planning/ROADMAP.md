@@ -73,26 +73,41 @@ Plans:
 **Plans**: 3 plans across 2 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — React app foundation with data fetching and infinite scroll
-- [ ] 03-02-PLAN.md — Event cards with Tailwind styling and ticket integration
-- [ ] 03-03-PLAN.md — Filter UI with URL state management and debounced search
+- [x] 03-01-PLAN.md — React app foundation with data fetching and infinite scroll
+- [x] 03-02-PLAN.md — Event cards with Tailwind styling and ticket integration
+- [x] 03-03-PLAN.md — Filter UI with URL state management and debounced search
+
+### Phase 4: Crawler Expansion & Coverage Enhancement
+**Goal**: Expand Stockholm music event coverage by adding 10+ venue-specific crawlers and integrating the Tickster ticketing platform API, growing the crawler fleet from 12 to 27+ active venues
+**Depends on**: Phase 3
+**Requirements**: none specified
+**Success Criteria** (what must be TRUE):
+  1. All newly added crawlers return >0 events when run against live venue websites
+  2. All venues are accessible via venue filter in the calendar UI
+  3. crawl-all.js orchestrates all active crawlers in sequence
+  4. Berns crawler exists (JS-rendered site, 0 events acceptable as known limitation)
+  5. Tickster integration ready pending API key delivery
+**Plans**: 5 plans across 2 waves
+
+Note: 7 additional crawlers were added ad-hoc during phase execution (Nalen, Konserthuset,
+Fredagsmangel, Rosettas, Slakthusetclub, Gröna Lund, Geronimos FGT), bringing total active
+crawlers to 27+.
+
+Plans:
+- [x] 04-01-PLAN.md — 5 new venue crawlers (Stampen, GEB, Reimersholme, Cirkus, Berns)
+- [ ] 04-02-PLAN.md — Tickster API integration (blocked on API key)
+- [ ] 04-03-PLAN.md — Göta Lejon Live Nation API + B-K Webflow crawlers
+- [ ] 04-04-PLAN.md — Rival Bootstrap carousel + Under Bron fix
+- [ ] 04-05-PLAN.md — Phase wrap-up (ROADMAP + STATE update)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3
+Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation & Multi-Platform Aggregation | 10/10 | Complete | 2026-02-21 |
 | 2. API Layer & Performance | 4/4 | Complete | 2026-02-20 |
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
-
-### Phase 4: Crawler Expansion & Coverage Enhancement
-
-**Goal:** [To be planned]
-**Depends on:** Phase 3
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 4 to break down)
+| 4. Crawler Expansion & Coverage Enhancement | 1/5 | In Progress | - |
