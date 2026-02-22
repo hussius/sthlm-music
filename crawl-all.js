@@ -30,6 +30,7 @@ const crawlers = [
   { name: 'Gröna Lund', file: './crawl-gronalund.js' },
   { name: 'Geronimos FGT', file: './crawl-geronimosfgt.js' },
   { name: 'Konserthuset', file: './crawl-konserthuset.js' },
+  { name: 'Fredagsmangel', file: './crawl-fredagsmangel.js' },
   // Under Bron disabled - parsing is broken
   // { name: 'Under Bron', file: './crawl-underbron.js' },
 ];
