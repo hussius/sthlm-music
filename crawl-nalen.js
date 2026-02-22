@@ -42,6 +42,15 @@ try {
   const events = await page.evaluate(() => {
     const eventData = [];
 
+    // Extract plain text from Nalen's ProseMirror rich-text format
+    const extractText = (node) => {
+      if (typeof node === 'string') return node;
+      if (!node || typeof node !== 'object') return '';
+      if (node.text) return node.text;
+      if (Array.isArray(node.content)) return node.content.map(extractText).join('');
+      return '';
+    };
+
     // Try to extract JSON data from script tags
     const scripts = document.querySelectorAll('script[type="application/json"]');
 
@@ -55,8 +64,10 @@ try {
 
           // Check if this object looks like an event
           if (obj.artistName && obj.startDate) {
-            // Ensure artistName and startDate are strings, not objects
-            const name = typeof obj.artistName === 'string' ? obj.artistName : null;
+            // artistName is a ProseMirror rich-text object — extract plain text
+            const name = typeof obj.artistName === 'string'
+              ? obj.artistName
+              : extractText(obj.artistName).trim();
             const date = typeof obj.startDate === 'string' ? obj.startDate : null;
 
             // Only add if both name and date are valid strings

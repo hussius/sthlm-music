@@ -86,107 +86,87 @@ function normalizeGenre(text) {
 
 try {
   const events = [];
-  let offset = 0;
-  let hasMore = true;
 
-  while (hasMore) {
-    const url = offset === 0 ? VENUE_URL : `${VENUE_URL}?offset=${offset}`;
-    console.log(`📄 Fetching page with offset ${offset}...`);
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-
-    const pageEvents = [];
-
-    // Find event elements using .event class
-    $('.event').each((i, elem) => {
-      try {
-        const $elem = $(elem);
-
-        // Get event name from h3
-        const name = $elem.find('h3').text().trim();
-        if (!name) {
-          console.log(`    ⚠️  Event ${i + 1}: No name found`);
-          return;
-        }
-
-        // Get full text to parse date and venue
-        const fullText = $elem.text();
-
-        // Extract date
-        let dateStr = null;
-        const lines = fullText.split('\n').map(l => l.trim()).filter(l => l);
-
-        for (let line of lines) {
-          if (line.match(/\d+\s+(jan|feb|mar|apr|maj|jun|jul|aug|sep|okt|nov|dec)/i) ||
-              line.toLowerCase() === 'idag' ||
-              line.toLowerCase() === 'imorgon') {
-            dateStr = line;
-            break;
-          }
-        }
-
-        if (!dateStr) {
-          console.log(`    ⚠️  Event "${name}": No date found`);
-          return;
-        }
-
-        // Extract venue info
-        let venueInfo = VENUE_NAME;
-        const venueMatch = fullText.match(/Kollektivet Livet[^K]*/);
-        if (venueMatch) {
-          venueInfo = venueMatch[0].split('\n')[0].trim();
-        }
-
-        // Get ticket URL (optional)
-        const ticketUrl = $elem.find('a[href*="tickster"], a[href*="blackplanet"]').attr('href');
-        const finalTicketUrl = ticketUrl
-          ? (ticketUrl.startsWith('http') ? ticketUrl : `https://stadsgardsterminalen.com${ticketUrl}`)
-          : `https://stadsgardsterminalen.com/program/`;
-
-        const eventDate = parseSwedishDate(dateStr);
-        if (!eventDate || isNaN(eventDate.getTime())) {
-          console.log(`    ⚠️  Event "${name}": Invalid date "${dateStr}"`);
-          return;
-        }
-
-        pageEvents.push({
-          name,
-          artist: name,
-          venue: venueInfo,
-          date: eventDate,
-          time: '20:00',
-          genre: normalizeGenre(name),
-          ticketSources: [{
-            platform: 'venue-direct',
-            url: finalTicketUrl,
-            addedAt: new Date().toISOString(),
-          }],
-          sourceId: `stadsgarden-${name}-${dateStr}`,
-          sourcePlatform: 'venue-direct',
-        });
-
-      } catch (error) {
-        console.error(`⚠️  Error parsing event: ${error.message}`);
-      }
-    });
-
-    const totalOnPage = $('.event').length;
-    console.log(`  Found ${pageEvents.length} events on this page (${totalOnPage} total elements)`);
-
-    if (totalOnPage === 0) {
-      hasMore = false;
-      console.log('  No more events, stopping pagination');
-    } else {
-      events.push(...pageEvents);
-      offset += 12; // Page size is 12
-    }
+  console.log(`📄 Fetching ${VENUE_URL}...`);
+  const response = await fetch(VENUE_URL);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
+
+  const html = await response.text();
+  const $ = cheerio.load(html);
+
+  // Find event elements using .event class
+  $('.event').each((i, elem) => {
+    try {
+      const $elem = $(elem);
+
+      // Get event name from h3
+      const name = $elem.find('h3').text().trim();
+      if (!name) {
+        console.log(`    ⚠️  Event ${i + 1}: No name found`);
+        return;
+      }
+
+      // Use <time datetime="2026-02-28 19:00:00"> attribute for exact date/time
+      const datetimeAttr = $elem.find('time').attr('datetime');
+      if (!datetimeAttr) {
+        console.log(`    ⚠️  Event "${name}": No datetime attribute found`);
+        return;
+      }
+
+      // Parse "2026-02-28 19:00:00" format
+      const dateMatch = datetimeAttr.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+      if (!dateMatch) {
+        console.log(`    ⚠️  Event "${name}": Could not parse datetime "${datetimeAttr}"`);
+        return;
+      }
+      const [, year, month, day, hour, minute] = dateMatch;
+      const eventDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0, 0);
+
+      if (isNaN(eventDate.getTime())) {
+        console.log(`    ⚠️  Event "${name}": Invalid date`);
+        return;
+      }
+
+      // Always store as 'Kollektivet Livet' so UI venue filter works
+      // (sub-venue like "Stora Scen"/"Lilla Scen" stored via ticket URL)
+
+      // Get ticket URL — prefer Tickster link, fall back to event page
+      const ticketUrl = $elem.find('a[href*="tickster"], a[href*="blackplanet"]').attr('href');
+      const eventPageUrl = $elem.find('a.read-more').attr('href')
+        || $elem.find('a[href*="/event/"]').first().attr('href')
+        || VENUE_URL;
+      const finalTicketUrl = ticketUrl
+        ? (ticketUrl.startsWith('http') ? ticketUrl : `https://stadsgardsterminalen.com${ticketUrl}`)
+        : eventPageUrl;
+
+      // Use event page slug as stable sourceId
+      const eventSlug = eventPageUrl.replace(/.*\/event\//, '').replace(/\/$/, '') || name;
+      const sourceId = `stadsgarden-${eventSlug}`;
+
+      const timeStr = `${hour}:${minute}`;
+
+      events.push({
+        name,
+        artist: name,
+        venue: VENUE_NAME,
+        date: eventDate,
+        time: timeStr,
+        genre: normalizeGenre(name),
+        ticketSources: [{
+          platform: 'venue-direct',
+          url: finalTicketUrl,
+          addedAt: new Date().toISOString(),
+        }],
+        sourceId,
+        sourcePlatform: 'venue-direct',
+      });
+
+    } catch (error) {
+      console.error(`⚠️  Error parsing event: ${error.message}`);
+    }
+  });
 
   console.log(`\n📋 Found ${events.length} events`);
 

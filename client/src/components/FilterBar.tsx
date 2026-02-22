@@ -129,17 +129,14 @@ export function FilterBar() {
           <option value="Debaser Strand">Debaser Strand</option>
           <option value="Slaktkyrkan">Slaktkyrkan</option>
           <option value="Hus 7">Hus 7</option>
-          <option value="Terrassen">Terrassen</option>
           <option value="Fasching">Fasching</option>
           <option value="Nalen">Nalen</option>
           <option value="Fylkingen">Fylkingen</option>
           <option value="Pet Sounds">Pet Sounds</option>
           <option value="Fållan">Fållan</option>
           <option value="Södra Teatern">Södra Teatern</option>
-          <option value="Landet">Landet</option>
           <option value="Rönnells Antikvariat">Rönnells Antikvariat</option>
           <option value="Banankompaniet">Banankompaniet</option>
-          <option value="Under Bron">Under Bron</option>
         </select>
       </div>
 

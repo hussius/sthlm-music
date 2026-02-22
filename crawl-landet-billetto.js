@@ -2,14 +2,23 @@ import dotenv from 'dotenv';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { chromium } from 'playwright';
+import { mkdirSync } from 'fs';
 import * as schema from './dist/db/schema.js';
 
 dotenv.config({ path: '.env.local' });
 
+// Set temp directory to avoid permission issues
+const tmpDir = '/tmp/claude-crawlers';
+try {
+  mkdirSync(tmpDir, { recursive: true });
+  process.env.TMPDIR = tmpDir;
+} catch (e) {
+  console.warn(`Could not create temp dir ${tmpDir}:`, e.message);
+}
+
 const DATABASE_URL = process.env.DATABASE_URL;
-const SEARCH_URL = 'https://billetto.se/search?text=stockholm&category%5B%5D=music';
+const BILLETTO_URL = 'https://billetto.se/c/music-c?location_slug%5B%5D=stockholm';
 const VENUE_NAME = 'Landet';
-const VENUE_FILTER = 'Landet Hägersten';
 
 console.log(`🎸 Crawling ${VENUE_NAME} via Billetto...`);
 
@@ -17,21 +26,30 @@ const client = postgres(DATABASE_URL, { max: 1 });
 const db = drizzle(client, { schema });
 
 function parseSwedishDate(dateStr) {
-  // Parse Swedish dates like "22 feb 2026" or "15 mar"
   const months = {
-    jan: 0, feb: 1, mar: 2, apr: 3, maj: 4, jun: 5,
+    jan: 0, feb: 1, mar: 2, mars: 2, apr: 3, maj: 4, jun: 5,
     jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, dec: 11
   };
 
-  const match = dateStr.match(/(\d{1,2})\s+(\w{3})\s*(\d{4})?/i);
-  if (match) {
-    const day = parseInt(match[1]);
-    const monthName = match[2].toLowerCase();
-    const year = match[3] ? parseInt(match[3]) : new Date().getFullYear();
-    const month = months[monthName];
+  const cleaned = dateStr.toLowerCase().replace(/\./g, '').trim();
 
+  // Format: "apr 17 2026 19:30" or "apr 17 2026"
+  let match = cleaned.match(/(\w{3,4})\s+(\d{1,2})\s+(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (match) {
+    const month = months[match[1]];
     if (month !== undefined) {
-      return new Date(year, month, day, 20, 0, 0, 0);
+      return new Date(parseInt(match[3]), month, parseInt(match[2]),
+        match[4] ? parseInt(match[4]) : 20, match[5] ? parseInt(match[5]) : 0, 0, 0);
+    }
+  }
+
+  // Format: "22 feb 2026"
+  match = cleaned.match(/(\d{1,2})\s+(\w{3,4})\s*(\d{4})?/);
+  if (match) {
+    const month = months[match[2]];
+    if (month !== undefined) {
+      return new Date(match[3] ? parseInt(match[3]) : new Date().getFullYear(),
+        month, parseInt(match[1]), 20, 0, 0, 0);
     }
   }
 
@@ -44,91 +62,61 @@ try {
     headless: true,
     args: ['--disable-dev-shm-usage', '--no-sandbox'],
   });
-  const context = await browser.newContext({
+  const page = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-  });
-  const page = await context.newPage();
+  }).then(ctx => ctx.newPage());
 
-  console.log('📄 Loading Billetto search page...');
-  await page.goto(SEARCH_URL, { waitUntil: 'networkidle', timeout: 30000 });
-
-  // Wait for events to load
-  console.log('⏳ Waiting for search results...');
+  console.log('📄 Loading Billetto music page (Stockholm)...');
+  await page.goto(BILLETTO_URL, { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForTimeout(5000);
 
-  console.log('🔍 Extracting events...');
+  console.log('🔍 Extracting Landet events...');
 
-  const events = await page.evaluate((venueFilter) => {
+  const events = await page.evaluate(() => {
     const eventData = [];
 
-    // Try multiple selectors for event cards
-    const possibleSelectors = [
-      'article',
-      '[class*="event"]',
-      '[class*="card"]',
-      'a[href*="/e/"]',
-      '[data-testid*="event"]',
-      '.ant-card',
-    ];
+    // Each event card has a link to /e/<slug>
+    const eventLinks = Array.from(document.querySelectorAll('a[href*="/e/"]'));
 
-    let eventElements = [];
-
-    for (const selector of possibleSelectors) {
-      const elems = document.querySelectorAll(selector);
-      if (elems.length > 0) {
-        console.log(`Found ${elems.length} elements with selector: ${selector}`);
-        eventElements = Array.from(elems);
-        break;
-      }
-    }
-
-    // If no structured elements found, look for links to event pages
-    if (eventElements.length === 0) {
-      eventElements = Array.from(document.querySelectorAll('a[href*="/e/"]'));
-      console.log(`Found ${eventElements.length} event links`);
-    }
-
-    eventElements.forEach(elem => {
+    eventLinks.forEach(link => {
       try {
-        // Get event name from various possible locations
-        const nameElem = elem.querySelector('h1, h2, h3, h4, [class*="title"]');
-        const name = nameElem?.textContent?.trim() || elem.textContent?.trim().split('\n')[0];
+        const href = link.getAttribute('href') || '';
+        const container = link.closest('article') || link.closest('li') ||
+                          link.closest('[class*="card"]') || link.closest('div[class]') || link;
+        const fullText = container.textContent || '';
 
+        // Match venue via Billetto's "Plats: VenueName" field — avoids matching
+        // "landet" as a common Swedish word in event descriptions
+        const venueMatch = fullText.match(/Plats:\s*([^\n,]+)/i);
+        const venue = venueMatch ? venueMatch[1].trim() : '';
+        if (!venue.startsWith('Landet')) return;
+
+        // Event name from heading
+        const heading = container.querySelector('h1, h2, h3, h4, h5');
+        const name = heading?.textContent?.trim() || link.textContent?.trim().split('\n')[0]?.trim();
         if (!name || name.length < 2) return;
 
-        // Get full text to search for venue and date
-        const fullText = elem.textContent || '';
+        // Date — Billetto renders e.g. "apr. 17 2026 19:30"
+        const dateMatch = fullText.match(/(\w{3,4}\.?\s+\d{1,2}\s+\d{4}\s+\d{1,2}:\d{2})/i) ||
+                          fullText.match(/(\d{1,2}\s+\w{3,4}\.?\s+\d{4})/i);
+        if (!dateMatch) return;
 
-        // Check if this event is at Landet, Hägersten
-        if (!fullText.includes(venueFilter)) {
-          return;
-        }
-
-        // Try to find date
-        const dateMatch = fullText.match(/(\d{1,2})\s+(\w{3})\s*(\d{4})?/i);
-        const dateStr = dateMatch ? dateMatch[0] : '';
-
-        // Get event URL
-        const link = elem.tagName === 'A' ? elem : elem.querySelector('a');
-        const href = link?.getAttribute('href') || '';
-
-        if (dateStr) {
-          eventData.push({
-            name: name,
-            date: dateStr,
-            url: href,
-            fullText: fullText.substring(0, 200),
-          });
-        }
+        eventData.push({
+          name,
+          date: dateMatch[1].trim(),
+          url: href.startsWith('http') ? href : `https://billetto.se${href}`,
+        });
       } catch (e) {
-        // Skip problematic elements
+        // skip
       }
     });
 
     return eventData;
-  }, VENUE_FILTER);
+  });
 
-  console.log(`\n📋 Found ${events.length} events at ${VENUE_FILTER}`);
+  await browser.close();
+
+  console.log(`\n📋 Found ${events.length} Landet events`);
 
   let success = 0;
   let failed = 0;
@@ -136,7 +124,6 @@ try {
   for (const eventData of events) {
     try {
       const eventDate = parseSwedishDate(eventData.date);
-
       if (!eventDate || isNaN(eventDate.getTime())) {
         console.log(`⚠️  ${eventData.name}: Could not parse date (${eventData.date})`);
         failed++;
@@ -148,13 +135,11 @@ try {
         artist: eventData.name,
         venue: VENUE_NAME,
         date: eventDate,
-        time: '20:00',
+        time: eventDate.toTimeString().substring(0, 5),
         genre: 'other',
         ticketSources: [{
           platform: 'billetto',
-          url: eventData.url.startsWith('http')
-            ? eventData.url
-            : `https://billetto.se${eventData.url}`,
+          url: eventData.url,
           addedAt: new Date().toISOString(),
         }],
         sourceId: `billetto-landet-${eventData.name}-${eventDate.toISOString().split('T')[0]}`,
@@ -173,8 +158,6 @@ try {
       console.error(`❌ ${eventData.name}: ${error.message}`);
     }
   }
-
-  await browser.close();
 
   console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
 

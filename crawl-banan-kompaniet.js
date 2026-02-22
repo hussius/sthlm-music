@@ -14,7 +14,7 @@ dotenv.config({ path: '.env.local' });
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_URL = 'https://www.b-k.se/whats-on';
-const VENUE_NAME = 'Banan-Kompaniet';
+const VENUE_NAME = 'Banankompaniet';
 
 console.log(`🎸 Crawling ${VENUE_NAME}...`);
 
@@ -163,6 +163,7 @@ try {
     } catch (error) {
       failed++;
       console.error(`❌ ${eventData.name}: ${error.message}`);
+      if (error.cause) console.error('   Cause:', error.cause.message || error.cause);
     }
   }
 
