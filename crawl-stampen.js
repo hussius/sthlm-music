@@ -2,7 +2,8 @@
  * Stampen venue crawler
  *
  * Crawls: https://stampen.se/program
- * Uses Modern Events Calendar (MEC) WordPress plugin - events in static HTML.
+ * Uses Modern Events Calendar (MEC) WordPress plugin.
+ * Title in h3.mec-single-title, date as text "22 Feb 5:00 pm"
  */
 
 import dotenv from 'dotenv';
@@ -22,44 +23,66 @@ console.log(`🎸 Crawling ${VENUE_NAME}...`);
 const client = postgres(DATABASE_URL, { max: 1 });
 const db = drizzle(client, { schema });
 
-// MEC plugin renders dates like "22 Feb" (no year in display text)
-function parseMecDate(dateText) {
-  const cleaned = dateText.trim();
-
-  // Try "22 Feb 2026" first
-  let d = new Date(cleaned);
-  if (!isNaN(d.getTime())) return d;
-
-  // Try "22 Feb" — add current year
+function parseDate(dateText) {
+  // Formats: "22 Feb", "22 Feb 2026", "22 Feb 5:00 pm"
   const now = new Date();
-  const withYear = `${cleaned} ${now.getFullYear()}`;
-  d = new Date(withYear);
-  if (!isNaN(d.getTime())) {
-    // If date already passed this year, try next year
-    if (d < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
-      d = new Date(`${cleaned} ${now.getFullYear() + 1}`);
-    }
-    return d;
+  const clean = dateText.trim();
+
+  // Extract time if present: "5:00 pm" or "20:00"
+  let hour = 20, minute = 0;
+  const timeMatch = clean.match(/(\d{1,2}):(\d{2})\s*(pm|am)?/i);
+  if (timeMatch) {
+    hour = parseInt(timeMatch[1]);
+    minute = parseInt(timeMatch[2]);
+    const ampm = timeMatch[3]?.toLowerCase();
+    if (ampm === 'pm' && hour !== 12) hour += 12;
+    if (ampm === 'am' && hour === 12) hour = 0;
   }
 
-  return null;
+  // Extract day and month: "22 Feb" or "Feb 22"
+  const dmMatch = clean.match(/(\d{1,2})\s+([A-Za-z]+)/);
+  const mdMatch = clean.match(/([A-Za-z]+)\s+(\d{1,2})/);
+  let day, monthStr;
+
+  if (dmMatch) {
+    day = parseInt(dmMatch[1]);
+    monthStr = dmMatch[2];
+  } else if (mdMatch) {
+    monthStr = mdMatch[1];
+    day = parseInt(mdMatch[2]);
+  } else {
+    return null;
+  }
+
+  // Try parsing with current year appended
+  const withYear = `${day} ${monthStr} ${now.getFullYear()}`;
+  let d = new Date(withYear);
+  if (isNaN(d.getTime())) return null;
+
+  d.setHours(hour, minute, 0, 0);
+
+  // If date is in the past, try next year
+  if (d < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+    d = new Date(`${day} ${monthStr} ${now.getFullYear() + 1}`);
+    d.setHours(hour, minute, 0, 0);
+  }
+
+  return d;
 }
 
 try {
   console.log('📄 Fetching page...');
   const response = await fetch(VENUE_URL);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
   const html = await response.text();
   const $ = cheerio.load(html);
 
   console.log('🔍 Parsing events...');
 
-  // MEC plugin wraps each event in .mec-event-article
-  const articles = $('.mec-event-article').toArray();
-  console.log(`Found ${articles.length} event articles`);
+  // MEC renders each event as an <article> with h3.mec-single-title
+  const articles = $('article').toArray();
+  console.log(`Found ${articles.length} articles`);
 
   let success = 0;
   let failed = 0;
@@ -68,48 +91,35 @@ try {
     try {
       const $a = $(article);
 
-      // Title: .t-entry-title contains a link with the event name
-      const titleEl = $a.find('.t-entry-title');
+      // Title in h3.mec-single-title or any h3/h4
+      const titleEl = $a.find('.mec-single-title, h3, h4').first();
       const title = titleEl.text().trim();
       if (!title) continue;
 
-      // URL: link inside .t-entry-title
-      const linkEl = titleEl.find('a').first();
-      const eventUrl = linkEl.attr('href') || VENUE_URL;
+      // URL from the title link or any event link
+      const eventUrl = titleEl.find('a').attr('href')
+        || $a.find('a[href*="stampen.se/event"], a[href*="/event/"]').first().attr('href')
+        || VENUE_URL;
 
-      // Date: MEC stores it in a date element; try multiple selectors
-      const dateText = (
-        $a.find('.mec-event-date').first().text() ||
-        $a.find('[class*="date"]').first().text() ||
-        $a.find('time').first().attr('datetime') ||
-        $a.find('time').first().text()
-      ).trim();
-
-      if (!dateText) {
+      // Date text: look for "22 Feb" pattern in the article text
+      const articleText = $a.text();
+      const dateMatch = articleText.match(/\d{1,2}\s+[A-Za-z]{3}/);
+      if (!dateMatch) {
         console.log(`  ⚠️  No date for: ${title}`);
         continue;
       }
 
-      const eventDate = parseMecDate(dateText);
+      // Also grab time if present
+      const fullDateText = articleText.match(/\d{1,2}\s+[A-Za-z]{3,}.*?(\d{1,2}:\d{2}\s*(?:am|pm)?)/i)?.[0]
+        || dateMatch[0];
+
+      const eventDate = parseDate(fullDateText);
       if (!eventDate || isNaN(eventDate.getTime())) {
-        console.log(`  ⚠️  Could not parse date "${dateText}" for: ${title}`);
+        console.log(`  ⚠️  Could not parse date "${fullDateText}" for: ${title}`);
         continue;
       }
 
-      // Try to extract time from date area or description
-      const timeMatch = $a.text().match(/(\d{1,2}):(\d{2})\s*(pm|am)?/i);
-      let timeStr = '20:00';
-      if (timeMatch) {
-        let hour = parseInt(timeMatch[1]);
-        const minute = parseInt(timeMatch[2]);
-        const ampm = timeMatch[3]?.toLowerCase();
-        if (ampm === 'pm' && hour !== 12) hour += 12;
-        if (ampm === 'am' && hour === 12) hour = 0;
-        eventDate.setHours(hour, minute, 0, 0);
-        timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-      } else {
-        eventDate.setHours(20, 0, 0, 0);
-      }
+      const timeStr = `${String(eventDate.getHours()).padStart(2, '0')}:${String(eventDate.getMinutes()).padStart(2, '0')}`;
 
       const event = {
         name: title,
@@ -141,7 +151,6 @@ try {
   }
 
   console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-
   await client.end();
   process.exit(0);
 } catch (error) {

@@ -139,6 +139,7 @@ export function FilterBar() {
           <option value="Cirkus">Cirkus</option>
           <option value="Stampen">Stampen</option>
           <option value="Gamla Enskede Bryggeri">Gamla Enskede Bryggeri</option>
+          <option value="Reimersholme">Reimersholme</option>
         </select>
       </div>
 

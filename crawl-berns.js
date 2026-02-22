@@ -2,6 +2,8 @@
  * Berns venue crawler
  *
  * Crawls: https://berns.se/whats-on
+ * Structure: <div> <a><img></a> <p>27 February 2026</p> <a><h5>Title</h5></a> </div>
+ * Note: two <a> tags per card — image link and title link. Date is sibling <p>.
  */
 
 import dotenv from 'dotenv';
@@ -33,10 +35,12 @@ try {
 
   console.log('🔍 Parsing events...');
 
-  // Events are <a href="/calendar/..."> links with a <div> date and <h5> title
+  // Structure per event: <a><img></a> <div><h?>Title</h?><p>Date</p></div> <a>Explore</a>
+  // Title + date live in the sibling <div> next to the image <a> link.
   const eventLinks = $('a[href*="/calendar/"]').toArray();
-  console.log(`Found ${eventLinks.length} event links`);
+  console.log(`Found ${eventLinks.length} raw calendar links`);
 
+  const seen = new Set();
   let success = 0;
   let failed = 0;
 
@@ -46,17 +50,33 @@ try {
       const eventUrl = $el.attr('href');
       if (!eventUrl) continue;
 
-      const title = $el.find('h5').text().trim();
-      if (!title) continue;
+      // Skip bare /calendar/ nav link and deduplicate slugs
+      if (!/\/calendar\/.+/.test(eventUrl)) continue;
+      if (seen.has(eventUrl)) continue;
+      seen.add(eventUrl);
 
-      // Date is in a direct child <div>, format: "07 March 2026"
-      const dateText = $el.find('> div').first().text().trim();
+      // Title + date are in the sibling <div> (same card container)
+      const $infoDiv = $el.siblings('div').first();
+      const title = $infoDiv.find('h1,h2,h3,h4,h5,h6').first().text().trim();
+      if (!title) {
+        console.log(`  ⚠️  No title for: ${eventUrl}`);
+        continue;
+      }
+
+      // Date format: "07 March 2026"
+      const dateText = $infoDiv.find('p').first().text().trim();
       if (!dateText) {
         console.log(`  ⚠️  No date for: ${title}`);
         continue;
       }
 
-      const eventDate = new Date(dateText);
+      // Parse "07 March 2026" manually to avoid locale issues
+      const dateParts = dateText.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+      if (!dateParts) {
+        console.log(`  ⚠️  Could not parse date "${dateText}" for: ${title}`);
+        continue;
+      }
+      const eventDate = new Date(`${dateParts[2]} ${dateParts[1]} ${dateParts[3]}`);
       if (isNaN(eventDate.getTime())) {
         console.log(`  ⚠️  Could not parse date "${dateText}" for: ${title}`);
         continue;

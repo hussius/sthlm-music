@@ -24,6 +24,7 @@ const crawlers = [
   { name: 'Cirkus', file: './crawl-cirkus.js' },
   { name: 'Stampen', file: './crawl-stampen.js' },
   { name: 'Gamla Enskede Bryggeri', file: './crawl-gamla-enskede-bryggeri.js' },
+  { name: 'Reimersholme', file: './crawl-reimersholme.js' },
   // Under Bron disabled - parsing is broken
   // { name: 'Under Bron', file: './crawl-underbron.js' },
 ];

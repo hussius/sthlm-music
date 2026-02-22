@@ -34,8 +34,8 @@ function parseSwedishDate(dateText) {
   // Take only the start date (before any "–" for date ranges)
   const startPart = dateText.split('–')[0].trim();
 
-  // Match: dayAbbrev + dayNumber + monthName (e.g. "sön 22 feb")
-  const match = startPart.match(/\w+\s+(\d{1,2})\s+(\w+)/);
+  // Match: dayAbbrev + dayNumber + monthName (e.g. "sön 22 feb" or "sön22feb")
+  const match = startPart.match(/\w+\s*(\d{1,2})\s*(\w+)/);
   if (!match) return null;
 
   const day = parseInt(match[1]);
@@ -100,18 +100,18 @@ try {
         if (!href || seen.has(href)) continue;
         seen.add(href);
 
-        // Title: find first heading element inside the link
-        const title = ($el.find('h1,h2,h3,h4,h5,h6').first().text()
-          || $el.find('strong').first().text()
-          || $el.text()
-        ).trim().split('\n')[0].trim();
+        // Only process links that contain a heading (event cards, not category filter links)
+        const headingEl = $el.find('h1,h2,h3,h4,h5,h6').first();
+        if (!headingEl.length) continue;
+        const title = headingEl.text().trim();
 
         if (!title || title.length < 2) continue;
 
-        // Date text: look for Swedish date pattern in the full text
-        const fullText = $el.text();
-        // Pattern: "sön 22 feb" or "fre 27 mars" — dayAbbrev + number + monthName
-        const dateMatch = fullText.match(/\b(mån|tis|ons|tor|fre|lör|sön)\s+(\d{1,2})\s+(jan|feb|mars|apr|maj|jun|juli?|aug|sep|okt|nov|dec)/i);
+        // Date is a SIBLING of the <a> tag, not inside it.
+        // Parent text includes both date and title. Use \s* because
+        // <strong>22</strong> collapses spaces: "sön22feb" in .text().
+        const parentText = $el.parent().text();
+        const dateMatch = parentText.match(/(mån|tis|ons|tor|fre|lör|sön)\s*(\d{1,2})\s*(jan|feb|mars|apr|maj|jun|juli?|aug|sep|okt|nov|dec)/i);
         if (!dateMatch) {
           console.log(`  ⚠️  No date for: ${title}`);
           continue;

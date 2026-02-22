@@ -2,7 +2,7 @@
  * Gamla Enskede Bryggeri venue crawler
  *
  * Crawls: https://gamlaenskedebryggeri.se/pa-gang/
- * Simple static HTML list: <li>DD/MM EventName</li>
+ * Events are inline text (not <li>): "19/2 EventName" separated by line breaks.
  */
 
 import dotenv from 'dotenv';
@@ -22,15 +22,10 @@ console.log(`🎸 Crawling ${VENUE_NAME}...`);
 const client = postgres(DATABASE_URL, { max: 1 });
 const db = drizzle(client, { schema });
 
-/**
- * Parse "DD/MM" or "DD/MM/YYYY" date strings.
- * Assumes current year if year is missing.
- */
 function parseDate(day, month, year) {
   const now = new Date();
   const resolvedYear = year || now.getFullYear();
   const d = new Date(resolvedYear, month - 1, day, 20, 0, 0, 0);
-  // If no year given and date is in the past, try next year
   if (!year && d < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
     return new Date(resolvedYear + 1, month - 1, day, 20, 0, 0, 0);
   }
@@ -40,47 +35,55 @@ function parseDate(day, month, year) {
 try {
   console.log('📄 Fetching page...');
   const response = await fetch(VENUE_URL);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
   const html = await response.text();
   const $ = cheerio.load(html);
 
-  console.log('🔍 Parsing events...');
+  // Events are inline text — convert <br> and </p> to newlines, strip tags, split
+  const contentHtml = $('.entry-content, .wp-block-group, main, article').first().html()
+    || $('body').html();
+
+  const lines = contentHtml
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')   // strip remaining tags (keep text)
+    .split('\n')
+    .map(l => l.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+
+  console.log(`🔍 Scanning ${lines.length} text lines for events...`);
+
+  // Also collect href links keyed by surrounding text for FB event URLs
+  const links = {};
+  $('a[href]').each((_, el) => {
+    const text = $(el).text().trim();
+    const href = $(el).attr('href');
+    if (text && href) links[text] = href;
+  });
 
   let success = 0;
   let failed = 0;
 
-  // Events are <li> elements starting with "DD/MM" or "DD/MM/YYYY"
-  const listItems = $('li').toArray();
-  console.log(`Scanning ${listItems.length} list items for events...`);
-
-  for (const el of listItems) {
+  for (const line of lines) {
     try {
-      const $el = $(el);
-      const text = $el.text().trim();
-
-      // Match date at start of line: "19/2", "19/2/2026", "5/3"
-      const match = text.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?\s+(.+)$/);
+      // Match date at start: "19/2", "19/2/2026", "5/3"
+      const match = line.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?\s+(.+)/);
       if (!match) continue;
 
       const day = parseInt(match[1]);
       const month = parseInt(match[2]);
       const year = match[3] ? parseInt(match[3]) : null;
-      const title = match[4].trim();
+      const title = match[4].trim().replace(/\s+/g, ' ');
 
       if (!title || title.length < 2) continue;
 
       const eventDate = parseDate(day, month, year);
-      if (!eventDate || isNaN(eventDate.getTime())) {
-        console.log(`  ⚠️  Could not parse date for: ${text}`);
-        continue;
-      }
+      if (!eventDate || isNaN(eventDate.getTime())) continue;
 
-      // Use Facebook event link if present, otherwise venue page
-      const linkEl = $el.find('a').first();
-      const eventUrl = linkEl.attr('href') || VENUE_URL;
+      // Try to find a Facebook/event link for this event
+      const eventUrl = links[title] || VENUE_URL;
 
       const event = {
         name: title,
@@ -112,7 +115,6 @@ try {
   }
 
   console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-
   await client.end();
   process.exit(0);
 } catch (error) {
