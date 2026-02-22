@@ -4,7 +4,7 @@ A web app that aggregates upcoming live music events across Stockholm venues int
 
 ## What it does
 
-Crawls ~15 Stockholm venues and ticketing platforms daily, deduplicates events, and serves them through a filterable UI. Filter by venue, date range, or search by artist/event name.
+Crawls ~19 Stockholm venues and ticketing platforms daily, deduplicates events, and serves them through a filterable UI. Filter by venue, date range, or search by artist/event name.
 
 ## Stack
 
@@ -54,6 +54,10 @@ Individual crawlers live in `crawl-*.js` at the project root. `crawl-all.js` run
 | `crawl-billetto.js` | billetto.se | Multiple venues |
 | `crawl-ticketmaster.js` | ticketmaster.se | Multiple venues |
 | `crawl-landet-billetto.js` | billetto.se | Landet |
+| `crawl-berns.js` | berns.se | Berns |
+| `crawl-cirkus.js` | cirkus.se | Cirkus |
+| `crawl-stampen.js` | stampen.se | Stampen |
+| `crawl-gamla-enskede-bryggeri.js` | gamlaenskedebryggeri.se | Gamla Enskede Bryggeri |
 
 To add a new venue, create a `crawl-<venue>.js` and add it to `crawl-all.js`.
 

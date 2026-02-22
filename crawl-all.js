@@ -20,6 +20,10 @@ const crawlers = [
   { name: 'Södra Teatern', file: './crawl-sodrateatern.js' },
   { name: 'Rönnells Antikvariat', file: './crawl-ronnells.js' },
   { name: 'Banan-Kompaniet', file: './crawl-banan-kompaniet.js' },
+  { name: 'Berns', file: './crawl-berns.js' },
+  { name: 'Cirkus', file: './crawl-cirkus.js' },
+  { name: 'Stampen', file: './crawl-stampen.js' },
+  { name: 'Gamla Enskede Bryggeri', file: './crawl-gamla-enskede-bryggeri.js' },
   // Under Bron disabled - parsing is broken
   // { name: 'Under Bron', file: './crawl-underbron.js' },
 ];

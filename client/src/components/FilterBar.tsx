@@ -26,12 +26,11 @@ export function FilterBar() {
     const hasAnyFilter = filters.dateFrom || filters.dateTo || filters.genre || filters.venue;
     if (!hasAnyFilter) {
       const today = new Date();
-      const threeMonths = new Date();
-      threeMonths.setMonth(threeMonths.getMonth() + 3);
+      const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
 
       updateFilters({
         dateFrom: today.toISOString(),
-        dateTo: threeMonths.toISOString(),
+        dateTo: endOfYear.toISOString(),
       });
     }
   }, [filters, updateFilters]);
@@ -48,14 +47,13 @@ export function FilterBar() {
   const handleClearFilters = () => {
     // Reset to default date range (today to 3 months out)
     const today = new Date();
-    const threeMonths = new Date();
-    threeMonths.setMonth(threeMonths.getMonth() + 3);
+    const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
 
     updateFilters({
       genre: undefined,
       venue: undefined,
       dateFrom: today.toISOString(),
-      dateTo: threeMonths.toISOString(),
+      dateTo: endOfYear.toISOString(),
       artistSearch: undefined,
       eventSearch: undefined,
     });
@@ -137,6 +135,10 @@ export function FilterBar() {
           <option value="Södra Teatern">Södra Teatern</option>
           <option value="Rönnells Antikvariat">Rönnells Antikvariat</option>
           <option value="Banankompaniet">Banankompaniet</option>
+          <option value="Berns">Berns</option>
+          <option value="Cirkus">Cirkus</option>
+          <option value="Stampen">Stampen</option>
+          <option value="Gamla Enskede Bryggeri">Gamla Enskede Bryggeri</option>
         </select>
       </div>
 
@@ -162,9 +164,8 @@ export function FilterBar() {
           id="dateTo"
           type="date"
           value={filters.dateTo ? filters.dateTo.split('T')[0] : (() => {
-            const threeMonths = new Date();
-            threeMonths.setMonth(threeMonths.getMonth() + 3);
-            return threeMonths.toISOString().split('T')[0];
+            const now = new Date();
+            return `${now.getFullYear()}-12-31`;
           })()}
           onChange={handleDateToChange}
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

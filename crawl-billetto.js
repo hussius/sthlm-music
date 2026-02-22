@@ -100,6 +100,10 @@ function normalizeVenue(venueName) {
   if (name.includes('Södra Teatern')) return 'Södra Teatern';
   if (name.includes('Rönnells')) return 'Rönnells Antikvariat';
   if (name.includes('Banan') || name.includes('B-K')) return 'Banankompaniet';
+  if (name.includes('Berns')) return 'Berns';
+  if (name.includes('Cirkus')) return 'Cirkus';
+  if (name.includes('Stampen')) return 'Stampen';
+  if (name.includes('Gamla Enskede') || name.includes('GEB')) return 'Gamla Enskede Bryggeri';
 
   return name;
 }
