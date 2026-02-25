@@ -128,10 +128,11 @@ Plans:
   3. EventModal opens on event click and shows artist, genre, price, all ticket sources
   4. All venue filter options match canonical venue names stored in database
   5. Debug pagination banner removed from EventList
+**Plans**: 2 plans across 2 waves
 
 Plans:
-- [ ] 06-01-PLAN.md — Re-enable EventModal and restore genre filter in FilterBar
-- [ ] 06-02-PLAN.md — Fix venue filter option values to match Phase 1 canonical names
+- [ ] 06-01-PLAN.md — Wire EventModal into EventList via EventCard click handlers + remove debug banner
+- [ ] 06-02-PLAN.md — Uncomment genre filter in FilterBar and populate with 11 canonical genre options
 
 ## Progress
 
