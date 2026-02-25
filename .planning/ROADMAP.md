@@ -111,6 +111,7 @@ Plans:
   3. 12-month rolling window cleanup job runs on schedule
   4. Crawlers call deduplicateAndSave() instead of upsertEvent() directly
   5. Cross-platform fuzzy deduplication is active and merges duplicate events
+**Plans**: 2 plans across 2 waves
 
 Plans:
 - [ ] 05-01-PLAN.md — Wire worker startup and job registration into application entry point
