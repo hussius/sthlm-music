@@ -10,17 +10,19 @@
  * - Stockholm timezone for all dates
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useEvents } from '../hooks/useEvents';
 import { useFilterState } from '../hooks/useFilterState';
 import { EventCard } from './EventCard';
+import { EventModal } from './EventModal';
 import { SkeletonCard } from './SkeletonCard';
 import type { EventResponse } from '../types/events';
 
 export function EventList() {
   const { ref, inView } = useInView();
   const { filters } = useFilterState();
+  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
   const {
     data,
     isLoading,
@@ -91,21 +93,20 @@ export function EventList() {
         }}
       >
         {allEvents.map((event: EventResponse) => (
-          <EventCard key={event.id} event={event} />
+          <EventCard key={event.id} event={event} onSelect={() => setSelectedEvent(event)} />
         ))}
       </div>
 
       {/* Infinite scroll trigger */}
-      <div ref={ref} className="py-5 text-center bg-yellow-100">
-        <p className="text-xs text-gray-500">
-          hasNextPage: {String(hasNextPage)} | isFetchingNextPage: {String(isFetchingNextPage)}
-        </p>
+      <div ref={ref} className="py-5 text-center">
         {isFetchingNextPage && (
           <p className="text-gray-600">Loading more events...</p>
         )}
       </div>
 
-      {/* Modal disabled for now */}
+      {selectedEvent && (
+        <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+      )}
     </>
   );
 }
