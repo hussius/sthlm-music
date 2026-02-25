@@ -47,6 +47,7 @@ Progress: [██████████] 100% (Phase 3: 3 of 3 complete)
 | Phase 03 P03 | 3 | 3 tasks | 8 files |
 | Phase 03 P02 | 4 | 3 tasks | 3 files |
 | Phase 05-wire-scheduling-deduplication-pipeline P01 | 1 | 1 tasks | 1 files |
+| Phase 05-wire-scheduling-deduplication-pipeline P02 | 5 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Genre and venue filters update immediately without debouncing - dropdowns don't need throttling (03-03)
 - [Phase 05-01]: Scheduling startup errors are caught and logged without rethrowing — API starts even if Redis is unavailable
 - [Phase 05-01]: Scheduling try/catch is separate from server startup try/catch — Redis failure cannot prevent HTTP server from starting
+- [Phase 05-02]: Create manual migration SQL file when db:generate requires interactive input (ticket_url to ticket_sources rename prompt)
+- [Phase 05-02]: Crawlers call deduplicateAndSave() not upsertEvent() directly - deduplicator owns DB write responsibility
 
 ### Roadmap Evolution
 
