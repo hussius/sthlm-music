@@ -20,7 +20,7 @@
 
 import { PlaywrightCrawler, log } from 'crawlee';
 import { transformAXSEvent } from '../normalization/transformers.js';
-import { upsertEvent } from '../repositories/event-repository.js';
+import { deduplicateAndSave } from '../deduplication/deduplicator.js';
 import { config } from '../config/env.js';
 
 /**
@@ -331,7 +331,7 @@ export async function crawlAXS(): Promise<{ success: number; failed: number }> {
 
         // Save to database
         try {
-          await upsertEvent(normalized.data);
+          await deduplicateAndSave(normalized.data);
           success++;
 
           // Log progress every 10 events

@@ -14,7 +14,7 @@
 
 import { TicketmasterClient } from './ticketmaster-api-client.js';
 import { transformTicketmasterEvent } from '../normalization/transformers.js';
-import { upsertEvent } from '../repositories/event-repository.js';
+import { deduplicateAndSave } from '../deduplication/deduplicator.js';
 import { config } from '../config/env.js';
 
 /**
@@ -107,7 +107,7 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
           }
 
           // Store in database (upsert handles duplicates)
-          await upsertEvent(normalized.data);
+          await deduplicateAndSave(normalized.data);
           success++;
         } catch (error) {
           console.error(`❌ Failed to process event ${rawEvent.id || 'unknown'}:`, error instanceof Error ? error.message : String(error));

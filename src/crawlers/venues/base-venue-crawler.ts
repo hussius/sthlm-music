@@ -9,7 +9,7 @@
  * - BaseVenueCrawler handles crawling logic (extract, normalize, save)
  * - Automatically chooses Cheerio or Playwright based on config
  * - Normalizes events via transformVenueEvent
- * - Saves to database via upsertEvent
+ * - Saves to database via deduplicateAndSave (3-stage deduplication pipeline)
  *
  * Usage:
  * ```typescript
@@ -26,7 +26,7 @@
 
 import { CheerioCrawler, PlaywrightCrawler, log } from 'crawlee';
 import { transformVenueEvent } from '../../normalization/transformers.js';
-import { upsertEvent } from '../../repositories/event-repository.js';
+import { deduplicateAndSave } from '../../deduplication/deduplicator.js';
 
 /**
  * Venue configuration interface.
@@ -55,7 +55,7 @@ export interface VenueConfig {
  * 1. Choose crawler type (Cheerio for static, Playwright for dynamic)
  * 2. Extract events using configured selectors
  * 3. Normalize via transformVenueEvent
- * 4. Save via upsertEvent
+ * 4. Save via deduplicateAndSave (3-stage deduplication pipeline)
  * 5. Return success/failed counts
  */
 export class BaseVenueCrawler {
@@ -183,7 +183,7 @@ export class BaseVenueCrawler {
           }
 
           try {
-            await upsertEvent(normalized.data as any);
+            await deduplicateAndSave(normalized.data as any);
             success++;
           } catch (error) {
             log.error(`Failed to save event from ${this.config.name}:`, {

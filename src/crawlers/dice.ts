@@ -1,6 +1,6 @@
 import { PlaywrightCrawler, log } from 'crawlee';
 import { transformDICEEvent } from '../normalization/transformers.js';
-import { upsertEvent } from '../repositories/event-repository.js';
+import { deduplicateAndSave } from '../deduplication/deduplicator.js';
 import { config } from '../config/env.js';
 
 const DICE_STOCKHOLM_URL = 'https://dice.fm/city/stockholm/events';
@@ -199,7 +199,7 @@ export async function crawlDICE(): Promise<{ success: number; failed: number }> 
         }
 
         try {
-          await upsertEvent(normalized.data);
+          await deduplicateAndSave(normalized.data);
           success++;
         } catch (error) {
           log.error('Failed to save DICE event:', {
