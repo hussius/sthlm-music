@@ -144,5 +144,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. API Layer & Performance | 4/4 | Complete | 2026-02-20 |
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
 | 4. Crawler Expansion & Coverage Enhancement | 1/5 | In Progress | - |
-| 5. Wire Scheduling & Deduplication Pipeline | 0/2 | Not started | - |
+| 5. Wire Scheduling & Deduplication Pipeline | 1/2 | In Progress|  |
 | 6. Fix Calendar UI Gaps | 0/2 | Not started | - |
