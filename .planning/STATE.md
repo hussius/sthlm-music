@@ -129,7 +129,11 @@ Recent decisions affecting current work:
    - Add 20+ venue scrapers: Gamla Enskede Bryggeri, Gröna Lund, Cirkus, Kraken, Göta Lejon, Rosettas, Slakthuset, Yttons, Alcazar, Tre Backar, Tranan, Konserthuset, Snövit, Cafe 44, Kolingsborg, Fryshuset, Klubben, Studion, Sofia Common, Fredagsmangel
    - See: .planning/todos/pending/2026-02-21-expand-crawler-coverage-with-new-apis-and-venues.md
 
-3. **Filter out non-concert entries from event data** (api)
+3. **Berns venue filter returns empty set** (crawlers)
+   - Selecting Berns in dropdown returns empty — unclear if scraper failed or canonical name mismatch
+   - See: .planning/todos/pending/2026-02-25-berns-venue-filter-returns-empty-set.md
+
+4. **Filter out non-concert entries from event data** (api)
    - Crawlers ingest non-music entries like "presentkort" (gift cards), "quiz", etc.
    - Implement event name blocklist at normalization layer + enforce Ticketmaster `classificationName: "Music"`
    - See: .planning/todos/pending/2026-02-25-filter-out-non-concert-entries-from-event-data.md
