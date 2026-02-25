@@ -13,23 +13,23 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DATA-02**: System crawls AXS/Live Nation daily for Stockholm music events
 - [x] **DATA-03**: System crawls DICE daily for Stockholm music events
 - [x] **DATA-04**: System crawls priority venue websites directly (Kollektivet Livet, Slaktkyrkan, Hus 7, Fasching, Nalen, Fylkingen, Slakthuset, Fållan, Landet, Mosebacke, Kägelbanan, Pet Sounds, Debaser)
-- [x] **DATA-05**: System deduplicates events across all sources (same event shown once)
-- [x] **DATA-06**: System maintains 12-month rolling window (events within next year only)
+- [ ] **DATA-05**: System deduplicates events across all sources (same event shown once)
+- [ ] **DATA-06**: System maintains 12-month rolling window (events within next year only)
 - [x] **DATA-07**: System normalizes event data to common schema (venue, date, genre, artist)
 
 ### Discovery & Filtering
 
 - [x] **FILT-01**: User can filter events by date range (month/week/day selection)
-- [x] **FILT-02**: User can filter events by genre (5-10 core genres: Rock, Pop, Electronic, Jazz, Hip-hop, Metal, Indie, Folk, Classical, World)
-- [x] **FILT-03**: User can filter events by venue (all venues from all sources)
+- [ ] **FILT-02**: User can filter events by genre (5-10 core genres: Rock, Pop, Electronic, Jazz, Hip-hop, Metal, Indie, Folk, Classical, World)
+- [ ] **FILT-03**: User can filter events by venue (all venues from all sources)
 - [x] **FILT-04**: User can search for events by artist/band name
 - [x] **FILT-05**: User can search for events by event name
 
 ### Display & UI
 
 - [x] **DISP-01**: User can view events in chronological list view
-- [x] **DISP-02**: User sees event details: name, date, time, venue, genre, artist(s)
-- [x] **DISP-03**: User sees ticket availability status for each event
+- [ ] **DISP-02**: User sees event details: name, date, time, venue, genre, artist(s)
+- [ ] **DISP-03**: User sees ticket availability status for each event
 - [x] **DISP-04**: Calendar is mobile-responsive (works on phones and tablets)
 - [x] **DISP-05**: Calendar displays in Stockholm local time (Europe/Stockholm timezone)
 
@@ -42,7 +42,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **PERF-01**: Search results return in under 200ms
 - [x] **PERF-02**: Page loads work smoothly with 10,000+ events in database
-- [x] **QUAL-01**: Events are deduplicated with >95% accuracy (minimal false positives/negatives)
+- [ ] **QUAL-01**: Events are deduplicated with >95% accuracy (minimal false positives/negatives)
 
 ## v2 Requirements
 
@@ -97,24 +97,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Complete |
-| DATA-04 | Phase 1 | Complete |
-| DATA-05 | Phase 1 | Complete |
-| DATA-06 | Phase 1 | Complete |
+| DATA-01 | Phase 5 | Pending |
+| DATA-02 | Phase 5 | Pending |
+| DATA-03 | Phase 5 | Pending |
+| DATA-04 | Phase 5 | Pending |
+| DATA-05 | Phase 5 | Pending |
+| DATA-06 | Phase 5 | Pending |
 | DATA-07 | Phase 1 | Complete |
-| QUAL-01 | Phase 1 | Complete |
+| QUAL-01 | Phase 5 | Pending |
 | FILT-01 | Phase 2 | Complete |
-| FILT-02 | Phase 2 | Complete |
-| FILT-03 | Phase 2 | Complete |
+| FILT-02 | Phase 6 | Pending |
+| FILT-03 | Phase 6 | Pending |
 | FILT-04 | Phase 2 | Complete |
 | FILT-05 | Phase 2 | Complete |
 | PERF-01 | Phase 2 | Complete |
 | PERF-02 | Phase 2 | Complete |
 | DISP-01 | Phase 3 | Complete |
-| DISP-02 | Phase 3 | Complete |
-| DISP-03 | Phase 3 | Complete |
+| DISP-02 | Phase 6 | Pending |
+| DISP-03 | Phase 6 | Pending |
 | DISP-04 | Phase 3 | Complete |
 | DISP-05 | Phase 3 | Complete |
 | INTG-01 | Phase 3 | Complete |
@@ -124,7 +124,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1 requirements: 22 total
 - Mapped to phases: 22
 - Unmapped: 0
+- Complete: 11 | Pending: 11
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-20 after roadmap creation*
+*Last updated: 2026-02-25 after v1.0 audit gap closure phase creation*

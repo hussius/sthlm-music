@@ -129,6 +129,21 @@ Recent decisions affecting current work:
    - Add 20+ venue scrapers: Gamla Enskede Bryggeri, Gröna Lund, Cirkus, Kraken, Göta Lejon, Rosettas, Slakthuset, Yttons, Alcazar, Tre Backar, Tranan, Konserthuset, Snövit, Cafe 44, Kolingsborg, Fryshuset, Klubben, Studion, Sofia Common, Fredagsmangel
    - See: .planning/todos/pending/2026-02-21-expand-crawler-coverage-with-new-apis-and-venues.md
 
+2. **Fix pre-commit hook blocking commits** (tooling)
+   - `pre-commit not found. Did you forget to activate your virtualenv?` on every commit
+   - Staged changes from v1.0 audit gap closure (ROADMAP.md, REQUIREMENTS.md, v1.0-MILESTONE-AUDIT.md) are waiting
+   - See: .planning/todos/pending/2026-02-25-fix-pre-commit-hook-blocking-commits.md
+
+3. **Filter out non-concert entries from event data** (api)
+   - Crawlers ingest non-music entries like "presentkort" (gift cards), "quiz", etc.
+   - Implement event name blocklist at normalization layer + enforce Ticketmaster `classificationName: "Music"`
+   - See: .planning/todos/pending/2026-02-25-filter-out-non-concert-entries-from-event-data.md
+
+4. **Tag events with organizer for organizer filtering** (api)
+   - Organizers like Klubb Död and Jazz är Farligt host events at multiple/rotating venues
+   - Add organizer field to schema, extract from crawlers where available, add filter to API + UI
+   - See: .planning/todos/pending/2026-02-25-tag-events-with-organizer-for-organizer-filtering.md
+
 ### Blockers/Concerns
 
 None yet.

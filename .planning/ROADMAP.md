@@ -100,10 +100,42 @@ Plans:
 - [ ] 04-04-PLAN.md — Rival Bootstrap carousel + Under Bron fix
 - [ ] 04-05-PLAN.md — Phase wrap-up (ROADMAP + STATE update)
 
+### Phase 5: Wire Scheduling & Deduplication Pipeline
+**Goal**: System automatically crawls all platforms daily and deduplicates events across sources
+**Depends on**: Phase 1
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DATA-06, QUAL-01
+**Gap Closure**: Closes gaps from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. Application startup launches BullMQ worker and registers all crawl + cleanup jobs
+  2. Each crawl job runs and stores events automatically without manual invocation
+  3. 12-month rolling window cleanup job runs on schedule
+  4. Crawlers call deduplicateAndSave() instead of upsertEvent() directly
+  5. Cross-platform fuzzy deduplication is active and merges duplicate events
+
+Plans:
+- [ ] 05-01-PLAN.md — Wire worker startup and job registration into application entry point
+- [ ] 05-02-PLAN.md — Wire crawlers to use deduplication pipeline instead of direct upsert
+
+### Phase 6: Fix Calendar UI Gaps
+**Goal**: Users can filter by genre, see full event details (artist, genre, ticket availability), and all venue filters return correct results
+**Depends on**: Phase 3
+**Requirements**: FILT-02, FILT-03, DISP-02, DISP-03
+**Gap Closure**: Closes gaps from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. Genre filter select is visible and functional in FilterBar
+  2. Selecting a genre filters events to only that genre
+  3. EventModal opens on event click and shows artist, genre, price, all ticket sources
+  4. All venue filter options match canonical venue names stored in database
+  5. Debug pagination banner removed from EventList
+
+Plans:
+- [ ] 06-01-PLAN.md — Re-enable EventModal and restore genre filter in FilterBar
+- [ ] 06-02-PLAN.md — Fix venue filter option values to match Phase 1 canonical names
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -111,3 +143,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. API Layer & Performance | 4/4 | Complete | 2026-02-20 |
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
 | 4. Crawler Expansion & Coverage Enhancement | 1/5 | In Progress | - |
+| 5. Wire Scheduling & Deduplication Pipeline | 0/2 | Not started | - |
+| 6. Fix Calendar UI Gaps | 0/2 | Not started | - |
