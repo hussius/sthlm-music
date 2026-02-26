@@ -90,7 +90,7 @@ export function FilterBar() {
       {/* Title */}
       <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
 
-      {/* Genre Filter - Hidden (not useful with current data)
+      {/* Genre Filter */}
       <div className="flex flex-col gap-2">
         <label htmlFor="genre" className="text-sm font-medium text-gray-700">
           Genre
@@ -104,9 +104,19 @@ export function FilterBar() {
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Genres</option>
+          <option value="rock">Rock</option>
+          <option value="pop">Pop</option>
+          <option value="electronic">Electronic</option>
+          <option value="jazz">Jazz</option>
+          <option value="hip-hop">Hip-hop</option>
+          <option value="metal">Metal</option>
+          <option value="indie">Indie</option>
+          <option value="folk">Folk</option>
+          <option value="classical">Classical</option>
+          <option value="world">World</option>
+          <option value="other">Other</option>
         </select>
       </div>
-      */}
 
       {/* Venue Filter */}
       <div className="flex flex-col gap-2">
