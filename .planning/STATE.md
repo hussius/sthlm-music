@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Comprehensive event coverage - capture all Stockholm music events in one place so people don't miss shows scattered across multiple platforms.
-**Current focus:** Phase 3 - Calendar UI & Public Launch
+**Current focus:** Phase 4 - Crawler Expansion & Coverage Enhancement
 
 ## Current Position
 
 Phase: 4 of 6 (Crawler Expansion & Coverage Enhancement)
-Plan: 4 of 5 in current phase
-Status: In Progress
-Last activity: 2026-02-26 — Completed 04-04-PLAN.md (Rival and Under Bron Crawlers)
+Plan: 5 of 5 in current phase
+Status: Complete
+Last activity: 2026-02-26 — Completed Phase 4 wrap-up (04-05-PLAN.md)
 
-Progress: [█████████-] 80% (Phase 04: 4 of 5 complete)
+Progress: [██████████] 100% (Phase 04: 5 of 5 complete)
 
 ## Performance Metrics
 
@@ -29,6 +29,7 @@ Progress: [█████████-] 80% (Phase 04: 4 of 5 complete)
 |-------|-------|-------|----------|
 | Phase 01 | 9 | 194 min | 21.6 min |
 | Phase 02 | 4 | 11 min | 2.8 min |
+| Phase 04 | 5 | TBD | TBD |
 
 **Recent Plans:**
 | Plan | Duration | Tasks | Files |
@@ -136,20 +137,26 @@ Recent decisions affecting current work:
 - [Phase 04-04]: Rival date embedded in h3 title — parse DD/M from end of title, strip for clean event name
 - [Phase 04-04]: Under Bron uses .programpost containers — more reliable than generic DOM scan in broken original
 - [Phase 04-04]: Under Bron event names from image filenames — venue site has no textual artist names
+- [Phase 04]: Plain Node.js ESM fetch+Cheerio pattern for all venue crawlers (not Crawlee/Playwright)
+- [Phase 04]: iCal feeds preferred when available (Slakthusetclub pattern)
+- [Phase 04]: JSON API endpoints preferred over HTML parsing when discoverable (Gröna Lund Gatsby, Göta Lejon Live Nation)
+- [Phase 04]: WordPress MEC RSS feeds as reliable fallback for WP venues
+- [Phase 04]: Berns accepted as known limitation (JS-rendered, 0 events)
+- [Phase 04]: sourceId format: {venue-slug}-{title-slug}-{YYYY-MM-DD}
+- [Phase 04]: Unique conflict resolution: onConflictDoUpdate on (venue, date)
 
 ### Roadmap Evolution
 
 - Phase 4 added: Crawler Expansion & Coverage Enhancement (2026-02-21)
+- Phase 4 complete: Expanded from 12 to 27+ venue crawlers (2026-02-22)
 
 ### Pending Todos
 
-1. **Expand crawler coverage with new APIs and venues** (crawlers)
-   - Fix Nalen scraper (no hits) and verify Kollektivet Livet coverage
-   - Integrate Tickster API (pending key) and evaluate Eventbrite API
-   - Add 20+ venue scrapers: Gamla Enskede Bryggeri, Gröna Lund, Cirkus, Kraken, Göta Lejon, Rosettas, Slakthuset, Yttons, Alcazar, Tre Backar, Tranan, Konserthuset, Snövit, Cafe 44, Kolingsborg, Fryshuset, Klubben, Studion, Sofia Common, Fredagsmangel
-   - See: .planning/todos/pending/2026-02-21-expand-crawler-coverage-with-new-apis-and-venues.md
+1. **Tickster API integration** (crawlers) — PENDING API KEY
+   - Crawler framework ready, blocked on receiving API key from Tickster
+   - See: 04-02-PLAN.md
 
-3. **Berns venue filter returns empty set** (crawlers)
+2. **Berns venue filter returns empty set** (crawlers)
    - Selecting Berns in dropdown returns empty — unclear if scraper failed or canonical name mismatch
    - See: .planning/todos/pending/2026-02-25-berns-venue-filter-returns-empty-set.md
 
@@ -170,5 +177,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26 (plan execution)
-Stopped at: Completed 04-04-PLAN.md (Rival and Under Bron Crawlers)
+Stopped at: Completed 04-05-PLAN.md (Phase 4 wrap-up — ROADMAP + STATE update)
 Resume file: None
