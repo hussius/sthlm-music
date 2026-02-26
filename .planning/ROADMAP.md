@@ -96,9 +96,9 @@ crawlers to 27+.
 Plans:
 - [x] 04-01-PLAN.md — 5 new venue crawlers (Stampen, GEB, Reimersholme, Cirkus, Berns)
 - [ ] 04-02-PLAN.md — Tickster API integration (blocked on API key)
-- [ ] 04-03-PLAN.md — Göta Lejon Live Nation API + B-K Webflow crawlers
-- [ ] 04-04-PLAN.md — Rival Bootstrap carousel + Under Bron fix
-- [ ] 04-05-PLAN.md — Phase wrap-up (ROADMAP + STATE update)
+- [x] 04-03-PLAN.md — Göta Lejon Live Nation API + B-K Webflow crawlers
+- [x] 04-04-PLAN.md — Rival Bootstrap carousel + Under Bron fix
+- [x] 04-05-PLAN.md — Phase wrap-up (ROADMAP + STATE update)
 
 ### Phase 5: Wire Scheduling & Deduplication Pipeline
 **Goal**: System automatically crawls all platforms daily and deduplicates events across sources
@@ -144,6 +144,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Data Foundation & Multi-Platform Aggregation | 10/10 | Complete | 2026-02-21 |
 | 2. API Layer & Performance | 4/4 | Complete | 2026-02-20 |
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
-| 4. Crawler Expansion & Coverage Enhancement | 3/5 | In Progress|  |
+| 4. Crawler Expansion & Coverage Enhancement | 4/5 | In Progress | - |
 | 5. Wire Scheduling & Deduplication Pipeline | 2/2 | Complete   | 2026-02-25 |
 | 6. Fix Calendar UI Gaps | 2/2 | Complete | 2026-02-26 |
