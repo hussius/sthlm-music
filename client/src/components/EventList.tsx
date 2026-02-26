@@ -16,6 +16,7 @@ import { useEvents } from '../hooks/useEvents';
 import { useFilterState } from '../hooks/useFilterState';
 import { EventCard } from './EventCard';
 import { SkeletonCard } from './SkeletonCard';
+import type { EventResponse } from '../types/events';
 
 export function EventList() {
   const { ref, inView } = useInView();
