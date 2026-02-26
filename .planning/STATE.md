@@ -48,6 +48,7 @@ Progress: [██████████] 100% (Phase 3: 3 of 3 complete)
 | Phase 03 P02 | 4 | 3 tasks | 3 files |
 | Phase 05-wire-scheduling-deduplication-pipeline P01 | 1 | 1 tasks | 1 files |
 | Phase 05-wire-scheduling-deduplication-pipeline P02 | 5 | 2 tasks | 5 files |
+| Phase 06-fix-calendar-ui-gaps P01 | 20 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,8 @@ Recent decisions affecting current work:
 - [Phase 05-01]: Scheduling try/catch is separate from server startup try/catch — Redis failure cannot prevent HTTP server from starting
 - [Phase 05-02]: Create manual migration SQL file when db:generate requires interactive input (ticket_url to ticket_sources rename prompt)
 - [Phase 05-02]: Crawlers call deduplicateAndSave() not upsertEvent() directly - deduplicator owns DB write responsibility
+- [Phase 06-01]: EventCard no longer navigates directly to ticket URL — modal handles all ticket interactions
+- [Phase 06-01]: selectedEvent state lives in EventList (not App or context) — modal is scoped to the list
 
 ### Roadmap Evolution
 
@@ -155,6 +158,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-20 (plan execution)
-Stopped at: Completed 03-03-PLAN.md (Comprehensive Filtering UI with URL State Management) - Phase 3 complete
+Last session: 2026-02-26 (plan execution)
+Stopped at: Completed 06-01-PLAN.md (Wire EventModal into EventList via EventCard click handlers)
 Resume file: None
