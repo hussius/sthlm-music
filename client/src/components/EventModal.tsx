@@ -25,8 +25,9 @@ export function EventModal({ event, onClose }: EventModalProps) {
   const eventName = typeof event.name === 'string' ? event.name : '[Invalid Event Name]';
   const eventArtist = typeof event.artist === 'string' ? event.artist : '[Invalid Artist]';
 
-  const primaryTicket = event.ticketSources[0];
-  const additionalTickets = event.ticketSources.slice(1);
+  const ticketSources = Array.isArray(event.ticketSources) ? event.ticketSources : [];
+  const primaryTicket = ticketSources[0];
+  const additionalTickets = ticketSources.slice(1);
 
   // Close on Escape key
   useEffect(() => {
@@ -130,7 +131,7 @@ export function EventModal({ event, onClose }: EventModalProps) {
           </div>
 
           {/* Ticket sources */}
-          {event.ticketSources.length > 0 && (
+          {ticketSources.length > 0 && (
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Get Tickets</h3>
 
