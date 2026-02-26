@@ -15,7 +15,7 @@ import * as schema from './dist/db/schema.js';
 dotenv.config({ path: '.env.local' });
 
 const DATABASE_URL = process.env.DATABASE_URL;
-const VENUE_URL = 'https://berns.se/whats-on';
+const VENUE_URL = 'https://berns.se/sv/whats-on/';
 const VENUE_NAME = 'Berns';
 
 console.log(`🎸 Crawling ${VENUE_NAME}...`);
@@ -35,10 +35,22 @@ try {
 
   console.log('🔍 Parsing events...');
 
-  // Structure per event: <a><img></a> <div><h?>Title</h?><p>Date</p></div> <a>Explore</a>
-  // Title + date live in the sibling <div> next to the image <a> link.
-  const eventLinks = $('a[href*="/calendar/"]').toArray();
+  // Structure per event — 4 sibling <div>s inside a card container:
+  //   <div><a href="/sv/kalender/slug/"><img></a></div>  ← image link
+  //   <div>07 mars 2026</div>                            ← date (Swedish)
+  //   <div><a href="/sv/kalender/slug/">Upptäck</a></div>← action links
+  //   <div><h5>EVENT TITLE</h5></div>                   ← title
+  //
+  // Select only image links to get one anchor per event.
+  const eventLinks = $('a[href*="/kalender/"]:has(img)').toArray();
   console.log(`Found ${eventLinks.length} raw calendar links`);
+
+  const SWEDISH_MONTHS = {
+    januari: 'January', februari: 'February', mars: 'March',
+    april: 'April', maj: 'May', juni: 'June',
+    juli: 'July', augusti: 'August', september: 'September',
+    oktober: 'October', november: 'November', december: 'December',
+  };
 
   const seen = new Set();
   let success = 0;
@@ -49,34 +61,37 @@ try {
       const $el = $(element);
       const eventUrl = $el.attr('href');
       if (!eventUrl) continue;
-
-      // Skip bare /calendar/ nav link and deduplicate slugs
-      if (!/\/calendar\/.+/.test(eventUrl)) continue;
       if (seen.has(eventUrl)) continue;
       seen.add(eventUrl);
 
-      // Title + date are in the sibling <div> (same card container)
-      const $infoDiv = $el.siblings('div').first();
-      const title = $infoDiv.find('h1,h2,h3,h4,h5,h6').first().text().trim();
+      // Navigate: <a><img></a> is inside a <div>; subsequent sibling divs hold date + title
+      // All events' divs are children of the same container, so use nextAll() not siblings()
+      // to avoid picking up a previous event's title/date.
+      const $imageDiv = $el.parent();
+      const $next = $imageDiv.nextAll();
+
+      // Title is in the next sibling div containing a heading
+      const title = $next.find('h1,h2,h3,h4,h5,h6').first().text().trim();
       if (!title) {
         console.log(`  ⚠️  No title for: ${eventUrl}`);
         continue;
       }
 
-      // Date format: "07 March 2026"
-      const dateText = $infoDiv.find('p').first().text().trim();
+      // Date is in the next sibling div with text like "07 mars 2026" (Swedish month names)
+      const dateText = $next.filter((_, el) => /\d{1,2}\s+\w+\s+\d{4}/.test($(el).text())).first().text().trim();
       if (!dateText) {
         console.log(`  ⚠️  No date for: ${title}`);
         continue;
       }
 
-      // Parse "07 March 2026" manually to avoid locale issues
-      const dateParts = dateText.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+      // Parse "07 mars 2026" — translate Swedish month to English first
+      const dateParts = dateText.match(/(\d{1,2})\s+([A-Za-zåäö]+)\s+(\d{4})/);
       if (!dateParts) {
         console.log(`  ⚠️  Could not parse date "${dateText}" for: ${title}`);
         continue;
       }
-      const eventDate = new Date(`${dateParts[2]} ${dateParts[1]} ${dateParts[3]}`);
+      const englishMonth = SWEDISH_MONTHS[dateParts[2].toLowerCase()] || dateParts[2];
+      const eventDate = new Date(`${englishMonth} ${dateParts[1]} ${dateParts[3]}`);
       if (isNaN(eventDate.getTime())) {
         console.log(`  ⚠️  Could not parse date "${dateText}" for: ${title}`);
         continue;
