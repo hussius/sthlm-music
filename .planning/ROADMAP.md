@@ -132,7 +132,7 @@ Plans:
 
 Plans:
 - [x] 06-01-PLAN.md — Wire EventModal into EventList via EventCard click handlers + remove debug banner
-- [ ] 06-02-PLAN.md — Uncomment genre filter in FilterBar and populate with 11 canonical genre options
+- [x] 06-02-PLAN.md — Uncomment genre filter in FilterBar and populate with 11 canonical genre options
 
 ## Progress
 
@@ -146,4 +146,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
 | 4. Crawler Expansion & Coverage Enhancement | 1/5 | In Progress | - |
 | 5. Wire Scheduling & Deduplication Pipeline | 2/2 | Complete   | 2026-02-25 |
-| 6. Fix Calendar UI Gaps | 1/2 | In Progress | - |
+| 6. Fix Calendar UI Gaps | 2/2 | Complete | 2026-02-26 |

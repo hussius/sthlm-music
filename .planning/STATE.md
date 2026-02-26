@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 ## Current Position
 
-Phase: 3 of 3 (Calendar UI & Public Launch)
-Plan: 3 of 3 in current phase
+Phase: 6 of 6 (Fix Calendar UI Gaps)
+Plan: 2 of 2 in current phase
 Status: Complete
-Last activity: 2026-02-20 — Completed 03-03-PLAN.md (Comprehensive Filtering UI with URL State Management)
+Last activity: 2026-02-26 — Completed 06-02-PLAN.md (Genre Filter & Direct Navigation)
 
-Progress: [██████████] 100% (Phase 3: 3 of 3 complete)
+Progress: [██████████] 100% (Phase 6: 2 of 2 complete)
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [██████████] 100% (Phase 3: 3 of 3 complete)
 | Phase 05-wire-scheduling-deduplication-pipeline P01 | 1 | 1 tasks | 1 files |
 | Phase 05-wire-scheduling-deduplication-pipeline P02 | 5 | 2 tasks | 5 files |
 | Phase 06-fix-calendar-ui-gaps P01 | 20 | 2 tasks | 2 files |
+| Phase 06-fix-calendar-ui-gaps P02 | 25 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,8 @@ Recent decisions affecting current work:
 - [Phase 05-02]: Crawlers call deduplicateAndSave() not upsertEvent() directly - deduplicator owns DB write responsibility
 - [Phase 06-01]: EventCard no longer navigates directly to ticket URL — modal handles all ticket interactions
 - [Phase 06-01]: selectedEvent state lives in EventList (not App or context) — modal is scoped to the list
+- [Phase 06-02]: Genre filter options use exact DB canonical values (lowercase, hyphenated) to match stored events correctly
+- [Phase 06-02]: Modal approach reverted — user preferred direct click-through to ticket pages; DISP-02/DISP-03 deferred
 
 ### Roadmap Evolution
 
@@ -159,5 +162,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26 (plan execution)
-Stopped at: Completed 06-01-PLAN.md (Wire EventModal into EventList via EventCard click handlers)
+Stopped at: Completed 06-02-PLAN.md (Genre Filter & Direct Navigation) — Phase 6 complete
 Resume file: None

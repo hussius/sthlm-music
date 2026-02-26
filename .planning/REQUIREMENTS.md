@@ -20,7 +20,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Discovery & Filtering
 
 - [x] **FILT-01**: User can filter events by date range (month/week/day selection)
-- [ ] **FILT-02**: User can filter events by genre (5-10 core genres: Rock, Pop, Electronic, Jazz, Hip-hop, Metal, Indie, Folk, Classical, World)
+- [x] **FILT-02**: User can filter events by genre (5-10 core genres: Rock, Pop, Electronic, Jazz, Hip-hop, Metal, Indie, Folk, Classical, World)
 - [ ] **FILT-03**: User can filter events by venue (all venues from all sources)
 - [x] **FILT-04**: User can search for events by artist/band name
 - [x] **FILT-05**: User can search for events by event name
@@ -106,7 +106,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-07 | Phase 1 | Complete |
 | QUAL-01 | Phase 5 | Complete |
 | FILT-01 | Phase 2 | Complete |
-| FILT-02 | Phase 6 | Pending |
+| FILT-02 | Phase 6 | Complete |
 | FILT-03 | Phase 6 | Pending |
 | FILT-04 | Phase 2 | Complete |
 | FILT-05 | Phase 2 | Complete |
@@ -124,7 +124,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v1 requirements: 22 total
 - Mapped to phases: 22
 - Unmapped: 0
-- Complete: 11 | Pending: 11
+- Complete: 12 | Pending: 10
 
 ---
 *Requirements defined: 2026-02-20*
