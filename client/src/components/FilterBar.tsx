@@ -158,6 +158,8 @@ export function FilterBar() {
           <option value="Fredagsmangel">Fredagsmangel</option>
           <option value="Göta Lejon">Göta Lejon</option>
           <option value="B-K">B-K</option>
+          <option value="Rival">Rival</option>
+          <option value="Under Bron">Under Bron</option>
         </select>
       </div>
 

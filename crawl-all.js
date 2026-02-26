@@ -33,8 +33,8 @@ const crawlers = [
   { name: 'Fredagsmangel', file: './crawl-fredagsmangel.js' },
   { name: 'Göta Lejon', file: './crawl-gotalejon.js' },
   { name: 'B-K', file: './crawl-bk.js' },
-  // Under Bron disabled - parsing is broken
-  // { name: 'Under Bron', file: './crawl-underbron.js' },
+  { name: 'Rival', file: './crawl-rival.js' },
+  { name: 'Under Bron', file: './crawl-underbron-fixed.js' },
 ];
 
 function runCrawler(crawler) {
