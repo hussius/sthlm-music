@@ -126,6 +126,17 @@ None - no external service configuration required. The migration file `0002_add_
 - QUAL-01 satisfied: 3-stage fuzzy deduplication (exact match + token_set_ratio + manual review) active with pre-tuned thresholds
 - Ready for Phase 05 Plan 03 if applicable
 
+## Self-Check: PASSED
+
+- FOUND: src/db/migrations/0002_add_review_queue.sql
+- FOUND: src/crawlers/ticketmaster.ts (deduplicateAndSave wired)
+- FOUND: src/crawlers/axs.ts (deduplicateAndSave wired)
+- FOUND: src/crawlers/dice.ts (deduplicateAndSave wired)
+- FOUND: src/crawlers/venues/base-venue-crawler.ts (deduplicateAndSave wired)
+- FOUND commit b0bf112: chore(05-02): add review_queue migration file
+- FOUND commit 2872c68: feat(05-02): wire crawlers to use deduplication pipeline
+- TypeScript: PASS (npx tsc --noEmit exits 0)
+
 ---
 *Phase: 05-wire-scheduling-deduplication-pipeline*
 *Completed: 2026-02-25*
