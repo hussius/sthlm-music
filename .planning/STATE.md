@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 4 of 6 (Crawler Expansion & Coverage Enhancement)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In Progress
-Last activity: 2026-02-26 — Completed 04-03-PLAN.md (Göta Lejon and B-K Crawlers)
+Last activity: 2026-02-26 — Completed 04-04-PLAN.md (Rival and Under Bron Crawlers)
 
-Progress: [████████--] 80% (Phase 04: 3 of 5 complete)
+Progress: [█████████-] 80% (Phase 04: 4 of 5 complete)
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [████████--] 80% (Phase 04: 3 of 5 complete)
 | Phase 06-fix-calendar-ui-gaps P01 | 20 | 2 tasks | 2 files |
 | Phase 06-fix-calendar-ui-gaps P02 | 25 | 2 tasks | 4 files |
 | Phase 04-crawler-expansion-coverage-enhancement P03 | 5 | 3 tasks | 4 files |
+| Phase 04-crawler-expansion-coverage-enhancement P04 | 4 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,9 @@ Recent decisions affecting current work:
 - [Phase 04-03]: Use location=Stockholm filter on Live Nation API + client-side venue name filter — community=95 returns 9050 global events, location narrows to ~208 Stockholm events
 - [Phase 04-03]: B-K uses Cheerio not Playwright — Webflow site is server-side rendered, no JS execution needed
 - [Phase 04-03]: Sync collection + async insert pattern in cheerio crawlers — collect in .each() array, insert in async for-of loop
+- [Phase 04-04]: Rival date embedded in h3 title — parse DD/M from end of title, strip for clean event name
+- [Phase 04-04]: Under Bron uses .programpost containers — more reliable than generic DOM scan in broken original
+- [Phase 04-04]: Under Bron event names from image filenames — venue site has no textual artist names
 
 ### Roadmap Evolution
 
@@ -166,5 +170,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26 (plan execution)
-Stopped at: Completed 06-02-PLAN.md (Genre Filter & Direct Navigation) — Phase 6 complete
+Stopped at: Completed 04-04-PLAN.md (Rival and Under Bron Crawlers)
 Resume file: None
