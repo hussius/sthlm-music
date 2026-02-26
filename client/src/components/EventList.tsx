@@ -10,19 +10,16 @@
  * - Stockholm timezone for all dates
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useEvents } from '../hooks/useEvents';
 import { useFilterState } from '../hooks/useFilterState';
 import { EventCard } from './EventCard';
-import { EventModal } from './EventModal';
 import { SkeletonCard } from './SkeletonCard';
-import type { EventResponse } from '../types/events';
 
 export function EventList() {
   const { ref, inView } = useInView();
   const { filters } = useFilterState();
-  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
   const {
     data,
     isLoading,
@@ -93,7 +90,7 @@ export function EventList() {
         }}
       >
         {allEvents.map((event: EventResponse) => (
-          <EventCard key={event.id} event={event} onSelect={() => setSelectedEvent(event)} />
+          <EventCard key={event.id} event={event} />
         ))}
       </div>
 
@@ -104,9 +101,6 @@ export function EventList() {
         )}
       </div>
 
-      {selectedEvent && (
-        <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-      )}
     </>
   );
 }

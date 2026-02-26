@@ -14,12 +14,12 @@ import type { EventResponse } from '@/types/events';
 
 interface EventCardProps {
   event: EventResponse;
-  onSelect?: () => void;
 }
 
-export function EventCard({ event, onSelect }: EventCardProps) {
-  // Safely handle event name that might be an object
+export function EventCard({ event }: EventCardProps) {
   const eventName = typeof event.name === 'string' ? event.name : '[Invalid Event Name]';
+  const ticketSources = Array.isArray(event.ticketSources) ? event.ticketSources : [];
+  const ticketUrl = ticketSources[0]?.url;
 
   const cardContent = (
     <>
@@ -49,14 +49,21 @@ export function EventCard({ event, onSelect }: EventCardProps) {
     </>
   );
 
+  if (ticketUrl) {
+    return (
+      <a
+        href={ticketUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block border border-gray-200 rounded-lg p-3 bg-white shadow-sm cursor-pointer hover:shadow-md hover:border-blue-400 transition-all no-underline text-inherit"
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
   return (
-    <article
-      onClick={onSelect}
-      className={`border border-gray-200 rounded-lg p-3 bg-white shadow-sm${onSelect ? ' cursor-pointer hover:shadow-md hover:border-blue-400 transition-all' : ''}`}
-      role={onSelect ? 'button' : undefined}
-      tabIndex={onSelect ? 0 : undefined}
-      onKeyDown={onSelect ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } } : undefined}
-    >
+    <article className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
       {cardContent}
     </article>
   );

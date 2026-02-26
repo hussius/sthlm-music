@@ -21,6 +21,7 @@ interface EventModalProps {
 }
 
 export function EventModal({ event, onClose }: EventModalProps) {
+  console.log('EventModal rendering for event:', event?.id);
   // Safely handle event data that might be objects instead of strings
   const eventName = typeof event.name === 'string' ? event.name : '[Invalid Event Name]';
   const eventArtist = typeof event.artist === 'string' ? event.artist : '[Invalid Artist]';
@@ -51,18 +52,30 @@ export function EventModal({ event, onClose }: EventModalProps) {
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        backgroundColor: 'rgba(0,0,0,0.8)',
+      }}
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 transition-opacity"
-        style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1 }}
         onClick={onClose}
         aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+        }}
       />
 
       {/* Modal panel */}
