@@ -144,6 +144,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Data Foundation & Multi-Platform Aggregation | 10/10 | Complete | 2026-02-21 |
 | 2. API Layer & Performance | 4/4 | Complete | 2026-02-20 |
 | 3. Calendar UI & Public Launch | 3/3 | Complete | 2026-02-20 |
-| 4. Crawler Expansion & Coverage Enhancement | 4/5 | In Progress | - |
+| 4. Crawler Expansion & Coverage Enhancement | 4/5 | In Progress|  |
 | 5. Wire Scheduling & Deduplication Pipeline | 2/2 | Complete   | 2026-02-25 |
 | 6. Fix Calendar UI Gaps | 2/2 | Complete | 2026-02-26 |
