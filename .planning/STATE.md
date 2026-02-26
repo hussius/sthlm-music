@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 ## Current Position
 
-Phase: 6 of 6 (Fix Calendar UI Gaps)
-Plan: 2 of 2 in current phase
-Status: Complete
-Last activity: 2026-02-26 — Completed 06-02-PLAN.md (Genre Filter & Direct Navigation)
+Phase: 4 of 6 (Crawler Expansion & Coverage Enhancement)
+Plan: 3 of 5 in current phase
+Status: In Progress
+Last activity: 2026-02-26 — Completed 04-03-PLAN.md (Göta Lejon and B-K Crawlers)
 
-Progress: [██████████] 100% (Phase 6: 2 of 2 complete)
+Progress: [████████--] 80% (Phase 04: 3 of 5 complete)
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [██████████] 100% (Phase 6: 2 of 2 complete)
 | Phase 05-wire-scheduling-deduplication-pipeline P02 | 5 | 2 tasks | 5 files |
 | Phase 06-fix-calendar-ui-gaps P01 | 20 | 2 tasks | 2 files |
 | Phase 06-fix-calendar-ui-gaps P02 | 25 | 2 tasks | 4 files |
+| Phase 04-crawler-expansion-coverage-enhancement P03 | 5 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,9 @@ Recent decisions affecting current work:
 - [Phase 06-01]: selectedEvent state lives in EventList (not App or context) — modal is scoped to the list
 - [Phase 06-02]: Genre filter options use exact DB canonical values (lowercase, hyphenated) to match stored events correctly
 - [Phase 06-02]: Modal approach reverted — user preferred direct click-through to ticket pages; DISP-02/DISP-03 deferred
+- [Phase 04-03]: Use location=Stockholm filter on Live Nation API + client-side venue name filter — community=95 returns 9050 global events, location narrows to ~208 Stockholm events
+- [Phase 04-03]: B-K uses Cheerio not Playwright — Webflow site is server-side rendered, no JS execution needed
+- [Phase 04-03]: Sync collection + async insert pattern in cheerio crawlers — collect in .each() array, insert in async for-of loop
 
 ### Roadmap Evolution
 
