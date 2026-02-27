@@ -23,6 +23,7 @@
 import { z } from 'zod';
 import { CANONICAL_GENRES, mapGenre } from './genre-mappings.js';
 import { normalizeVenueName } from './venue-mappings.js';
+import { isBlocklisted } from './event-filters.js';
 
 /**
  * Ticket source schema - validates individual ticket platform entries
@@ -64,7 +65,12 @@ export const TicketSourceSchema = z.object({
  * - Never rejects valid event due to unknown genre
  */
 export const EventSchema = z.object({
-  name: z.string().trim().min(1, 'Event name required').max(500, 'Event name too long'),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Event name required')
+    .max(500, 'Event name too long')
+    .refine((n) => !isBlocklisted(n), { message: 'Non-concert event blocked by content filter' }),
   artist: z.string().trim().min(1, 'Artist name required').max(500, 'Artist name too long'),
   venue: z.string().trim().transform(normalizeVenueName),
   date: z.coerce
