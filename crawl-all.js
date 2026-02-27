@@ -7,8 +7,36 @@ dotenv.config({ path: '.env.local' });
 console.log('🎸 Stockholm Music Events Crawler');
 console.log('==================================\n');
 
+// --- TS crawlers (imported from compiled dist/) ---
+async function runTsCrawlers() {
+  const tsCrawlers = [
+    { name: 'Ticketmaster API', fn: async () => (await import('./dist/crawlers/ticketmaster.js')).crawlTicketmaster() },
+    { name: 'AXS', fn: async () => (await import('./dist/crawlers/axs.js')).crawlAXS() },
+    { name: 'DICE', fn: async () => (await import('./dist/crawlers/dice.js')).crawlDICE() },
+  ];
+
+  let successCount = 0;
+  let failedCount = 0;
+
+  for (const crawler of tsCrawlers) {
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`📍 ${crawler.name}`);
+    console.log('='.repeat(60));
+    try {
+      const result = await crawler.fn();
+      console.log(`\n✅ ${crawler.name} complete (${result.success} saved, ${result.failed} failed)`);
+      successCount++;
+    } catch (err) {
+      console.error(`\n❌ ${crawler.name} failed:`, err.message);
+      failedCount++;
+    }
+  }
+
+  return { successCount, failedCount };
+}
+
+// --- JS crawlers (spawned as subprocesses) ---
 const crawlers = [
-  { name: 'Ticketmaster API', file: './crawl-ticketmaster.js' },
   { name: 'Stadsgårdsterminalen (Kollektivet Livet)', file: './crawl-stadsgarden.js' },
   { name: 'Debaser', file: './crawl-debaser-fixed.js' },
   { name: 'Fylkingen', file: './crawl-fylkingen-fixed.js' },
@@ -67,9 +95,12 @@ function runCrawler(crawler) {
   });
 }
 
-let successCount = 0;
-let failedCount = 0;
+// Run TS crawlers first
+const tsResult = await runTsCrawlers();
+let successCount = tsResult.successCount;
+let failedCount = tsResult.failedCount;
 
+// Then JS crawlers
 for (const crawler of crawlers) {
   const result = await runCrawler(crawler);
   if (result.success) {
@@ -79,9 +110,10 @@ for (const crawler of crawlers) {
   }
 }
 
+const total = 3 + crawlers.length; // 3 TS + JS crawlers
 console.log('\n' + '='.repeat(60));
 console.log('📊 CRAWL SUMMARY');
 console.log('='.repeat(60));
-console.log(`Successful crawlers: ${successCount}/${crawlers.length}`);
-console.log(`Failed crawlers: ${failedCount}/${crawlers.length}`);
+console.log(`Successful crawlers: ${successCount}/${total}`);
+console.log(`Failed crawlers: ${failedCount}/${total}`);
 console.log('\n✅ All crawlers complete!\n');
