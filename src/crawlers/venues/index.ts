@@ -35,6 +35,15 @@ export { crawlDebaser } from './debaser.js';
  *
  * @returns Aggregated { success, failed } counts across all venues
  */
+// Load a JS crawler by path using a runtime variable so TypeScript does not attempt
+// static module resolution (which would trigger TS7016 for JS files without .d.ts).
+type CrawlResult = { success: number; failed: number };
+const runJsCrawler = async (path: string): Promise<CrawlResult> => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mod = await import(path) as { crawl: () => Promise<CrawlResult> };
+  return mod.crawl();
+};
+
 export async function crawlAllVenues() {
   const crawlers = [
     // TypeScript crawlers (13)
@@ -51,33 +60,33 @@ export async function crawlAllVenues() {
     { name: 'Kägelbanan', fn: async () => (await import('./kagelbanan.js')).crawlKagelbanan() },
     { name: 'Pet Sounds', fn: async () => (await import('./pet-sounds.js')).crawlPetSounds() },
     { name: 'Debaser', fn: async () => (await import('./debaser.js')).crawlDebaser() },
-    // JavaScript crawlers (26)
-    { name: 'Stadsgårdsterminalen', fn: async () => { const { crawl } = await import('../../../crawl-stadsgarden.js'); return crawl(); } },
-    { name: 'Debaser (JS)', fn: async () => { const { crawl } = await import('../../../crawl-debaser-fixed.js'); return crawl(); } },
-    { name: 'Fylkingen (JS)', fn: async () => { const { crawl } = await import('../../../crawl-fylkingen-fixed.js'); return crawl(); } },
-    { name: 'Slakthusen (all venues)', fn: async () => { const { crawl } = await import('../../../crawl-slakthusen.js'); return crawl(); } },
-    { name: 'Fasching (JS)', fn: async () => { const { crawl } = await import('../../../crawl-fasching.js'); return crawl(); } },
-    { name: 'Pet Sounds (JS)', fn: async () => { const { crawl } = await import('../../../crawl-petsounds.js'); return crawl(); } },
-    { name: 'Nalen (JS)', fn: async () => { const { crawl } = await import('../../../crawl-nalen.js'); return crawl(); } },
-    { name: 'Fållan (JS)', fn: async () => { const { crawl } = await import('../../../crawl-fallan.js'); return crawl(); } },
-    { name: 'Södra Teatern', fn: async () => { const { crawl } = await import('../../../crawl-sodrateatern.js'); return crawl(); } },
-    { name: 'Rönnells', fn: async () => { const { crawl } = await import('../../../crawl-ronnells.js'); return crawl(); } },
-    { name: 'Banan-Kompaniet', fn: async () => { const { crawl } = await import('../../../crawl-banan-kompaniet.js'); return crawl(); } },
-    { name: 'Berns', fn: async () => { const { crawl } = await import('../../../crawl-berns.js'); return crawl(); } },
-    { name: 'Cirkus', fn: async () => { const { crawl } = await import('../../../crawl-cirkus.js'); return crawl(); } },
-    { name: 'Stampen', fn: async () => { const { crawl } = await import('../../../crawl-stampen.js'); return crawl(); } },
-    { name: 'Gamla Enskede Bryggeri', fn: async () => { const { crawl } = await import('../../../crawl-gamla-enskede-bryggeri.js'); return crawl(); } },
-    { name: 'Reimersholme', fn: async () => { const { crawl } = await import('../../../crawl-reimersholme.js'); return crawl(); } },
-    { name: 'Rosettas', fn: async () => { const { crawl } = await import('../../../crawl-rosettas.js'); return crawl(); } },
-    { name: 'Slakthusetclub', fn: async () => { const { crawl } = await import('../../../crawl-slakthusetclub.js'); return crawl(); } },
-    { name: 'Gröna Lund', fn: async () => { const { crawl } = await import('../../../crawl-gronalund.js'); return crawl(); } },
-    { name: 'Geronimos FGT', fn: async () => { const { crawl } = await import('../../../crawl-geronimosfgt.js'); return crawl(); } },
-    { name: 'Konserthuset', fn: async () => { const { crawl } = await import('../../../crawl-konserthuset.js'); return crawl(); } },
-    { name: 'Fredagsmangel', fn: async () => { const { crawl } = await import('../../../crawl-fredagsmangel.js'); return crawl(); } },
-    { name: 'Göta Lejon', fn: async () => { const { crawl } = await import('../../../crawl-gotalejon.js'); return crawl(); } },
-    { name: 'B-K', fn: async () => { const { crawl } = await import('../../../crawl-bk.js'); return crawl(); } },
-    { name: 'Rival', fn: async () => { const { crawl } = await import('../../../crawl-rival.js'); return crawl(); } },
-    { name: 'Under Bron', fn: async () => { const { crawl } = await import('../../../crawl-underbron-fixed.js'); return crawl(); } },
+    // JavaScript crawlers (26) — loaded via runJsCrawler to bypass TS7016
+    { name: 'Stadsgårdsterminalen', fn: () => runJsCrawler('../../../crawl-stadsgarden.js') },
+    { name: 'Debaser (JS)', fn: () => runJsCrawler('../../../crawl-debaser-fixed.js') },
+    { name: 'Fylkingen (JS)', fn: () => runJsCrawler('../../../crawl-fylkingen-fixed.js') },
+    { name: 'Slakthusen (all venues)', fn: () => runJsCrawler('../../../crawl-slakthusen.js') },
+    { name: 'Fasching (JS)', fn: () => runJsCrawler('../../../crawl-fasching.js') },
+    { name: 'Pet Sounds (JS)', fn: () => runJsCrawler('../../../crawl-petsounds.js') },
+    { name: 'Nalen (JS)', fn: () => runJsCrawler('../../../crawl-nalen.js') },
+    { name: 'Fållan (JS)', fn: () => runJsCrawler('../../../crawl-fallan.js') },
+    { name: 'Södra Teatern', fn: () => runJsCrawler('../../../crawl-sodrateatern.js') },
+    { name: 'Rönnells', fn: () => runJsCrawler('../../../crawl-ronnells.js') },
+    { name: 'Banan-Kompaniet', fn: () => runJsCrawler('../../../crawl-banan-kompaniet.js') },
+    { name: 'Berns', fn: () => runJsCrawler('../../../crawl-berns.js') },
+    { name: 'Cirkus', fn: () => runJsCrawler('../../../crawl-cirkus.js') },
+    { name: 'Stampen', fn: () => runJsCrawler('../../../crawl-stampen.js') },
+    { name: 'Gamla Enskede Bryggeri', fn: () => runJsCrawler('../../../crawl-gamla-enskede-bryggeri.js') },
+    { name: 'Reimersholme', fn: () => runJsCrawler('../../../crawl-reimersholme.js') },
+    { name: 'Rosettas', fn: () => runJsCrawler('../../../crawl-rosettas.js') },
+    { name: 'Slakthusetclub', fn: () => runJsCrawler('../../../crawl-slakthusetclub.js') },
+    { name: 'Gröna Lund', fn: () => runJsCrawler('../../../crawl-gronalund.js') },
+    { name: 'Geronimos FGT', fn: () => runJsCrawler('../../../crawl-geronimosfgt.js') },
+    { name: 'Konserthuset', fn: () => runJsCrawler('../../../crawl-konserthuset.js') },
+    { name: 'Fredagsmangel', fn: () => runJsCrawler('../../../crawl-fredagsmangel.js') },
+    { name: 'Göta Lejon', fn: () => runJsCrawler('../../../crawl-gotalejon.js') },
+    { name: 'B-K', fn: () => runJsCrawler('../../../crawl-bk.js') },
+    { name: 'Rival', fn: () => runJsCrawler('../../../crawl-rival.js') },
+    { name: 'Under Bron', fn: () => runJsCrawler('../../../crawl-underbron-fixed.js') },
   ];
 
   const results = [];
