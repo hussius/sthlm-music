@@ -16,11 +16,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const BASE_URL = 'https://cirkus.se';
 const VENUE_NAME = 'Cirkus';
 
-console.log(`🎸 Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 const MONTHS = {
   jan: 0, feb: 1, mars: 2, apr: 3, maj: 4, jun: 5, juni: 5,
   jul: 6, juli: 6, aug: 7, sep: 8, okt: 9, nov: 10, dec: 11,
@@ -56,112 +51,124 @@ function parseSwedishDate(dateText) {
   return date;
 }
 
-let success = 0;
-let failed = 0;
-const seen = new Set();
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-try {
-  for (let page = 1; page <= 10; page++) {
-    const url = page === 1
-      ? `${BASE_URL}/evenemang/`
-      : `${BASE_URL}/evenemang/page/${page}/`;
+  let success = 0;
+  let failed = 0;
+  const seen = new Set();
 
-    console.log(`\n📄 Fetching page ${page}: ${url}`);
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log(`  ↩ No more pages (404)`);
+  try {
+    console.log(`🎸 Crawling ${VENUE_NAME}...`);
+
+    for (let page = 1; page <= 10; page++) {
+      const url = page === 1
+        ? `${BASE_URL}/evenemang/`
+        : `${BASE_URL}/evenemang/page/${page}/`;
+
+      console.log(`\n📄 Fetching page ${page}: ${url}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log(`  ↩ No more pages (404)`);
+          break;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      // Event links: <a href="/sv/evenemang/[slug]/"> cards
+      const eventLinks = $('a[href^="/sv/evenemang/"]').toArray().filter(el => {
+        const href = $(el).attr('href') || '';
+        // Skip the parent /sv/evenemang/ listing link itself
+        return href !== '/sv/evenemang/' && href !== '/sv/evenemang';
+      });
+
+      if (eventLinks.length === 0) {
+        console.log(`  ↩ No events found, stopping pagination`);
         break;
       }
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
 
-    const html = await response.text();
-    const $ = cheerio.load(html);
+      console.log(`  Found ${eventLinks.length} event links`);
 
-    // Event links: <a href="/sv/evenemang/[slug]/"> cards
-    const eventLinks = $('a[href^="/sv/evenemang/"]').toArray().filter(el => {
-      const href = $(el).attr('href') || '';
-      // Skip the parent /sv/evenemang/ listing link itself
-      return href !== '/sv/evenemang/' && href !== '/sv/evenemang';
-    });
+      for (const element of eventLinks) {
+        try {
+          const $el = $(element);
+          const href = $el.attr('href');
+          if (!href || seen.has(href)) continue;
+          seen.add(href);
 
-    if (eventLinks.length === 0) {
-      console.log(`  ↩ No events found, stopping pagination`);
-      break;
-    }
+          // Only process links that contain a heading (event cards, not category filter links)
+          const headingEl = $el.find('h1,h2,h3,h4,h5,h6').first();
+          if (!headingEl.length) continue;
+          const title = headingEl.text().trim();
 
-    console.log(`  Found ${eventLinks.length} event links`);
+          if (!title || title.length < 2) continue;
 
-    for (const element of eventLinks) {
-      try {
-        const $el = $(element);
-        const href = $el.attr('href');
-        if (!href || seen.has(href)) continue;
-        seen.add(href);
+          // Date is a SIBLING of the <a> tag, not inside it.
+          // Parent text includes both date and title. Use \s* because
+          // <strong>22</strong> collapses spaces: "sön22feb" in .text().
+          const parentText = $el.parent().text();
+          const dateMatch = parentText.match(/(mån|tis|ons|tor|fre|lör|sön)\s*(\d{1,2})\s*(jan|feb|mars|apr|maj|jun|juli?|aug|sep|okt|nov|dec)/i);
+          if (!dateMatch) {
+            console.log(`  ⚠️  No date for: ${title}`);
+            continue;
+          }
 
-        // Only process links that contain a heading (event cards, not category filter links)
-        const headingEl = $el.find('h1,h2,h3,h4,h5,h6').first();
-        if (!headingEl.length) continue;
-        const title = headingEl.text().trim();
+          const dateText = dateMatch[0];
+          const eventDate = parseSwedishDate(dateText);
+          if (!eventDate) {
+            console.log(`  ⚠️  Could not parse date "${dateText}" for: ${title}`);
+            continue;
+          }
 
-        if (!title || title.length < 2) continue;
+          const fullUrl = `${BASE_URL}${href}`;
 
-        // Date is a SIBLING of the <a> tag, not inside it.
-        // Parent text includes both date and title. Use \s* because
-        // <strong>22</strong> collapses spaces: "sön22feb" in .text().
-        const parentText = $el.parent().text();
-        const dateMatch = parentText.match(/(mån|tis|ons|tor|fre|lör|sön)\s*(\d{1,2})\s*(jan|feb|mars|apr|maj|jun|juli?|aug|sep|okt|nov|dec)/i);
-        if (!dateMatch) {
-          console.log(`  ⚠️  No date for: ${title}`);
-          continue;
+          const event = {
+            name: title,
+            artist: title,
+            venue: VENUE_NAME,
+            date: eventDate,
+            time: '20:00',
+            genre: 'other',
+            ticketSources: [{
+              platform: 'venue-direct',
+              url: fullUrl,
+              addedAt: new Date().toISOString(),
+            }],
+            sourceId: `cirkus-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
+            sourcePlatform: 'venue-direct',
+          };
+
+          await db.insert(schema.events).values(event).onConflictDoUpdate({
+            target: [schema.events.venue, schema.events.date],
+            set: event,
+          });
+
+          success++;
+          console.log(`  ✅ ${title} (${eventDate.toISOString().split('T')[0]})`);
+        } catch (error) {
+          failed++;
+          console.error(`  ❌ Error: ${error.message}`);
         }
-
-        const dateText = dateMatch[0];
-        const eventDate = parseSwedishDate(dateText);
-        if (!eventDate) {
-          console.log(`  ⚠️  Could not parse date "${dateText}" for: ${title}`);
-          continue;
-        }
-
-        const fullUrl = `${BASE_URL}${href}`;
-
-        const event = {
-          name: title,
-          artist: title,
-          venue: VENUE_NAME,
-          date: eventDate,
-          time: '20:00',
-          genre: 'other',
-          ticketSources: [{
-            platform: 'venue-direct',
-            url: fullUrl,
-            addedAt: new Date().toISOString(),
-          }],
-          sourceId: `cirkus-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
-          sourcePlatform: 'venue-direct',
-        };
-
-        await db.insert(schema.events).values(event).onConflictDoUpdate({
-          target: [schema.events.venue, schema.events.date],
-          set: event,
-        });
-
-        success++;
-        console.log(`  ✅ ${title} (${eventDate.toISOString().split('T')[0]})`);
-      } catch (error) {
-        failed++;
-        console.error(`  ❌ Error: ${error.message}`);
       }
     }
+
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
   }
+}
 
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

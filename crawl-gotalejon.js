@@ -22,11 +22,6 @@ const VENUE_NAME = 'Göta Lejon';
 const PAGE_SIZE = 20;
 const MAX_PAGES = 15;
 
-console.log(`Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 function isGotaLejonVenue(venueName) {
   if (!venueName) return false;
   const lower = venueName.toLowerCase();
@@ -43,134 +38,145 @@ function buildUrl(page) {
   return `${API_BASE}?${params.toString()}`;
 }
 
-try {
-  console.log('Fetching events from Live Nation API...');
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  // Fetch page 0 first to determine total count
-  const firstResponse = await fetch(buildUrl(0), {
-    headers: {
-      'Accept': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; StockholmEventsBot/1.0)',
-    },
-  });
-  if (!firstResponse.ok) throw new Error(`HTTP ${firstResponse.status}: ${firstResponse.statusText}`);
+  try {
+    console.log(`Crawling ${VENUE_NAME}...`);
+    console.log('Fetching events from Live Nation API...');
 
-  const firstData = await firstResponse.json();
-  const total = firstData.total || 0;
-  const totalPages = Math.min(Math.ceil(total / PAGE_SIZE), MAX_PAGES);
-
-  console.log(`Total Stockholm events: ${total}, fetching ${totalPages} pages...`);
-
-  // Collect all documents across pages
-  let allDocuments = [...(firstData.documents || [])];
-
-  for (let page = 1; page < totalPages; page++) {
-    const response = await fetch(buildUrl(page), {
+    // Fetch page 0 first to determine total count
+    const firstResponse = await fetch(buildUrl(0), {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (compatible; StockholmEventsBot/1.0)',
       },
     });
-    if (!response.ok) {
-      console.warn(`  Warning: Page ${page} returned HTTP ${response.status}, skipping`);
-      continue;
-    }
-    const data = await response.json();
-    const docs = data.documents || [];
-    if (docs.length === 0) break;
-    allDocuments = allDocuments.concat(docs);
-  }
+    if (!firstResponse.ok) throw new Error(`HTTP ${firstResponse.status}: ${firstResponse.statusText}`);
 
-  console.log(`Fetched ${allDocuments.length} total Stockholm events`);
+    const firstData = await firstResponse.json();
+    const total = firstData.total || 0;
+    const totalPages = Math.min(Math.ceil(total / PAGE_SIZE), MAX_PAGES);
 
-  // Filter to Göta Lejon events only
-  const gotaLejonDocs = allDocuments.filter(doc =>
-    isGotaLejonVenue(doc?.venue?.name)
-  );
+    console.log(`Total Stockholm events: ${total}, fetching ${totalPages} pages...`);
 
-  console.log(`Found ${gotaLejonDocs.length} Göta Lejon events`);
+    // Collect all documents across pages
+    let allDocuments = [...(firstData.documents || [])];
 
-  if (gotaLejonDocs.length === 0) {
-    console.warn('No Göta Lejon events found — API filter may need adjustment');
-    await client.end();
-    process.exit(0);
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let success = 0;
-  let failed = 0;
-  let skipped = 0;
-
-  for (const doc of gotaLejonDocs) {
-    try {
-      const name = doc.name?.trim();
-      if (!name) continue;
-
-      const eventDate = new Date(doc.eventDate);
-      if (isNaN(eventDate.getTime())) {
-        console.log(`  Warning: Could not parse date for: ${name}`);
-        continue;
-      }
-
-      if (eventDate < today) {
-        skipped++;
-        continue;
-      }
-
-      const dateStr = eventDate.toISOString().split('T')[0];
-      const timeStr = `${String(eventDate.getUTCHours()).padStart(2, '0')}:${String(eventDate.getUTCMinutes()).padStart(2, '0')}`;
-
-      // Primary artist from lineup
-      const primaryLineup = doc.lineup?.find(l => l.isPrimary);
-      const artist = primaryLineup?.name || name;
-
-      // Ticket URL
-      const ticketUrl = doc.tickets?.[0]?.ticketUrl || 'https://www.gotalejon.se/kalendarium';
-
-      // Swedish event page URL from localizations
-      const sweLocalization = doc.localizations?.find(l =>
-        l.url && l.url.includes('gotalejon.se')
-      );
-      const eventUrl = sweLocalization?.url || ticketUrl;
-
-      const sourceId = `gotalejon-${name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`;
-
-      const event = {
-        name,
-        artist,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: timeStr,
-        genre: 'other',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: ticketUrl,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId,
-        sourcePlatform: 'venue-direct',
-      };
-
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
+    for (let page = 1; page < totalPages; page++) {
+      const response = await fetch(buildUrl(page), {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; StockholmEventsBot/1.0)',
+        },
       });
-
-      success++;
-      console.log(`Saved: ${name} (${dateStr} ${timeStr})`);
-    } catch (error) {
-      failed++;
-      console.error(`Error processing event: ${error.message}`);
+      if (!response.ok) {
+        console.warn(`  Warning: Page ${page} returned HTTP ${response.status}, skipping`);
+        continue;
+      }
+      const data = await response.json();
+      const docs = data.documents || [];
+      if (docs.length === 0) break;
+      allDocuments = allDocuments.concat(docs);
     }
-  }
 
-  console.log(`\nComplete: ${success} saved, ${failed} failed, ${skipped} past events skipped`);
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+    console.log(`Fetched ${allDocuments.length} total Stockholm events`);
+
+    // Filter to Göta Lejon events only
+    const gotaLejonDocs = allDocuments.filter(doc =>
+      isGotaLejonVenue(doc?.venue?.name)
+    );
+
+    console.log(`Found ${gotaLejonDocs.length} Göta Lejon events`);
+
+    if (gotaLejonDocs.length === 0) {
+      console.warn('No Göta Lejon events found — API filter may need adjustment');
+      return { success: 0, failed: 0 };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    for (const doc of gotaLejonDocs) {
+      try {
+        const name = doc.name?.trim();
+        if (!name) continue;
+
+        const eventDate = new Date(doc.eventDate);
+        if (isNaN(eventDate.getTime())) {
+          console.log(`  Warning: Could not parse date for: ${name}`);
+          continue;
+        }
+
+        if (eventDate < today) {
+          skipped++;
+          continue;
+        }
+
+        const dateStr = eventDate.toISOString().split('T')[0];
+        const timeStr = `${String(eventDate.getUTCHours()).padStart(2, '0')}:${String(eventDate.getUTCMinutes()).padStart(2, '0')}`;
+
+        // Primary artist from lineup
+        const primaryLineup = doc.lineup?.find(l => l.isPrimary);
+        const artist = primaryLineup?.name || name;
+
+        // Ticket URL
+        const ticketUrl = doc.tickets?.[0]?.ticketUrl || 'https://www.gotalejon.se/kalendarium';
+
+        // Swedish event page URL from localizations
+        const sweLocalization = doc.localizations?.find(l =>
+          l.url && l.url.includes('gotalejon.se')
+        );
+        const eventUrl = sweLocalization?.url || ticketUrl;
+
+        const sourceId = `gotalejon-${name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`;
+
+        const event = {
+          name,
+          artist,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: timeStr,
+          genre: 'other',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: ticketUrl,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId,
+          sourcePlatform: 'venue-direct',
+        };
+
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+
+        success++;
+        console.log(`Saved: ${name} (${dateStr} ${timeStr})`);
+      } catch (error) {
+        failed++;
+        console.error(`Error processing event: ${error.message}`);
+      }
+    }
+
+    console.log(`\nComplete: ${success} saved, ${failed} failed, ${skipped} past events skipped`);
+    return { success, failed };
+  } catch (error) {
+    console.error('Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

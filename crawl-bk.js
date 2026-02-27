@@ -29,11 +29,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const WHATS_ON_URL = 'https://www.b-k.se/whats-on';
 const VENUE_NAME = 'B-K';
 
-console.log(`Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 // Parse date strings like "Mar 5, 2026", "March 5, 2026", "Apr 2, 2026"
 function parseEventDate(dateText) {
   if (!dateText) return null;
@@ -63,117 +58,129 @@ function parseEventDate(dateText) {
   return null;
 }
 
-try {
-  console.log('Fetching B-K whats-on page...');
-  const response = await fetch(WHATS_ON_URL, {
-    headers: {
-      'Accept': 'text/html,application/xhtml+xml',
-      'User-Agent': 'Mozilla/5.0 (compatible; StockholmEventsBot/1.0)',
-    },
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  const html = await response.text();
-  const $ = load(html);
-
-  const links = $('a[href^="/whats-on/"]');
-  console.log(`Found ${links.length} event links (before deduplication)`);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Collect events first (cheerio each is sync, DB inserts are async)
-  const seenHrefs = new Set();
-  const eventsToInsert = [];
-
-  links.each((i, el) => {
-    const link = $(el);
-    const href = link.attr('href');
-
-    // Deduplicate by href
-    if (!href || seenHrefs.has(href)) return;
-    seenHrefs.add(href);
-
-    // Title: primary h3, fallback to heading/title class
-    let title = link.find('h3').first().text().trim();
-    if (!title) {
-      title = link.find('[class*="headline"], [class*="title"]').first().text().trim();
-    }
-    if (!title) return;
-
-    // Date from .text-block-19 (Webflow date display block)
-    let dateText = link.find('.text-block-19').first().text().trim();
-    if (!dateText) {
-      // Fallback: regex on full link text
-      const allText = link.text();
-      const m = allText.match(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\b/i);
-      dateText = m ? m[0] : '';
-    }
-
-    if (!dateText) {
-      console.log(`  Warning: No date found for: ${title} (${href})`);
-      return;
-    }
-
-    const eventDate = parseEventDate(dateText);
-    if (!eventDate || isNaN(eventDate.getTime())) {
-      console.log(`  Warning: Could not parse date "${dateText}" for: ${title}`);
-      return;
-    }
-
-    // Skip past events
-    if (eventDate < today) return;
-
-    // Doors time from text content (format: "DOORS:19:00")
-    const allText = link.text();
-    const doorsMatch = allText.match(/DOORS:(\d{2}:\d{2})/i);
-    const timeStr = doorsMatch ? doorsMatch[1] : '19:00';
-
-    const dateStr = eventDate.toISOString().split('T')[0];
-    const eventUrl = `https://www.b-k.se${href}`;
-    const sourceId = `bk-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`;
-
-    eventsToInsert.push({
-      name: title,
-      artist: title,
-      venue: VENUE_NAME,
-      date: eventDate,
-      time: timeStr,
-      genre: 'other',
-      ticketSources: [{
-        platform: 'venue-direct',
-        url: eventUrl,
-        addedAt: new Date().toISOString(),
-      }],
-      sourceId,
-      sourcePlatform: 'venue-direct',
+  try {
+    console.log(`Crawling ${VENUE_NAME}...`);
+    console.log('Fetching B-K whats-on page...');
+    const response = await fetch(WHATS_ON_URL, {
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml',
+        'User-Agent': 'Mozilla/5.0 (compatible; StockholmEventsBot/1.0)',
+      },
     });
-  });
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-  console.log(`Collected ${eventsToInsert.length} future events to save`);
+    const html = await response.text();
+    const $ = load(html);
 
-  let success = 0;
-  let failed = 0;
+    const links = $('a[href^="/whats-on/"]');
+    console.log(`Found ${links.length} event links (before deduplication)`);
 
-  for (const event of eventsToInsert) {
-    try {
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Collect events first (cheerio each is sync, DB inserts are async)
+    const seenHrefs = new Set();
+    const eventsToInsert = [];
+
+    links.each((i, el) => {
+      const link = $(el);
+      const href = link.attr('href');
+
+      // Deduplicate by href
+      if (!href || seenHrefs.has(href)) return;
+      seenHrefs.add(href);
+
+      // Title: primary h3, fallback to heading/title class
+      let title = link.find('h3').first().text().trim();
+      if (!title) {
+        title = link.find('[class*="headline"], [class*="title"]').first().text().trim();
+      }
+      if (!title) return;
+
+      // Date from .text-block-19 (Webflow date display block)
+      let dateText = link.find('.text-block-19').first().text().trim();
+      if (!dateText) {
+        // Fallback: regex on full link text
+        const allText = link.text();
+        const m = allText.match(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\b/i);
+        dateText = m ? m[0] : '';
+      }
+
+      if (!dateText) {
+        console.log(`  Warning: No date found for: ${title} (${href})`);
+        return;
+      }
+
+      const eventDate = parseEventDate(dateText);
+      if (!eventDate || isNaN(eventDate.getTime())) {
+        console.log(`  Warning: Could not parse date "${dateText}" for: ${title}`);
+        return;
+      }
+
+      // Skip past events
+      if (eventDate < today) return;
+
+      // Doors time from text content (format: "DOORS:19:00")
+      const allText = link.text();
+      const doorsMatch = allText.match(/DOORS:(\d{2}:\d{2})/i);
+      const timeStr = doorsMatch ? doorsMatch[1] : '19:00';
+
+      const dateStr = eventDate.toISOString().split('T')[0];
+      const eventUrl = `https://www.b-k.se${href}`;
+      const sourceId = `bk-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`;
+
+      eventsToInsert.push({
+        name: title,
+        artist: title,
+        venue: VENUE_NAME,
+        date: eventDate,
+        time: timeStr,
+        genre: 'other',
+        ticketSources: [{
+          platform: 'venue-direct',
+          url: eventUrl,
+          addedAt: new Date().toISOString(),
+        }],
+        sourceId,
+        sourcePlatform: 'venue-direct',
       });
-      success++;
-      console.log(`Saved: ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
-    } catch (error) {
-      failed++;
-      console.error(`Error saving ${event.name}: ${error.message}`);
-    }
-  }
+    });
 
-  console.log(`\nComplete: ${success} saved, ${failed} failed`);
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+    console.log(`Collected ${eventsToInsert.length} future events to save`);
+
+    let success = 0;
+    let failed = 0;
+
+    for (const event of eventsToInsert) {
+      try {
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+        success++;
+        console.log(`Saved: ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
+      } catch (error) {
+        failed++;
+        console.error(`Error saving ${event.name}: ${error.message}`);
+      }
+    }
+
+    console.log(`\nComplete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

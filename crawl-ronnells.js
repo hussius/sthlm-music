@@ -10,11 +10,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_URL = 'https://ronnells.se/?page_id=21';
 const VENUE_NAME = 'Rönnells Antikvariat';
 
-console.log(`🎸 Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 function parseRonnellsDate(dateStr) {
   // Parse Swedish dates like "torsdag 26 februari 2026" or "måndag 3 mars 2026"
   const months = {
@@ -52,170 +47,182 @@ function parseTime(timeStr) {
   return { hour: 20, minute: 0 };
 }
 
-try {
-  console.log('📄 Fetching events page...');
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  const response = await fetch(VENUE_URL);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
+  try {
+    console.log(`🎸 Crawling ${VENUE_NAME}...`);
+    console.log('📄 Fetching events page...');
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
+    const response = await fetch(VENUE_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
 
-  const events = [];
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-  console.log('🔍 Parsing events...');
-  console.log(`Found ${$('strong').length} <strong> tags`);
-  console.log(`Found ${$('b').length} <b> tags`);
-  console.log(`Found ${$('h3').length} <h3> tags`);
+    const events = [];
 
-  // Find all strong and b tags with dates (they mark the start of event blocks)
-  $('strong, b').each((i, elem) => {
-    try {
-      const dateText = $(elem).text().trim();
+    console.log('🔍 Parsing events...');
+    console.log(`Found ${$('strong').length} <strong> tags`);
+    console.log(`Found ${$('b').length} <b> tags`);
+    console.log(`Found ${$('h3').length} <h3> tags`);
 
-      console.log(`  Checking strong tag: "${dateText}"`);
+    // Find all strong and b tags with dates (they mark the start of event blocks)
+    $('strong, b').each((i, elem) => {
+      try {
+        const dateText = $(elem).text().trim();
 
-      // Check if this looks like a date
-      if (!dateText.match(/\d{1,2}\s+\w+\s+\d{4}/)) {
-        return;
-      }
+        console.log(`  Checking strong tag: "${dateText}"`);
 
-      console.log(`  ✓ Found date: ${dateText}`);
-
-      const dateParts = parseRonnellsDate(dateText);
-      if (!dateParts) return;
-
-      // Find all h3 elements and get the one that follows this date element
-      const allH3s = $('h3').toArray();
-      const dateElem = $(elem)[0];
-      let titleText = '';
-      let timeText = '';
-      let eventUrl = '';
-
-      // Find the next h3 after this date element
-      for (const h3 of allH3s) {
-        if (h3.startSourcePos && dateElem.endSourcePos && h3.startSourcePos > dateElem.endSourcePos) {
-          titleText = $(h3).text().trim();
-
-          // Look for time text before this h3
-          const h3Parent = $(h3).parent();
-          const textBefore = h3Parent.prevAll().toArray().slice(0, 3).map(el => $(el).text().trim()).join(' ');
-          const timeMatch = textBefore.match(/(\d{1,2}-\d{1,2})/);
-          if (timeMatch) {
-            timeText = timeMatch[0];
-          }
-
-          // Look for event link
-          const link = h3Parent.find('a').first();
-          if (link.length) {
-            eventUrl = link.attr('href') || '';
-          }
-
-          break;
+        // Check if this looks like a date
+        if (!dateText.match(/\d{1,2}\s+\w+\s+\d{4}/)) {
+          return;
         }
-      }
 
-      // Fallback: if position comparison didn't work, just get the next h3 in DOM order
-      if (!titleText) {
-        const allContent = $('*').toArray();
-        let foundDate = false;
-        for (const el of allContent) {
-          if (foundDate && $(el).is('h3')) {
-            titleText = $(el).text().trim();
+        console.log(`  ✓ Found date: ${dateText}`);
 
-            // Get surrounding text for time
-            const surroundingText = $(el).parent().text();
-            const timeMatch = surroundingText.match(/(\d{1,2}-\d{1,2})/);
+        const dateParts = parseRonnellsDate(dateText);
+        if (!dateParts) return;
+
+        // Find all h3 elements and get the one that follows this date element
+        const allH3s = $('h3').toArray();
+        const dateElem = $(elem)[0];
+        let titleText = '';
+        let timeText = '';
+        let eventUrl = '';
+
+        // Find the next h3 after this date element
+        for (const h3 of allH3s) {
+          if (h3.startSourcePos && dateElem.endSourcePos && h3.startSourcePos > dateElem.endSourcePos) {
+            titleText = $(h3).text().trim();
+
+            // Look for time text before this h3
+            const h3Parent = $(h3).parent();
+            const textBefore = h3Parent.prevAll().toArray().slice(0, 3).map(el => $(el).text().trim()).join(' ');
+            const timeMatch = textBefore.match(/(\d{1,2}-\d{1,2})/);
             if (timeMatch) {
               timeText = timeMatch[0];
             }
 
+            // Look for event link
+            const link = h3Parent.find('a').first();
+            if (link.length) {
+              eventUrl = link.attr('href') || '';
+            }
+
             break;
           }
-          if (el === dateElem) {
-            foundDate = true;
+        }
+
+        // Fallback: if position comparison didn't work, just get the next h3 in DOM order
+        if (!titleText) {
+          const allContent = $('*').toArray();
+          let foundDate = false;
+          for (const el of allContent) {
+            if (foundDate && $(el).is('h3')) {
+              titleText = $(el).text().trim();
+
+              // Get surrounding text for time
+              const surroundingText = $(el).parent().text();
+              const timeMatch = surroundingText.match(/(\d{1,2}-\d{1,2})/);
+              if (timeMatch) {
+                timeText = timeMatch[0];
+              }
+
+              break;
+            }
+            if (el === dateElem) {
+              foundDate = true;
+            }
           }
         }
+
+        if (titleText) {
+          console.log(`  ✓ Found title: ${titleText}`);
+          console.log(`  ✓ Time: ${timeText || 'default'}`);
+
+          const time = parseTime(timeText || '20-22');
+          const eventDate = new Date(
+            dateParts.year,
+            dateParts.month,
+            dateParts.day,
+            time.hour,
+            time.minute,
+            0,
+            0
+          );
+
+          events.push({
+            name: titleText,
+            date: eventDate,
+            time: `${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`,
+            url: eventUrl || VENUE_URL,
+          });
+        } else {
+          console.log(`  ✗ No title found for date: ${dateText}`);
+        }
+      } catch (error) {
+        console.error(`⚠️  Error parsing event: ${error.message}`);
       }
+    });
 
-      if (titleText) {
-        console.log(`  ✓ Found title: ${titleText}`);
-        console.log(`  ✓ Time: ${timeText || 'default'}`);
+    console.log(`\n📋 Found ${events.length} events`);
 
-        const time = parseTime(timeText || '20-22');
-        const eventDate = new Date(
-          dateParts.year,
-          dateParts.month,
-          dateParts.day,
-          time.hour,
-          time.minute,
-          0,
-          0
-        );
+    let success = 0;
+    let failed = 0;
 
-        events.push({
-          name: titleText,
-          date: eventDate,
-          time: `${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`,
-          url: eventUrl || VENUE_URL,
+    for (const eventData of events) {
+      try {
+        if (isNaN(eventData.date.getTime())) {
+          console.log(`⚠️  ${eventData.name}: Invalid date`);
+          failed++;
+          continue;
+        }
+
+        const event = {
+          name: eventData.name,
+          artist: eventData.name,
+          venue: VENUE_NAME,
+          date: eventData.date,
+          time: eventData.time,
+          genre: 'other',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: eventData.url,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId: `ronnells-${eventData.name}-${eventData.date.toISOString().split('T')[0]}`,
+          sourcePlatform: 'venue-direct',
+        };
+
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
         });
-      } else {
-        console.log(`  ✗ No title found for date: ${dateText}`);
-      }
-    } catch (error) {
-      console.error(`⚠️  Error parsing event: ${error.message}`);
-    }
-  });
 
-  console.log(`\n📋 Found ${events.length} events`);
-
-  let success = 0;
-  let failed = 0;
-
-  for (const eventData of events) {
-    try {
-      if (isNaN(eventData.date.getTime())) {
-        console.log(`⚠️  ${eventData.name}: Invalid date`);
+        success++;
+        console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
+      } catch (error) {
         failed++;
-        continue;
+        console.error(`❌ ${eventData.name}: ${error.message}`);
       }
-
-      const event = {
-        name: eventData.name,
-        artist: eventData.name,
-        venue: VENUE_NAME,
-        date: eventData.date,
-        time: eventData.time,
-        genre: 'other',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: eventData.url,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId: `ronnells-${eventData.name}-${eventData.date.toISOString().split('T')[0]}`,
-        sourcePlatform: 'venue-direct',
-      };
-
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
-      });
-
-      success++;
-      console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
-    } catch (error) {
-      failed++;
-      console.error(`❌ ${eventData.name}: ${error.message}`);
     }
+
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
   }
+}
 
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  process.exit(1);
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

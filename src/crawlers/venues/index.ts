@@ -25,7 +25,7 @@ export { crawlPetSounds } from './pet-sounds.js';
 export { crawlDebaser } from './debaser.js';
 
 /**
- * Crawl all 13 priority venues sequentially.
+ * Crawl all venues sequentially.
  *
  * Process:
  * - Runs each venue crawler in sequence (avoid overwhelming small sites)
@@ -37,6 +37,7 @@ export { crawlDebaser } from './debaser.js';
  */
 export async function crawlAllVenues() {
   const crawlers = [
+    // TypeScript crawlers (13)
     { name: 'Kollektivet Livet', fn: async () => (await import('./kollektivet-livet.js')).crawlKollektivetLivet() },
     { name: 'Slaktkyrkan', fn: async () => (await import('./slaktkyrkan.js')).crawlSlaktkyrkan() },
     { name: 'Hus 7', fn: async () => (await import('./hus7.js')).crawlHus7() },
@@ -50,6 +51,33 @@ export async function crawlAllVenues() {
     { name: 'Kägelbanan', fn: async () => (await import('./kagelbanan.js')).crawlKagelbanan() },
     { name: 'Pet Sounds', fn: async () => (await import('./pet-sounds.js')).crawlPetSounds() },
     { name: 'Debaser', fn: async () => (await import('./debaser.js')).crawlDebaser() },
+    // JavaScript crawlers (26)
+    { name: 'Stadsgårdsterminalen', fn: async () => { const { crawl } = await import('../../../crawl-stadsgarden.js'); return crawl(); } },
+    { name: 'Debaser (JS)', fn: async () => { const { crawl } = await import('../../../crawl-debaser-fixed.js'); return crawl(); } },
+    { name: 'Fylkingen (JS)', fn: async () => { const { crawl } = await import('../../../crawl-fylkingen-fixed.js'); return crawl(); } },
+    { name: 'Slakthusen (all venues)', fn: async () => { const { crawl } = await import('../../../crawl-slakthusen.js'); return crawl(); } },
+    { name: 'Fasching (JS)', fn: async () => { const { crawl } = await import('../../../crawl-fasching.js'); return crawl(); } },
+    { name: 'Pet Sounds (JS)', fn: async () => { const { crawl } = await import('../../../crawl-petsounds.js'); return crawl(); } },
+    { name: 'Nalen (JS)', fn: async () => { const { crawl } = await import('../../../crawl-nalen.js'); return crawl(); } },
+    { name: 'Fållan (JS)', fn: async () => { const { crawl } = await import('../../../crawl-fallan.js'); return crawl(); } },
+    { name: 'Södra Teatern', fn: async () => { const { crawl } = await import('../../../crawl-sodrateatern.js'); return crawl(); } },
+    { name: 'Rönnells', fn: async () => { const { crawl } = await import('../../../crawl-ronnells.js'); return crawl(); } },
+    { name: 'Banan-Kompaniet', fn: async () => { const { crawl } = await import('../../../crawl-banan-kompaniet.js'); return crawl(); } },
+    { name: 'Berns', fn: async () => { const { crawl } = await import('../../../crawl-berns.js'); return crawl(); } },
+    { name: 'Cirkus', fn: async () => { const { crawl } = await import('../../../crawl-cirkus.js'); return crawl(); } },
+    { name: 'Stampen', fn: async () => { const { crawl } = await import('../../../crawl-stampen.js'); return crawl(); } },
+    { name: 'Gamla Enskede Bryggeri', fn: async () => { const { crawl } = await import('../../../crawl-gamla-enskede-bryggeri.js'); return crawl(); } },
+    { name: 'Reimersholme', fn: async () => { const { crawl } = await import('../../../crawl-reimersholme.js'); return crawl(); } },
+    { name: 'Rosettas', fn: async () => { const { crawl } = await import('../../../crawl-rosettas.js'); return crawl(); } },
+    { name: 'Slakthusetclub', fn: async () => { const { crawl } = await import('../../../crawl-slakthusetclub.js'); return crawl(); } },
+    { name: 'Gröna Lund', fn: async () => { const { crawl } = await import('../../../crawl-gronalund.js'); return crawl(); } },
+    { name: 'Geronimos FGT', fn: async () => { const { crawl } = await import('../../../crawl-geronimosfgt.js'); return crawl(); } },
+    { name: 'Konserthuset', fn: async () => { const { crawl } = await import('../../../crawl-konserthuset.js'); return crawl(); } },
+    { name: 'Fredagsmangel', fn: async () => { const { crawl } = await import('../../../crawl-fredagsmangel.js'); return crawl(); } },
+    { name: 'Göta Lejon', fn: async () => { const { crawl } = await import('../../../crawl-gotalejon.js'); return crawl(); } },
+    { name: 'B-K', fn: async () => { const { crawl } = await import('../../../crawl-bk.js'); return crawl(); } },
+    { name: 'Rival', fn: async () => { const { crawl } = await import('../../../crawl-rival.js'); return crawl(); } },
+    { name: 'Under Bron', fn: async () => { const { crawl } = await import('../../../crawl-underbron-fixed.js'); return crawl(); } },
   ];
 
   const results = [];

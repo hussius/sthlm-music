@@ -24,11 +24,6 @@ const VENUE_URL = 'https://www.rival.se';
 const BASE_URL = 'https://www.rival.se';
 const VENUE_NAME = 'Rival';
 
-console.log(`Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 const SWEDISH_MONTHS = {
   jan: 0, januari: 0,
   feb: 1, februari: 1,
@@ -99,104 +94,116 @@ function stripDateFromTitle(title) {
   return cleaned;
 }
 
-try {
-  console.log('Fetching events page...');
-  const response = await fetch(VENUE_URL);
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
+  try {
+    console.log(`Crawling ${VENUE_NAME}...`);
+    console.log('Fetching events page...');
+    const response = await fetch(VENUE_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-  console.log('Parsing events...');
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    console.log('Parsing events...');
 
-  const events = [];
-  const seen = new Set();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Each event is a .carousel-item inside #upcoming
-  $('#upcoming .carousel-item').each((_, el) => {
-    const $item = $(el);
+    const events = [];
+    const seen = new Set();
 
-    // Title from h3
-    const h3Text = $item.find('h3').first().text().trim();
-    if (!h3Text) return;
+    // Each event is a .carousel-item inside #upcoming
+    $('#upcoming .carousel-item').each((_, el) => {
+      const $item = $(el);
 
-    // Try to parse date from h3 title
-    const eventDate = parseRivalDate(h3Text);
-    if (!eventDate) {
-      console.warn(`  [SKIP] No date found in: "${h3Text}"`);
-      return;
-    }
+      // Title from h3
+      const h3Text = $item.find('h3').first().text().trim();
+      if (!h3Text) return;
 
-    if (eventDate < today) {
-      console.warn(`  [SKIP] Past event: "${h3Text}" (${eventDate.toISOString().split('T')[0]})`);
-      return;
-    }
-
-    // Strip date from title to get clean name
-    const cleanName = stripDateFromTitle(h3Text) || h3Text;
-
-    // Deduplicate by (name + date)
-    const key = `${cleanName}-${eventDate.toISOString().split('T')[0]}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-
-    // Event URL: prefer the "Mer Info" link
-    let eventUrl = VENUE_URL;
-    $item.find('a.btn').each((_, a) => {
-      const href = $(a).attr('href') || '';
-      if (href.startsWith('/shower/') || href.includes('rival.se/shower/')) {
-        eventUrl = href.startsWith('/') ? `${BASE_URL}${href}` : href;
+      // Try to parse date from h3 title
+      const eventDate = parseRivalDate(h3Text);
+      if (!eventDate) {
+        console.warn(`  [SKIP] No date found in: "${h3Text}"`);
+        return;
       }
-    });
 
-    events.push({ name: cleanName, eventUrl, eventDate });
-  });
+      if (eventDate < today) {
+        console.warn(`  [SKIP] Past event: "${h3Text}" (${eventDate.toISOString().split('T')[0]})`);
+        return;
+      }
 
-  console.log(`Found ${events.length} upcoming events`);
+      // Strip date from title to get clean name
+      const cleanName = stripDateFromTitle(h3Text) || h3Text;
 
-  let success = 0;
-  let failed = 0;
+      // Deduplicate by (name + date)
+      const key = `${cleanName}-${eventDate.toISOString().split('T')[0]}`;
+      if (seen.has(key)) return;
+      seen.add(key);
 
-  for (const { name, eventUrl, eventDate } of events) {
-    try {
-      const dateStr = eventDate.toISOString().split('T')[0];
-      const event = {
-        name,
-        artist: name,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: '19:00',
-        genre: 'other',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: eventUrl,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId: `rival-${name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`,
-        sourcePlatform: 'venue-direct',
-      };
-
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
+      // Event URL: prefer the "Mer Info" link
+      let eventUrl = VENUE_URL;
+      $item.find('a.btn').each((_, a) => {
+        const href = $(a).attr('href') || '';
+        if (href.startsWith('/shower/') || href.includes('rival.se/shower/')) {
+          eventUrl = href.startsWith('/') ? `${BASE_URL}${href}` : href;
+        }
       });
 
-      success++;
-      console.log(`  OK: ${name} (${dateStr})`);
-    } catch (error) {
-      failed++;
-      console.error(`  FAIL: ${name}: ${error.message}`);
-    }
-  }
+      events.push({ name: cleanName, eventUrl, eventDate });
+    });
 
-  console.log(`\nComplete: ${success} saved, ${failed} failed`);
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+    console.log(`Found ${events.length} upcoming events`);
+
+    let success = 0;
+    let failed = 0;
+
+    for (const { name, eventUrl, eventDate } of events) {
+      try {
+        const dateStr = eventDate.toISOString().split('T')[0];
+        const event = {
+          name,
+          artist: name,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: '19:00',
+          genre: 'other',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: eventUrl,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId: `rival-${name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`,
+          sourcePlatform: 'venue-direct',
+        };
+
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+
+        success++;
+        console.log(`  OK: ${name} (${dateStr})`);
+      } catch (error) {
+        failed++;
+        console.error(`  FAIL: ${name}: ${error.message}`);
+      }
+    }
+
+    console.log(`\nComplete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

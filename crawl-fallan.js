@@ -20,11 +20,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_URL = 'https://www.fallan.nu/whats-on';
 const VENUE_NAME = 'Fållan';
 
-console.log(`🎸 Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 function parseFallanDate(dateStr, timeStr) {
   // Date format: "Feb 22, 2026" or "Mar 6, 2026"
   // Time format: "19:00"
@@ -55,152 +50,164 @@ function parseFallanDate(dateStr, timeStr) {
   return new Date(year, month, day, hour, minute, 0, 0);
 }
 
-try {
-  console.log('🌐 Launching browser...');
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  console.log('📄 Loading Fållan events page...');
-  await page.goto(VENUE_URL, { waitUntil: 'networkidle', timeout: 30000 });
+  try {
+    console.log(`🎸 Crawling ${VENUE_NAME}...`);
+    console.log('🌐 Launching browser...');
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
 
-  // Wait for content to render
-  console.log('⏳ Waiting for events to load...');
-  await page.waitForTimeout(5000);
+    console.log('📄 Loading Fållan events page...');
+    await page.goto(VENUE_URL, { waitUntil: 'networkidle', timeout: 30000 });
 
-  console.log('🔍 Extracting events...');
+    // Wait for content to render
+    console.log('⏳ Waiting for events to load...');
+    await page.waitForTimeout(5000);
 
-  const events = await page.evaluate(() => {
-    const eventData = [];
+    console.log('🔍 Extracting events...');
 
-    // Strategy 1: Look for h3 elements with event names
-    const h3Elements = document.querySelectorAll('h3');
+    const events = await page.evaluate(() => {
+      const eventData = [];
 
-    h3Elements.forEach(h3 => {
-      const name = h3.textContent?.trim();
-      if (!name || name.length < 2) return;
+      // Strategy 1: Look for h3 elements with event names
+      const h3Elements = document.querySelectorAll('h3');
 
-      // Skip navigation/menu items
-      if (name.toLowerCase().includes('menu') ||
-          name.toLowerCase().includes('subscribe') ||
-          name.toLowerCase() === 'events') return;
+      h3Elements.forEach(h3 => {
+        const name = h3.textContent?.trim();
+        if (!name || name.length < 2) return;
 
-      // Find the closest container that might have full event info
-      let container = h3.parentElement;
-      for (let i = 0; i < 5; i++) {
-        if (!container) break;
-        const text = container.textContent || '';
+        // Skip navigation/menu items
+        if (name.toLowerCase().includes('menu') ||
+            name.toLowerCase().includes('subscribe') ||
+            name.toLowerCase() === 'events') return;
 
-        // Check if this container has date and venue info
-        if (text.match(/\w{3}\s+\d{1,2},?\s+\d{4}/) &&
-            (text.includes('Fållan') || text.includes('fållan'))) {
+        // Find the closest container that might have full event info
+        let container = h3.parentElement;
+        for (let i = 0; i < 5; i++) {
+          if (!container) break;
+          const text = container.textContent || '';
+
+          // Check if this container has date and venue info
+          if (text.match(/\w{3}\s+\d{1,2},?\s+\d{4}/) &&
+              (text.includes('Fållan') || text.includes('fållan'))) {
+
+            const dateMatch = text.match(/(\w{3})\s+(\d{1,2}),?\s+(\d{4})/i);
+            const timeMatch = text.match(/(\d{2}:\d{2})/);
+
+            if (dateMatch) {
+              // Find event link
+              const link = container.querySelector('a');
+              const href = link?.getAttribute('href') || '';
+
+              eventData.push({
+                name: name,
+                date: dateMatch[0],
+                time: timeMatch ? timeMatch[1] : '20:00',
+                href: href,
+              });
+              return; // Found event, stop searching up the DOM
+            }
+          }
+
+          container = container.parentElement;
+        }
+      });
+
+      // Strategy 2: If no events found, try looking for event cards/containers
+      if (eventData.length === 0) {
+        const containers = document.querySelectorAll('[class*="event"], [class*="card"], article');
+
+        containers.forEach(container => {
+          const h3 = container.querySelector('h3');
+          const name = h3?.textContent?.trim();
+          const text = container.textContent || '';
+
+          if (!name) return;
 
           const dateMatch = text.match(/(\w{3})\s+(\d{1,2}),?\s+(\d{4})/i);
           const timeMatch = text.match(/(\d{2}:\d{2})/);
 
-          if (dateMatch) {
-            // Find event link
+          if (dateMatch && (text.includes('Fållan') || text.includes('fållan'))) {
             const link = container.querySelector('a');
-            const href = link?.getAttribute('href') || '';
 
             eventData.push({
               name: name,
               date: dateMatch[0],
               time: timeMatch ? timeMatch[1] : '20:00',
-              href: href,
+              href: link?.getAttribute('href') || '',
             });
-            return; // Found event, stop searching up the DOM
           }
-        }
-
-        container = container.parentElement;
+        });
       }
+
+      return eventData;
     });
 
-    // Strategy 2: If no events found, try looking for event cards/containers
-    if (eventData.length === 0) {
-      const containers = document.querySelectorAll('[class*="event"], [class*="card"], article');
+    console.log(`\n📋 Found ${events.length} events`);
 
-      containers.forEach(container => {
-        const h3 = container.querySelector('h3');
-        const name = h3?.textContent?.trim();
-        const text = container.textContent || '';
+    let success = 0;
+    let failed = 0;
 
-        if (!name) return;
+    for (const eventData of events) {
+      try {
+        const eventDate = parseFallanDate(eventData.date, eventData.time);
 
-        const dateMatch = text.match(/(\w{3})\s+(\d{1,2}),?\s+(\d{4})/i);
-        const timeMatch = text.match(/(\d{2}:\d{2})/);
-
-        if (dateMatch && (text.includes('Fållan') || text.includes('fållan'))) {
-          const link = container.querySelector('a');
-
-          eventData.push({
-            name: name,
-            date: dateMatch[0],
-            time: timeMatch ? timeMatch[1] : '20:00',
-            href: link?.getAttribute('href') || '',
-          });
+        if (!eventDate || isNaN(eventDate.getTime())) {
+          console.log(`⚠️  ${eventData.name}: Could not parse date (${eventData.date} ${eventData.time})`);
+          failed++;
+          continue;
         }
-      });
-    }
 
-    return eventData;
-  });
+        const event = {
+          name: eventData.name,
+          artist: eventData.name,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: eventDate.toTimeString().substring(0, 5),
+          genre: 'other',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: eventData.href.startsWith('http')
+              ? eventData.href
+              : eventData.href.startsWith('/')
+              ? `https://www.fallan.nu${eventData.href}`
+              : VENUE_URL,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId: `fallan-${eventData.name}-${eventDate.toISOString().split('T')[0]}`,
+          sourcePlatform: 'venue-direct',
+        };
 
-  console.log(`\n📋 Found ${events.length} events`);
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
 
-  let success = 0;
-  let failed = 0;
-
-  for (const eventData of events) {
-    try {
-      const eventDate = parseFallanDate(eventData.date, eventData.time);
-
-      if (!eventDate || isNaN(eventDate.getTime())) {
-        console.log(`⚠️  ${eventData.name}: Could not parse date (${eventData.date} ${eventData.time})`);
+        success++;
+        console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
+      } catch (error) {
         failed++;
-        continue;
+        console.error(`❌ ${eventData.name}: ${error.message}`);
       }
-
-      const event = {
-        name: eventData.name,
-        artist: eventData.name,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: eventDate.toTimeString().substring(0, 5),
-        genre: 'other',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: eventData.href.startsWith('http')
-            ? eventData.href
-            : eventData.href.startsWith('/')
-            ? `https://www.fallan.nu${eventData.href}`
-            : VENUE_URL,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId: `fallan-${eventData.name}-${eventDate.toISOString().split('T')[0]}`,
-        sourcePlatform: 'venue-direct',
-      };
-
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
-      });
-
-      success++;
-      console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
-    } catch (error) {
-      failed++;
-      console.error(`❌ ${eventData.name}: ${error.message}`);
     }
+
+    await browser.close();
+
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
   }
+}
 
-  await browser.close();
-
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  process.exit(1);
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

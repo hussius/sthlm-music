@@ -20,11 +20,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_URL = 'https://www.fasching.se/kalendarium/?date=0&st=&view=default&c=2&o=calendar&t=96';
 const VENUE_NAME = 'Fasching';
 
-console.log(`🎸 Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 function parseFaschingDate(dateStr) {
   // Try to parse date from URL hash format: #2026-02-21T20-00
   const hashMatch = dateStr.match(/#(\d{4})-(\d{2})-(\d{2})T(\d{2})-(\d{2})/);
@@ -51,146 +46,158 @@ function parseFaschingDate(dateStr) {
   return null;
 }
 
-try {
-  console.log('🌐 Launching browser...');
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  console.log('📄 Loading calendar page...');
-  await page.goto(VENUE_URL, { waitUntil: 'networkidle', timeout: 30000 });
+  try {
+    console.log(`🎸 Crawling ${VENUE_NAME}...`);
+    console.log('🌐 Launching browser...');
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
 
-  // Wait for content to render
-  console.log('⏳ Waiting for events to load...');
-  await page.waitForTimeout(5000);
+    console.log('📄 Loading calendar page...');
+    await page.goto(VENUE_URL, { waitUntil: 'networkidle', timeout: 30000 });
 
-  console.log('🔍 Extracting events...');
+    // Wait for content to render
+    console.log('⏳ Waiting for events to load...');
+    await page.waitForTimeout(5000);
 
-  const events = await page.evaluate(() => {
-    const eventData = [];
+    console.log('🔍 Extracting events...');
 
-    // Find event links - they have date hash format #YYYY-MM-DDTHH-MM
-    const links = document.querySelectorAll('a[href*="#"]');
+    const events = await page.evaluate(() => {
+      const eventData = [];
 
-    links.forEach(link => {
-      const href = link.getAttribute('href');
+      // Find event links - they have date hash format #YYYY-MM-DDTHH-MM
+      const links = document.querySelectorAll('a[href*="#"]');
 
-      // Only process links with date hash format
-      if (!href || !href.match(/#\d{4}-\d{2}-\d{2}T\d{2}-\d{2}/)) {
-        return;
-      }
+      links.forEach(link => {
+        const href = link.getAttribute('href');
 
-      // Skip utility links
-      if (href.includes('wp-admin') ||
-          href.includes('wp-content') ||
-          href.includes('kontakt') ||
-          href.includes('about') ||
-          href.includes('om-') ||
-          href.toLowerCase().includes('köp') ||
-          href.toLowerCase().includes('boka')) {
-        return;
-      }
+        // Only process links with date hash format
+        if (!href || !href.match(/#\d{4}-\d{2}-\d{2}T\d{2}-\d{2}/)) {
+          return;
+        }
 
-      // Look for event name in h3, h2, or strong text
-      const nameElement = link.querySelector('h3, h2, strong, .title, [class*="title"]');
-      const name = nameElement?.textContent?.trim() || link.textContent?.trim();
+        // Skip utility links
+        if (href.includes('wp-admin') ||
+            href.includes('wp-content') ||
+            href.includes('kontakt') ||
+            href.includes('about') ||
+            href.includes('om-') ||
+            href.toLowerCase().includes('köp') ||
+            href.toLowerCase().includes('boka')) {
+          return;
+        }
 
-      // Skip if no meaningful name or very short
-      if (!name || name.length < 3) {
-        return;
-      }
+        // Look for event name in h3, h2, or strong text
+        const nameElement = link.querySelector('h3, h2, strong, .title, [class*="title"]');
+        const name = nameElement?.textContent?.trim() || link.textContent?.trim();
 
-      // Skip button/utility text
-      const skipTexts = ['läs mer', 'köp biljett', 'boka', 'ej förköp', 'fri entré', 'utsålt'];
-      if (skipTexts.some(skip => name.toLowerCase().includes(skip))) {
-        return;
-      }
+        // Skip if no meaningful name or very short
+        if (!name || name.length < 3) {
+          return;
+        }
 
-      // Try to find date/time information
-      const timeElement = link.querySelector('time, .date, [class*="date"], [class*="time"]');
-      const timeText = timeElement?.textContent?.trim() || '';
-      const dateAttribute = timeElement?.getAttribute('datetime') || '';
+        // Skip button/utility text
+        const skipTexts = ['läs mer', 'köp biljett', 'boka', 'ej förköp', 'fri entré', 'utsålt'];
+        if (skipTexts.some(skip => name.toLowerCase().includes(skip))) {
+          return;
+        }
 
-      eventData.push({
-        name: name,
-        href: href,
-        timeText: timeText,
-        dateAttribute: dateAttribute,
-        fullText: link.textContent?.trim() || '',
+        // Try to find date/time information
+        const timeElement = link.querySelector('time, .date, [class*="date"], [class*="time"]');
+        const timeText = timeElement?.textContent?.trim() || '';
+        const dateAttribute = timeElement?.getAttribute('datetime') || '';
+
+        eventData.push({
+          name: name,
+          href: href,
+          timeText: timeText,
+          dateAttribute: dateAttribute,
+          fullText: link.textContent?.trim() || '',
+        });
       });
+
+      return eventData;
     });
 
-    return eventData;
-  });
+    console.log(`\n📋 Found ${events.length} potential events`);
 
-  console.log(`\n📋 Found ${events.length} potential events`);
+    let success = 0;
+    let failed = 0;
 
-  let success = 0;
-  let failed = 0;
+    for (const eventData of events) {
+      try {
+        // Try to parse date from href hash, datetime attribute, or time text
+        let eventDate = null;
 
-  for (const eventData of events) {
-    try {
-      // Try to parse date from href hash, datetime attribute, or time text
-      let eventDate = null;
+        if (eventData.href.includes('#')) {
+          eventDate = parseFaschingDate(eventData.href);
+        }
 
-      if (eventData.href.includes('#')) {
-        eventDate = parseFaschingDate(eventData.href);
-      }
+        if (!eventDate && eventData.dateAttribute) {
+          eventDate = parseFaschingDate(eventData.dateAttribute);
+        }
 
-      if (!eventDate && eventData.dateAttribute) {
-        eventDate = parseFaschingDate(eventData.dateAttribute);
-      }
+        if (!eventDate) {
+          // If we can't find a date, skip this event
+          console.log(`⚠️  ${eventData.name}: Could not parse date`);
+          failed++;
+          continue;
+        }
 
-      if (!eventDate) {
-        // If we can't find a date, skip this event
-        console.log(`⚠️  ${eventData.name}: Could not parse date`);
+        if (isNaN(eventDate.getTime())) {
+          console.log(`⚠️  ${eventData.name}: Invalid date`);
+          failed++;
+          continue;
+        }
+
+        const event = {
+          name: eventData.name,
+          artist: eventData.name,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: eventDate.toTimeString().substring(0, 5), // HH:MM
+          genre: 'jazz', // Fasching is primarily a jazz club
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: eventData.href.startsWith('http')
+              ? eventData.href
+              : `https://www.fasching.se${eventData.href}`,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId: `fasching-${eventData.name}-${eventDate.toISOString().split('T')[0]}`,
+          sourcePlatform: 'venue-direct',
+        };
+
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+
+        success++;
+        console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
+      } catch (error) {
         failed++;
-        continue;
+        console.error(`❌ ${eventData.name}: ${error.message}`);
       }
-
-      if (isNaN(eventDate.getTime())) {
-        console.log(`⚠️  ${eventData.name}: Invalid date`);
-        failed++;
-        continue;
-      }
-
-      const event = {
-        name: eventData.name,
-        artist: eventData.name,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: eventDate.toTimeString().substring(0, 5), // HH:MM
-        genre: 'jazz', // Fasching is primarily a jazz club
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: eventData.href.startsWith('http')
-            ? eventData.href
-            : `https://www.fasching.se${eventData.href}`,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId: `fasching-${eventData.name}-${eventDate.toISOString().split('T')[0]}`,
-        sourcePlatform: 'venue-direct',
-      };
-
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
-      });
-
-      success++;
-      console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]} ${event.time})`);
-    } catch (error) {
-      failed++;
-      console.error(`❌ ${eventData.name}: ${error.message}`);
     }
+
+    await browser.close();
+
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
   }
+}
 
-  await browser.close();
-
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  process.exit(1);
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

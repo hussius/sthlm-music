@@ -23,11 +23,6 @@ const VENUE_URL = 'https://nalen.com/sv/konserter-event';
 const BASE_URL = 'https://nalen.com';
 const VENUE_NAME = 'Nalen';
 
-console.log(`🎸 Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 const MONTHS = {
   jan: 0, 'jan.': 0, januari: 0,
   feb: 1, 'feb.': 1, februari: 1,
@@ -65,88 +60,100 @@ function parseNalenDate(text) {
   return d;
 }
 
-try {
-  console.log('📄 Fetching events page...');
-  const response = await fetch(VENUE_URL);
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
+  try {
+    console.log(`🎸 Crawling ${VENUE_NAME}...`);
+    console.log('📄 Fetching events page...');
+    const response = await fetch(VENUE_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-  console.log('🔍 Parsing events...');
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    console.log('🔍 Parsing events...');
 
-  const events = [];
-  const seen = new Set();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Each event is an <a href="/sv/konsert/[slug]">
-  $('a[href*="/sv/konsert/"]').each((_, el) => {
-    const $a = $(el);
-    const href = $a.attr('href') || '';
-    if (!href || seen.has(href)) return;
+    const events = [];
+    const seen = new Set();
 
-    // Artist name: inside .rich-content p (first one)
-    const title = $a.find('.rich-content p').first().text().trim();
-    if (!title) return;
+    // Each event is an <a href="/sv/konsert/[slug]">
+    $('a[href*="/sv/konsert/"]').each((_, el) => {
+      const $a = $(el);
+      const href = $a.attr('href') || '';
+      if (!href || seen.has(href)) return;
 
-    // Date: inside .justify-self-end p (the date display at bottom-right)
-    const dateText = $a.find('.justify-self-end p').text().trim();
-    if (!dateText) return;
+      // Artist name: inside .rich-content p (first one)
+      const title = $a.find('.rich-content p').first().text().trim();
+      if (!title) return;
 
-    const eventDate = parseNalenDate(dateText);
-    if (!eventDate || eventDate < today) return;
+      // Date: inside .justify-self-end p (the date display at bottom-right)
+      const dateText = $a.find('.justify-self-end p').text().trim();
+      if (!dateText) return;
 
-    seen.add(href);
+      const eventDate = parseNalenDate(dateText);
+      if (!eventDate || eventDate < today) return;
 
-    const eventUrl = `${BASE_URL}${href}`;
-    const timeStr = '20:00';
+      seen.add(href);
 
-    events.push({ title, eventUrl, eventDate, timeStr });
-  });
+      const eventUrl = `${BASE_URL}${href}`;
+      const timeStr = '20:00';
 
-  console.log(`Found ${events.length} events`);
+      events.push({ title, eventUrl, eventDate, timeStr });
+    });
 
-  let success = 0;
-  let failed = 0;
+    console.log(`Found ${events.length} events`);
 
-  for (const { title, eventUrl, eventDate, timeStr } of events) {
-    try {
-      const event = {
-        name: title,
-        artist: title,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: timeStr,
-        genre: 'other',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: eventUrl,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId: `nalen-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
-        sourcePlatform: 'venue-direct',
-      };
+    let success = 0;
+    let failed = 0;
 
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
-      });
+    for (const { title, eventUrl, eventDate, timeStr } of events) {
+      try {
+        const event = {
+          name: title,
+          artist: title,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: timeStr,
+          genre: 'other',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: eventUrl,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId: `nalen-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
+          sourcePlatform: 'venue-direct',
+        };
 
-      success++;
-      console.log(`✅ ${title} (${eventDate.toISOString().split('T')[0]} ${timeStr})`);
-    } catch (error) {
-      failed++;
-      console.error(`❌ ${title}: ${error.message}`);
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+
+        success++;
+        console.log(`✅ ${title} (${eventDate.toISOString().split('T')[0]} ${timeStr})`);
+      } catch (error) {
+        failed++;
+        console.error(`❌ ${title}: ${error.message}`);
+      }
     }
-  }
 
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

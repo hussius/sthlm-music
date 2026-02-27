@@ -25,11 +25,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_URL = 'https://fredagsmangel.se/';
 const VENUE_NAME = 'Fredagsmangel';
 
-console.log(`🎸 Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 function parseFredagsmangelDate(raw) {
   // Format: "260227" or "260522-24" (multi-day, use first)
   // Take first 6 chars: YYMMDD
@@ -68,117 +63,129 @@ function extractArtistName(line) {
   return line.trim();
 }
 
-try {
-  console.log('📄 Fetching events page...');
-  const response = await fetch(VENUE_URL);
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
+  try {
+    console.log(`🎸 Crawling ${VENUE_NAME}...`);
+    console.log('📄 Fetching events page...');
+    const response = await fetch(VENUE_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-  console.log('🔍 Parsing events...');
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    console.log('🔍 Parsing events...');
 
-  const events = [];
-  const seen = new Set();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  $('.project-card').each((_, el) => {
-    const $card = $(el);
+    const events = [];
+    const seen = new Set();
 
-    // Date from <h3>
-    const dateRaw = $card.find('h3').first().text().trim();
-    if (!dateRaw) return;
+    $('.project-card').each((_, el) => {
+      const $card = $(el);
 
-    // Skip non-date headings (letters only, no digits)
-    if (!/^\d/.test(dateRaw)) return;
+      // Date from <h3>
+      const dateRaw = $card.find('h3').first().text().trim();
+      if (!dateRaw) return;
 
-    const parsed = parseFredagsmangelDate(dateRaw);
-    if (!parsed) return;
+      // Skip non-date headings (letters only, no digits)
+      if (!/^\d/.test(dateRaw)) return;
 
-    const { year, month, day } = parsed;
+      const parsed = parseFredagsmangelDate(dateRaw);
+      if (!parsed) return;
 
-    // Get first artist paragraph (not the ticket link paragraph)
-    const paras = $card.find('p');
-    let artistText = '';
-    let ticketUrl = VENUE_URL;
+      const { year, month, day } = parsed;
 
-    paras.each((_, p) => {
-      const $p = $(p);
-      const link = $p.find('a[href*="nortic.se"]');
-      if (link.length > 0) {
-        ticketUrl = link.attr('href') || VENUE_URL;
-      } else if (!artistText) {
-        artistText = $p.text().trim();
-      }
-    });
+      // Get first artist paragraph (not the ticket link paragraph)
+      const paras = $card.find('p');
+      let artistText = '';
+      let ticketUrl = VENUE_URL;
 
-    if (!artistText) return;
-
-    // First line = headliner
-    const firstLine = artistText.split('\n')[0].trim().replace(/\s+/g, ' ');
-    const artist = extractArtistName(firstLine) || firstLine;
-    if (!artist) return;
-
-    // Title: artist name (headliner)
-    const title = artist;
-
-    // Time from first line
-    const timeStr = extractTimeFromLine(firstLine) || '20:00';
-    const [hours, minutes] = timeStr.split(':').map(Number);
-
-    const eventDate = new Date(year, month, day, hours, minutes, 0, 0);
-    if (eventDate < today) return;
-
-    const key = `${dateRaw}-${title}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-
-    events.push({ title, ticketUrl, eventDate, timeStr });
-  });
-
-  console.log(`Found ${events.length} events`);
-
-  let success = 0;
-  let failed = 0;
-
-  for (const { title, ticketUrl, eventDate, timeStr } of events) {
-    try {
-      const event = {
-        name: title,
-        artist: title,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: timeStr,
-        genre: 'metal',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: ticketUrl,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId: `fredagsmangel-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
-        sourcePlatform: 'venue-direct',
-      };
-
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
+      paras.each((_, p) => {
+        const $p = $(p);
+        const link = $p.find('a[href*="nortic.se"]');
+        if (link.length > 0) {
+          ticketUrl = link.attr('href') || VENUE_URL;
+        } else if (!artistText) {
+          artistText = $p.text().trim();
+        }
       });
 
-      success++;
-      console.log(`✅ ${title} (${eventDate.toISOString().split('T')[0]} ${timeStr})`);
-    } catch (error) {
-      failed++;
-      console.error(`❌ ${title}: ${error.message}`);
-    }
-  }
+      if (!artistText) return;
 
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+      // First line = headliner
+      const firstLine = artistText.split('\n')[0].trim().replace(/\s+/g, ' ');
+      const artist = extractArtistName(firstLine) || firstLine;
+      if (!artist) return;
+
+      // Title: artist name (headliner)
+      const title = artist;
+
+      // Time from first line
+      const timeStr = extractTimeFromLine(firstLine) || '20:00';
+      const [hours, minutes] = timeStr.split(':').map(Number);
+
+      const eventDate = new Date(year, month, day, hours, minutes, 0, 0);
+      if (eventDate < today) return;
+
+      const key = `${dateRaw}-${title}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      events.push({ title, ticketUrl, eventDate, timeStr });
+    });
+
+    console.log(`Found ${events.length} events`);
+
+    let success = 0;
+    let failed = 0;
+
+    for (const { title, ticketUrl, eventDate, timeStr } of events) {
+      try {
+        const event = {
+          name: title,
+          artist: title,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: timeStr,
+          genre: 'metal',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: ticketUrl,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId: `fredagsmangel-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
+          sourcePlatform: 'venue-direct',
+        };
+
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+
+        success++;
+        console.log(`✅ ${title} (${eventDate.toISOString().split('T')[0]} ${timeStr})`);
+      } catch (error) {
+        failed++;
+        console.error(`❌ ${title}: ${error.message}`);
+      }
+    }
+
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

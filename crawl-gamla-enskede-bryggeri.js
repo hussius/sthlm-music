@@ -17,11 +17,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_URL = 'https://gamlaenskedebryggeri.se/pa-gang/';
 const VENUE_NAME = 'Gamla Enskede Bryggeri';
 
-console.log(`🎸 Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 function parseDate(day, month, year) {
   const now = new Date();
   const resolvedYear = year || now.getFullYear();
@@ -32,93 +27,105 @@ function parseDate(day, month, year) {
   return d;
 }
 
-try {
-  console.log('📄 Fetching page...');
-  const response = await fetch(VENUE_URL);
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
+  try {
+    console.log(`🎸 Crawling ${VENUE_NAME}...`);
+    console.log('📄 Fetching page...');
+    const response = await fetch(VENUE_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-  // Events are inline text — convert <br> and </p> to newlines, strip tags, split
-  const contentHtml = $('.entry-content, .wp-block-group, main, article').first().html()
-    || $('body').html();
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-  const lines = contentHtml
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')   // strip remaining tags (keep text)
-    .split('\n')
-    .map(l => l.replace(/\s+/g, ' ').trim())
-    .filter(Boolean);
+    // Events are inline text — convert <br> and </p> to newlines, strip tags, split
+    const contentHtml = $('.entry-content, .wp-block-group, main, article').first().html()
+      || $('body').html();
 
-  console.log(`🔍 Scanning ${lines.length} text lines for events...`);
+    const lines = contentHtml
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ')   // strip remaining tags (keep text)
+      .split('\n')
+      .map(l => l.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
 
-  // Also collect href links keyed by surrounding text for FB event URLs
-  const links = {};
-  $('a[href]').each((_, el) => {
-    const text = $(el).text().trim();
-    const href = $(el).attr('href');
-    if (text && href) links[text] = href;
-  });
+    console.log(`🔍 Scanning ${lines.length} text lines for events...`);
 
-  let success = 0;
-  let failed = 0;
+    // Also collect href links keyed by surrounding text for FB event URLs
+    const links = {};
+    $('a[href]').each((_, el) => {
+      const text = $(el).text().trim();
+      const href = $(el).attr('href');
+      if (text && href) links[text] = href;
+    });
 
-  for (const line of lines) {
-    try {
-      // Match date at start: "19/2", "19/2/2026", "5/3"
-      const match = line.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?\s+(.+)/);
-      if (!match) continue;
+    let success = 0;
+    let failed = 0;
 
-      const day = parseInt(match[1]);
-      const month = parseInt(match[2]);
-      const year = match[3] ? parseInt(match[3]) : null;
-      const title = match[4].trim().replace(/\s+/g, ' ');
+    for (const line of lines) {
+      try {
+        // Match date at start: "19/2", "19/2/2026", "5/3"
+        const match = line.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?\s+(.+)/);
+        if (!match) continue;
 
-      if (!title || title.length < 2) continue;
+        const day = parseInt(match[1]);
+        const month = parseInt(match[2]);
+        const year = match[3] ? parseInt(match[3]) : null;
+        const title = match[4].trim().replace(/\s+/g, ' ');
 
-      const eventDate = parseDate(day, month, year);
-      if (!eventDate || isNaN(eventDate.getTime())) continue;
+        if (!title || title.length < 2) continue;
 
-      // Try to find a Facebook/event link for this event
-      const eventUrl = links[title] || VENUE_URL;
+        const eventDate = parseDate(day, month, year);
+        if (!eventDate || isNaN(eventDate.getTime())) continue;
 
-      const event = {
-        name: title,
-        artist: title,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: '20:00',
-        genre: 'other',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: eventUrl,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId: `geb-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
-        sourcePlatform: 'venue-direct',
-      };
+        // Try to find a Facebook/event link for this event
+        const eventUrl = links[title] || VENUE_URL;
 
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
-      });
+        const event = {
+          name: title,
+          artist: title,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: '20:00',
+          genre: 'other',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: eventUrl,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId: `geb-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${eventDate.toISOString().split('T')[0]}`,
+          sourcePlatform: 'venue-direct',
+        };
 
-      success++;
-      console.log(`✅ ${title} (${eventDate.toISOString().split('T')[0]})`);
-    } catch (error) {
-      failed++;
-      console.error(`❌ Error: ${error.message}`);
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+
+        success++;
+        console.log(`✅ ${title} (${eventDate.toISOString().split('T')[0]})`);
+      } catch (error) {
+        failed++;
+        console.error(`❌ Error: ${error.message}`);
+      }
     }
-  }
 
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

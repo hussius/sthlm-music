@@ -10,11 +10,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_NAME = 'Kollektivet Livet'; // Stadsgårdsterminalen is a stage of Kollektivet Livet
 const VENUE_URL = 'https://stadsgardsterminalen.com/program/';
 
-console.log(`🎸 Crawling Stadsgårdsterminalen (Kollektivet Livet)...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 // Parse Swedish dates
 function parseSwedishDate(dateStr) {
   const months = {
@@ -84,114 +79,126 @@ function normalizeGenre(text) {
   return 'other';
 }
 
-try {
-  const events = [];
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  console.log(`📄 Fetching ${VENUE_URL}...`);
-  const response = await fetch(VENUE_URL);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
+  try {
+    console.log(`🎸 Crawling Stadsgårdsterminalen (Kollektivet Livet)...`);
+    const events = [];
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
-
-  // Find event elements using .event class
-  $('.event').each((i, elem) => {
-    try {
-      const $elem = $(elem);
-
-      // Get event name from h3
-      const name = $elem.find('h3').text().trim();
-      if (!name) {
-        console.log(`    ⚠️  Event ${i + 1}: No name found`);
-        return;
-      }
-
-      // Use <time datetime="2026-02-28 19:00:00"> attribute for exact date/time
-      const datetimeAttr = $elem.find('time').attr('datetime');
-      if (!datetimeAttr) {
-        console.log(`    ⚠️  Event "${name}": No datetime attribute found`);
-        return;
-      }
-
-      // Parse "2026-02-28 19:00:00" format
-      const dateMatch = datetimeAttr.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
-      if (!dateMatch) {
-        console.log(`    ⚠️  Event "${name}": Could not parse datetime "${datetimeAttr}"`);
-        return;
-      }
-      const [, year, month, day, hour, minute] = dateMatch;
-      const eventDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0, 0);
-
-      if (isNaN(eventDate.getTime())) {
-        console.log(`    ⚠️  Event "${name}": Invalid date`);
-        return;
-      }
-
-      // Always store as 'Kollektivet Livet' so UI venue filter works
-      // (sub-venue like "Stora Scen"/"Lilla Scen" stored via ticket URL)
-
-      // Get ticket URL — prefer Tickster link, fall back to event page
-      const ticketUrl = $elem.find('a[href*="tickster"], a[href*="blackplanet"]').attr('href');
-      const eventPageUrl = $elem.find('a.read-more').attr('href')
-        || $elem.find('a[href*="/event/"]').first().attr('href')
-        || VENUE_URL;
-      const finalTicketUrl = ticketUrl
-        ? (ticketUrl.startsWith('http') ? ticketUrl : `https://stadsgardsterminalen.com${ticketUrl}`)
-        : eventPageUrl;
-
-      // Use event page slug as stable sourceId
-      const eventSlug = eventPageUrl.replace(/.*\/event\//, '').replace(/\/$/, '') || name;
-      const sourceId = `stadsgarden-${eventSlug}`;
-
-      const timeStr = `${hour}:${minute}`;
-
-      events.push({
-        name,
-        artist: name,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: timeStr,
-        genre: normalizeGenre(name),
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: finalTicketUrl,
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId,
-        sourcePlatform: 'venue-direct',
-      });
-
-    } catch (error) {
-      console.error(`⚠️  Error parsing event: ${error.message}`);
+    console.log(`📄 Fetching ${VENUE_URL}...`);
+    const response = await fetch(VENUE_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-  });
 
-  console.log(`\n📋 Found ${events.length} events`);
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-  let success = 0;
-  let failed = 0;
+    // Find event elements using .event class
+    $('.event').each((i, elem) => {
+      try {
+        const $elem = $(elem);
 
-  for (const event of events) {
-    try {
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
-      });
-      success++;
-      console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]})`);
-    } catch (error) {
-      failed++;
-      console.error(`❌ Failed to save "${event.name}": ${error.message}`);
+        // Get event name from h3
+        const name = $elem.find('h3').text().trim();
+        if (!name) {
+          console.log(`    ⚠️  Event ${i + 1}: No name found`);
+          return;
+        }
+
+        // Use <time datetime="2026-02-28 19:00:00"> attribute for exact date/time
+        const datetimeAttr = $elem.find('time').attr('datetime');
+        if (!datetimeAttr) {
+          console.log(`    ⚠️  Event "${name}": No datetime attribute found`);
+          return;
+        }
+
+        // Parse "2026-02-28 19:00:00" format
+        const dateMatch = datetimeAttr.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+        if (!dateMatch) {
+          console.log(`    ⚠️  Event "${name}": Could not parse datetime "${datetimeAttr}"`);
+          return;
+        }
+        const [, year, month, day, hour, minute] = dateMatch;
+        const eventDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0, 0);
+
+        if (isNaN(eventDate.getTime())) {
+          console.log(`    ⚠️  Event "${name}": Invalid date`);
+          return;
+        }
+
+        // Always store as 'Kollektivet Livet' so UI venue filter works
+        // (sub-venue like "Stora Scen"/"Lilla Scen" stored via ticket URL)
+
+        // Get ticket URL — prefer Tickster link, fall back to event page
+        const ticketUrl = $elem.find('a[href*="tickster"], a[href*="blackplanet"]').attr('href');
+        const eventPageUrl = $elem.find('a.read-more').attr('href')
+          || $elem.find('a[href*="/event/"]').first().attr('href')
+          || VENUE_URL;
+        const finalTicketUrl = ticketUrl
+          ? (ticketUrl.startsWith('http') ? ticketUrl : `https://stadsgardsterminalen.com${ticketUrl}`)
+          : eventPageUrl;
+
+        // Use event page slug as stable sourceId
+        const eventSlug = eventPageUrl.replace(/.*\/event\//, '').replace(/\/$/, '') || name;
+        const sourceId = `stadsgarden-${eventSlug}`;
+
+        const timeStr = `${hour}:${minute}`;
+
+        events.push({
+          name,
+          artist: name,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: timeStr,
+          genre: normalizeGenre(name),
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: finalTicketUrl,
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId,
+          sourcePlatform: 'venue-direct',
+        });
+
+      } catch (error) {
+        console.error(`⚠️  Error parsing event: ${error.message}`);
+      }
+    });
+
+    console.log(`\n📋 Found ${events.length} events`);
+
+    let success = 0;
+    let failed = 0;
+
+    for (const event of events) {
+      try {
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+        success++;
+        console.log(`✅ ${event.name} (${event.date.toISOString().split('T')[0]})`);
+      } catch (error) {
+        failed++;
+        console.error(`❌ Failed to save "${event.name}": ${error.message}`);
+      }
     }
+
+    console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('❌ Crawler failed:', error);
+    throw error;
+  } finally {
+    await client.end();
   }
+}
 
-  console.log(`\n✅ Complete: ${success} saved, ${failed} failed`);
-
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('❌ Crawler failed:', error);
-  process.exit(1);
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }

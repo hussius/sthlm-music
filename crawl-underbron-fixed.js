@@ -29,11 +29,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const VENUE_URL = 'https://www.underbron.com/?view=program';
 const VENUE_NAME = 'Under Bron';
 
-console.log(`Crawling ${VENUE_NAME}...`);
-
-const client = postgres(DATABASE_URL, { max: 1 });
-const db = drizzle(client, { schema });
-
 /**
  * Parse dates in Under Bron's DD/M format (e.g. "27/2", "6/3", "2/4").
  * Copied from original crawl-underbron.js, handles day/month and DD MMM formats.
@@ -115,103 +110,114 @@ function nameFromImageSrc(src) {
   return parts.replace(/\b\w/g, c => c.toUpperCase());
 }
 
-try {
-  console.log('Fetching events page...');
-  const response = await fetch(VENUE_URL);
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+export async function crawl() {
+  const client = postgres(DATABASE_URL, { max: 1 });
+  const db = drizzle(client, { schema });
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
+  try {
+    console.log(`Crawling ${VENUE_NAME}...`);
+    console.log('Fetching events page...');
+    const response = await fetch(VENUE_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-  console.log('Parsing events...');
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    console.log('Parsing events...');
 
-  const events = [];
-  const seen = new Set();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Each event is a .programpost div
-  $('.programpost').each((_, el) => {
-    const $post = $(el);
+    const events = [];
+    const seen = new Set();
 
-    // Date from .datumdatum
-    const dateText = $post.find('.datumdatum').text().trim();
-    if (!dateText) return;
+    // Each event is a .programpost div
+    $('.programpost').each((_, el) => {
+      const $post = $(el);
 
-    const eventDate = parseUnderBronDate(dateText);
-    if (!eventDate || isNaN(eventDate.getTime())) return;
+      // Date from .datumdatum
+      const dateText = $post.find('.datumdatum').text().trim();
+      if (!dateText) return;
 
-    // Skip past events
-    if (eventDate < today) return;
+      const eventDate = parseUnderBronDate(dateText);
+      if (!eventDate || isNaN(eventDate.getTime())) return;
 
-    // Try to get a name from the image filename
-    const imgSrc = $post.find('img.thumbthumb').first().attr('src') || '';
-    let name = nameFromImageSrc(imgSrc);
+      // Skip past events
+      if (eventDate < today) return;
 
-    // Fall back to generic name
-    if (!name) {
-      name = 'Under Bron Club Night';
+      // Try to get a name from the image filename
+      const imgSrc = $post.find('img.thumbthumb').first().attr('src') || '';
+      let name = nameFromImageSrc(imgSrc);
+
+      // Fall back to generic name
+      if (!name) {
+        name = 'Under Bron Club Night';
+      }
+
+      // Deduplicate by (name + date)
+      const key = `${name}-${eventDate.toISOString().split('T')[0]}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      events.push({ name, eventDate });
+    });
+
+    console.log(`Found ${events.length} upcoming events`);
+
+    if (events.length === 0) {
+      console.log('No events found — this is non-fatal for a club venue.');
+      return { success: 0, failed: 0 };
     }
 
-    // Deduplicate by (name + date)
-    const key = `${name}-${eventDate.toISOString().split('T')[0]}`;
-    if (seen.has(key)) return;
-    seen.add(key);
+    let success = 0;
+    let failed = 0;
 
-    events.push({ name, eventDate });
-  });
+    for (const { name, eventDate } of events) {
+      try {
+        const dateStr = eventDate.toISOString().split('T')[0];
+        const sourceId = `underbron-${name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`;
 
-  console.log(`Found ${events.length} upcoming events`);
+        const event = {
+          name,
+          artist: name,
+          venue: VENUE_NAME,
+          date: eventDate,
+          time: '22:00',
+          genre: 'electronic',
+          ticketSources: [{
+            platform: 'venue-direct',
+            url: 'https://www.underbron.com',
+            addedAt: new Date().toISOString(),
+          }],
+          sourceId,
+          sourcePlatform: 'venue-direct',
+        };
 
-  if (events.length === 0) {
-    console.log('No events found — this is non-fatal for a club venue.');
+        await db.insert(schema.events).values(event).onConflictDoUpdate({
+          target: [schema.events.venue, schema.events.date],
+          set: event,
+        });
+
+        success++;
+        console.log(`  OK: ${name} (${dateStr})`);
+      } catch (error) {
+        failed++;
+        console.error(`  FAIL: ${name}: ${error.message}`);
+      }
+    }
+
+    console.log(`\nComplete: ${success} saved, ${failed} failed`);
+    return { success, failed };
+  } catch (error) {
+    console.error('Crawler failed:', error);
+    throw error;
+  } finally {
     await client.end();
-    process.exit(0);
   }
+}
 
-  let success = 0;
-  let failed = 0;
-
-  for (const { name, eventDate } of events) {
-    try {
-      const dateStr = eventDate.toISOString().split('T')[0];
-      const sourceId = `underbron-${name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 60)}-${dateStr}`;
-
-      const event = {
-        name,
-        artist: name,
-        venue: VENUE_NAME,
-        date: eventDate,
-        time: '22:00',
-        genre: 'electronic',
-        ticketSources: [{
-          platform: 'venue-direct',
-          url: 'https://www.underbron.com',
-          addedAt: new Date().toISOString(),
-        }],
-        sourceId,
-        sourcePlatform: 'venue-direct',
-      };
-
-      await db.insert(schema.events).values(event).onConflictDoUpdate({
-        target: [schema.events.venue, schema.events.date],
-        set: event,
-      });
-
-      success++;
-      console.log(`  OK: ${name} (${dateStr})`);
-    } catch (error) {
-      failed++;
-      console.error(`  FAIL: ${name}: ${error.message}`);
-    }
-  }
-
-  console.log(`\nComplete: ${success} saved, ${failed} failed`);
-  await client.end();
-  process.exit(0);
-} catch (error) {
-  console.error('Crawler failed:', error);
-  await client.end();
-  process.exit(1);
+// Standalone runner
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  crawl().then(r => { console.log(r); process.exit(0); }).catch(e => { console.error(e); process.exit(1); });
 }
