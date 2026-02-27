@@ -156,7 +156,7 @@ export class EventsRepository {
       .select()
       .from(events)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(asc(events.date), asc(events.name), asc(events.id)) // Chronological, then alphabetic, then ID
+      .orderBy(asc(events.date), asc(events.id)) // Chronological, then ID (must match cursor condition)
       .limit(limit + 1); // Fetch extra to check if more exist
 
     // Build response with pagination metadata
