@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFilterState } from '@/hooks/useFilterState';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -15,17 +15,21 @@ export function FilterBar() {
   // Separate input state for search fields (immediate updates)
   const [artistInput, setArtistInput] = useState(filters.artistSearch || '');
   const [eventInput, setEventInput] = useState(filters.eventSearch || '');
-  const [organizerInput, setOrganizerInput] = useState(filters.organizerSearch || '');
-
   // Debounced values (triggers API after 300ms delay)
   const debouncedArtist = useDebounce(artistInput, 300);
   const debouncedEvent = useDebounce(eventInput, 300);
-  const debouncedOrganizer = useDebounce(organizerInput, 300);
 
-  // Set default date filter to show events from today to 3 months out
+  // Mount guards: skip the first fire of each debounce sync effect.
+  // Without these guards, the effects fire on mount with initial empty values,
+  // calling updateFilters() → setSearchParams() → new filters object reference →
+  // TanStack Query sees a new queryKey → infinite scroll resets to page 1.
+  const isArtistMounted = useRef(false);
+  const isEventMounted = useRef(false);
+
+  // Set default date filter to show events from today to end of year
   useEffect(() => {
-    // Only set default if NO filters are present at all
-    const hasAnyFilter = filters.dateFrom || filters.dateTo || filters.genre || filters.venue;
+    // Only set default if NO filters are present at all (including organizer filter)
+    const hasAnyFilter = filters.dateFrom || filters.dateTo || filters.genre || filters.venue || filters.organizerSearch;
     if (!hasAnyFilter) {
       const today = new Date();
       const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
@@ -37,18 +41,23 @@ export function FilterBar() {
     }
   }, [filters, updateFilters]);
 
-  // Sync debounced values to URL (triggers API refetch)
+  // Sync debounced values to URL (triggers API refetch).
+  // Skip the first run on mount - URL already reflects the correct initial state.
   useEffect(() => {
+    if (!isArtistMounted.current) {
+      isArtistMounted.current = true;
+      return;
+    }
     updateFilters({ artistSearch: debouncedArtist });
   }, [debouncedArtist]);
 
   useEffect(() => {
+    if (!isEventMounted.current) {
+      isEventMounted.current = true;
+      return;
+    }
     updateFilters({ eventSearch: debouncedEvent });
   }, [debouncedEvent]);
-
-  useEffect(() => {
-    updateFilters({ organizerSearch: debouncedOrganizer });
-  }, [debouncedOrganizer]);
 
   const handleClearFilters = () => {
     // Reset to default date range (today to 3 months out)
@@ -68,7 +77,6 @@ export function FilterBar() {
     // Reset input states
     setArtistInput('');
     setEventInput('');
-    setOrganizerInput('');
   };
 
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,19 +245,20 @@ export function FilterBar() {
         />
       </div>
 
-      {/* Organizer Search */}
+      {/* Organizer Filter */}
       <div className="flex flex-col gap-2">
         <label htmlFor="organizerSearch" className="text-sm font-medium text-gray-700">
-          Search Organizer
+          Organizer
         </label>
-        <input
+        <select
           id="organizerSearch"
-          type="text"
-          value={organizerInput}
-          onChange={(e) => setOrganizerInput(e.target.value)}
-          placeholder="Organizer name..."
+          value={filters.organizerSearch || ''}
+          onChange={(e) => updateFilters({ organizerSearch: e.target.value || undefined })}
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
+        >
+          <option value="">All Organizers</option>
+          <option value="Klubb Död">Klubb Död</option>
+        </select>
       </div>
 
       {/* Clear Filters Button */}
