@@ -146,7 +146,7 @@ export async function crawl() {
       // Event URL: prefer the "Mer Info" link
       let eventUrl = VENUE_URL;
       $item.find('a.btn').each((_, a) => {
-        const href = $(a).attr('href') || '';
+        const href = ($(a).attr('href') || '').trim();
         if (href.startsWith('/shower/') || href.includes('rival.se/shower/')) {
           eventUrl = href.startsWith('/') ? `${BASE_URL}${href}` : href;
         }

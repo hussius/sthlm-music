@@ -173,6 +173,7 @@ export class EventsRepository {
       ticketSources: Array.isArray(event.ticketSources)
         ? event.ticketSources.map((source: any) => ({
             ...source,
+            url: typeof source.url === 'string' ? source.url.trim() : source.url,
             addedAt: typeof source.addedAt === 'string' ? source.addedAt : new Date(source.addedAt).toISOString()
           }))
         : []
