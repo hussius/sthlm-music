@@ -17,7 +17,7 @@ async function main() {
     const server = await buildServer();
 
     // Start server
-    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
     await server.listen({ port, host: '0.0.0.0' });
 
     server.log.info(`Server listening at http://0.0.0.0:${port}`);
