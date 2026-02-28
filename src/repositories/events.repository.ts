@@ -31,6 +31,7 @@ export interface EventFilters {
   venue?: string;
   artistSearch?: string;
   eventSearch?: string;
+  organizerSearch?: string;
   cursor?: string;    // Format: "date_id" (e.g., "2024-03-15T19:00:00Z_uuid")
   limit?: number;     // Default 20, max 100
 }
@@ -131,6 +132,11 @@ export class EventsRepository {
     // Event name search (case-insensitive, uses GIN trigram index)
     if (filters.eventSearch) {
       conditions.push(ilike(events.name, `%${filters.eventSearch}%`));
+    }
+
+    // Organizer search (case-insensitive, uses B-tree index)
+    if (filters.organizerSearch) {
+      conditions.push(ilike(events.organizer, `%${filters.organizerSearch}%`));
     }
 
     // Cursor pagination

@@ -10,6 +10,7 @@ export interface EventFilters {
   venue?: string;
   artistSearch?: string;
   eventSearch?: string;
+  organizerSearch?: string;
   cursor?: string;
   limit?: number;
 }
@@ -30,6 +31,7 @@ export interface EventResponse {
   genre: string;
   ticketSources: TicketSource[];
   price: string | null;
+  organizer: string | null;
 }
 
 export interface EventsResponse {

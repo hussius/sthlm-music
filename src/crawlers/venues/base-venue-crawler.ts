@@ -34,6 +34,7 @@ import { deduplicateAndSave } from '../../deduplication/deduplicator.js';
  */
 export interface VenueConfig {
   name: string;
+  organizer?: string;
   url: string;
   selectors: {
     eventContainer: string;
@@ -174,6 +175,7 @@ export class BaseVenueCrawler {
             url: fullUrl,
             price: rawEvent.price,
             id: `${this.config.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            organizer: this.config.organizer,
           });
 
           if (!normalized.success) {

@@ -23,6 +23,7 @@ export { crawlMosebacke } from './mosebacke.js';
 export { crawlKagelbanan } from './kagelbanan.js';
 export { crawlPetSounds } from './pet-sounds.js';
 export { crawlDebaser } from './debaser.js';
+export { crawlKlubbDod } from './klubbdod.js';
 
 /**
  * Crawl all venues sequentially.
@@ -60,6 +61,7 @@ export async function crawlAllVenues() {
     { name: 'Kägelbanan', fn: async () => (await import('./kagelbanan.js')).crawlKagelbanan() },
     { name: 'Pet Sounds', fn: async () => (await import('./pet-sounds.js')).crawlPetSounds() },
     { name: 'Debaser', fn: async () => (await import('./debaser.js')).crawlDebaser() },
+    { name: 'Klubb Död', fn: async () => (await import('./klubbdod.js')).crawlKlubbDod() },
     // JavaScript crawlers (26) — loaded via runJsCrawler to bypass TS7016
     { name: 'Stadsgårdsterminalen', fn: () => runJsCrawler('../../../crawl-stadsgarden.js') },
     { name: 'Debaser (JS)', fn: () => runJsCrawler('../../../crawl-debaser-fixed.js') },

@@ -19,6 +19,7 @@ export const EventFiltersSchema = z.object({
   venue: z.string().optional(),
   artistSearch: z.string().optional(),
   eventSearch: z.string().optional(),
+  organizerSearch: z.string().optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20)
 });
@@ -44,7 +45,8 @@ export const EventSchema = z.object({
   time: z.string().nullable(),
   genre: z.string(),
   ticketSources: z.array(TicketSourceSchema),
-  price: z.string().nullable()
+  price: z.string().nullable(),
+  organizer: z.string().nullable(),
 });
 
 /**

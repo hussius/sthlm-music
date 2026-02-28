@@ -15,10 +15,12 @@ export function FilterBar() {
   // Separate input state for search fields (immediate updates)
   const [artistInput, setArtistInput] = useState(filters.artistSearch || '');
   const [eventInput, setEventInput] = useState(filters.eventSearch || '');
+  const [organizerInput, setOrganizerInput] = useState(filters.organizerSearch || '');
 
   // Debounced values (triggers API after 300ms delay)
   const debouncedArtist = useDebounce(artistInput, 300);
   const debouncedEvent = useDebounce(eventInput, 300);
+  const debouncedOrganizer = useDebounce(organizerInput, 300);
 
   // Set default date filter to show events from today to 3 months out
   useEffect(() => {
@@ -44,6 +46,10 @@ export function FilterBar() {
     updateFilters({ eventSearch: debouncedEvent });
   }, [debouncedEvent]);
 
+  useEffect(() => {
+    updateFilters({ organizerSearch: debouncedOrganizer });
+  }, [debouncedOrganizer]);
+
   const handleClearFilters = () => {
     // Reset to default date range (today to 3 months out)
     const today = new Date();
@@ -56,11 +62,13 @@ export function FilterBar() {
       dateTo: endOfYear.toISOString(),
       artistSearch: undefined,
       eventSearch: undefined,
+      organizerSearch: undefined,
     });
 
     // Reset input states
     setArtistInput('');
     setEventInput('');
+    setOrganizerInput('');
   };
 
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,6 +233,21 @@ export function FilterBar() {
           value={eventInput}
           onChange={(e) => setEventInput(e.target.value)}
           placeholder="Event name..."
+          className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* Organizer Search */}
+      <div className="flex flex-col gap-2">
+        <label htmlFor="organizerSearch" className="text-sm font-medium text-gray-700">
+          Search Organizer
+        </label>
+        <input
+          id="organizerSearch"
+          type="text"
+          value={organizerInput}
+          onChange={(e) => setOrganizerInput(e.target.value)}
+          placeholder="Organizer name..."
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>

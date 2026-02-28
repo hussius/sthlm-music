@@ -84,6 +84,7 @@ export const EventSchema = z.object({
   price: z.string().optional(),
   sourceId: z.string().min(1, 'Source ID required'),
   sourcePlatform: z.enum(['ticketmaster', 'axs', 'dice', 'venue-direct']),
+  organizer: z.string().trim().min(1).max(500).optional(),
 });
 
 /**

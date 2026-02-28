@@ -34,6 +34,7 @@ export const events = pgTable(
     date: timestamp('date', { withTimezone: true }).notNull(),
     time: text('time'), // Optional display time string (e.g., "19:00")
     genre: text('genre').notNull(), // Canonical genre (e.g., "rock", "electronic")
+    organizer: text('organizer'), // nullable — populated by organizer-specific crawlers
 
     // Ticketing
     ticketSources: jsonb('ticket_sources').notNull().$type<TicketSource[]>(),
@@ -61,6 +62,7 @@ export const events = pgTable(
     genreIdx: index('genre_idx').on(table.genre), // Genre filtering
     artistDateIdx: index('artist_date_idx').on(table.artist, table.date), // Fuzzy match candidates
     sourcePlatformIdx: index('source_platform_idx').on(table.sourcePlatform, table.sourceId), // Source tracking
+    organizerIdx: index('organizer_idx').on(table.organizer),
   })
 );
 

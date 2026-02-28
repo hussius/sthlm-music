@@ -150,5 +150,6 @@ export function transformVenueEvent(raw: any) {
     price: raw.price,
     sourceId: raw.id || `${raw.venue}-${raw.date}`, // Generate ID if missing
     sourcePlatform: 'venue-direct',
+    organizer: raw.organizer,
   });
 }

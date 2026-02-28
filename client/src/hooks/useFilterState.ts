@@ -19,6 +19,7 @@ export function useFilterState() {
     dateTo: searchParams.get('dateTo') || undefined,
     artistSearch: searchParams.get('artistSearch') || undefined,
     eventSearch: searchParams.get('eventSearch') || undefined,
+    organizerSearch: searchParams.get('organizerSearch') || undefined,
     // cursor and limit handled by useEvents, not exposed to filters
   };
 
