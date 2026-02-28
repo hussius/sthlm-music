@@ -1,17 +1,10 @@
 /**
- * Event list component with infinite scroll pagination.
+ * Event list component.
  *
- * Features:
- * - Displays events in compact grid layout (1-3 columns responsive)
- * - Click event card to open modal with full details
- * - Automatic infinite scroll using intersection observer
- * - Loading states with skeleton cards
- * - Error handling with user-friendly messages
- * - Stockholm timezone for all dates
+ * Renders all events for the selected month. Pagination is handled by the
+ * FilterBar month navigator (← Month →) — no infinite scroll.
  */
 
-import { useEffect } from 'react';
-import { useInView } from 'react-intersection-observer';
 import { useEvents } from '../hooks/useEvents';
 import { useFilterState } from '../hooks/useFilterState';
 import { EventCard } from './EventCard';
@@ -19,35 +12,15 @@ import { SkeletonCard } from './SkeletonCard';
 import type { EventResponse } from '../types/events';
 
 export function EventList() {
-  const { ref, inView } = useInView();
   const { filters } = useFilterState();
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useEvents(filters);
+  const { data, isLoading, isError, error } = useEvents(filters);
 
-  // Trigger next page load when scroll trigger is in view
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  // Loading state - show skeleton cards
   if (isLoading) {
     return (
       <div
         className="gap-4"
         role="list"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
-        }}
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
       >
         {Array.from({ length: 9 }).map((_, i) => (
           <SkeletonCard key={i} />
@@ -56,11 +29,7 @@ export function EventList() {
     );
   }
 
-  // Get all events from all pages (may be partial on error)
-  const allEvents = data?.pages.flatMap((page) => page.events) ?? [];
-
-  // Initial load error (no events loaded yet)
-  if (isError && allEvents.length === 0) {
+  if (isError) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
         <h3 className="text-lg font-semibold mb-2">Failed to load events. Please try again.</h3>
@@ -69,8 +38,9 @@ export function EventList() {
     );
   }
 
-  // Empty state (no error, no events)
-  if (allEvents.length === 0) {
+  const events = data?.events ?? [];
+
+  if (events.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-lg text-gray-600 mb-2">No events found</p>
@@ -79,32 +49,15 @@ export function EventList() {
     );
   }
 
-  // Success state - render event grid (with inline pagination error if fetchNextPage failed)
   return (
-    <>
-      <div
-        className="gap-4"
-        role="list"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
-        }}
-      >
-        {allEvents.map((event: EventResponse) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-      </div>
-
-      {/* Infinite scroll trigger */}
-      <div ref={ref} className="py-5 text-center">
-        {isFetchingNextPage && (
-          <p className="text-gray-600">Loading more events...</p>
-        )}
-        {isError && allEvents.length > 0 && !isFetchingNextPage && (
-          <p className="text-sm text-red-600">Could not load more events. Scroll up to see what was loaded.</p>
-        )}
-      </div>
-
-    </>
+    <div
+      className="gap-4"
+      role="list"
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+    >
+      {events.map((event: EventResponse) => (
+        <EventCard key={event.id} event={event} />
+      ))}
+    </div>
   );
 }

@@ -104,7 +104,7 @@ export class EventsRepository {
    */
   async findByFilters(filters: EventFilters): Promise<EventsResponse> {
     const conditions = [];
-    const limit = Math.min(filters.limit || 20, 100); // Default 20, max 100
+    const limit = Math.min(filters.limit || 20, 500); // Default 20, max 500
 
     // Genre filter (exact match, uses B-tree index)
     if (filters.genre) {

@@ -1,110 +1,92 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useFilterState } from '@/hooks/useFilterState';
 import { useDebounce } from '@/hooks/useDebounce';
 
-/**
- * FilterBar component with genre, venue, date range, and search filters.
- *
- * Pattern: Separate immediate input state (artistInput, eventInput) from debounced state.
- * Input feels instant, API calls are throttled. Genre/venue/date update immediately
- * (no debounce needed for dropdowns/date pickers).
- */
 export function FilterBar() {
   const { filters, updateFilters } = useFilterState();
 
-  // Separate input state for search fields (immediate updates)
+  // Separate input state for search fields (immediate updates, debounced API calls)
   const [artistInput, setArtistInput] = useState(filters.artistSearch || '');
   const [eventInput, setEventInput] = useState(filters.eventSearch || '');
-  // Debounced values (triggers API after 300ms delay)
   const debouncedArtist = useDebounce(artistInput, 300);
   const debouncedEvent = useDebounce(eventInput, 300);
 
-  // Mount guards: skip the first fire of each debounce sync effect.
-  // Without these guards, the effects fire on mount with initial empty values,
-  // calling updateFilters() → setSearchParams() → new filters object reference →
-  // TanStack Query sees a new queryKey → infinite scroll resets to page 1.
+  // Mount guards: skip first fire so mount doesn't trigger an API refetch
   const isArtistMounted = useRef(false);
   const isEventMounted = useRef(false);
 
-  // Set default date filter to show events from today to end of year
   useEffect(() => {
-    // Only set default if NO filters are present at all (including organizer filter)
-    const hasAnyFilter = filters.dateFrom || filters.dateTo || filters.genre || filters.venue || filters.organizerSearch;
-    if (!hasAnyFilter) {
-      const today = new Date();
-      const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
-
-      updateFilters({
-        dateFrom: today.toISOString(),
-        dateTo: endOfYear.toISOString(),
-      });
-    }
-  }, [filters, updateFilters]);
-
-  // Sync debounced values to URL (triggers API refetch).
-  // Skip the first run on mount - URL already reflects the correct initial state.
-  useEffect(() => {
-    if (!isArtistMounted.current) {
-      isArtistMounted.current = true;
-      return;
-    }
+    if (!isArtistMounted.current) { isArtistMounted.current = true; return; }
     updateFilters({ artistSearch: debouncedArtist });
-  }, [debouncedArtist]);
+  }, [debouncedArtist]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!isEventMounted.current) {
-      isEventMounted.current = true;
-      return;
-    }
+    if (!isEventMounted.current) { isEventMounted.current = true; return; }
     updateFilters({ eventSearch: debouncedEvent });
-  }, [debouncedEvent]);
+  }, [debouncedEvent]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Derive current month from dateFrom filter
+  const currentMonth = filters.dateFrom ? new Date(filters.dateFrom) : new Date();
+
+  const monthLabel = currentMonth.toLocaleDateString('sv-SE', {
+    year: 'numeric',
+    month: 'long',
+  });
+
+  const goToMonth = (offset: number) => {
+    const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
+    const from = new Date(d.getFullYear(), d.getMonth(), 1);
+    const to = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+    updateFilters({
+      dateFrom: from.toISOString(),
+      dateTo: to.toISOString(),
+    });
+  };
 
   const handleClearFilters = () => {
-    // Reset to default date range (today to 3 months out)
-    const today = new Date();
-    const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
-
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     updateFilters({
       genre: undefined,
       venue: undefined,
-      dateFrom: today.toISOString(),
-      dateTo: endOfYear.toISOString(),
+      dateFrom: from.toISOString(),
+      dateTo: to.toISOString(),
       artistSearch: undefined,
       eventSearch: undefined,
       organizerSearch: undefined,
     });
-
-    // Reset input states
     setArtistInput('');
     setEventInput('');
   };
 
-  const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateStr = e.target.value;
-    if (!dateStr) {
-      updateFilters({ dateFrom: undefined });
-      return;
-    }
-    // Convert to ISO datetime - use UTC midnight to avoid timezone issues
-    const isoDate = `${dateStr}T00:00:00.000Z`;
-    updateFilters({ dateFrom: isoDate });
-  };
-
-  const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateStr = e.target.value;
-    if (!dateStr) {
-      updateFilters({ dateTo: undefined });
-      return;
-    }
-    // Convert to ISO datetime - use UTC end of day
-    const isoDate = `${dateStr}T23:59:59.999Z`;
-    updateFilters({ dateTo: isoDate });
-  };
-
   return (
     <div className="flex flex-col gap-4 p-4 bg-white border border-gray-200 rounded-lg lg:sticky lg:top-4">
-      {/* Title */}
       <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+
+      {/* Month Navigator */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">Month</label>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={() => goToMonth(-1)}
+            className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 font-medium"
+            aria-label="Previous month"
+          >
+            ←
+          </button>
+          <span className="flex-1 text-center text-sm font-medium text-gray-900 capitalize">
+            {monthLabel}
+          </span>
+          <button
+            onClick={() => goToMonth(1)}
+            className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 font-medium"
+            aria-label="Next month"
+          >
+            →
+          </button>
+        </div>
+      </div>
 
       {/* Genre Filter */}
       <div className="flex flex-col gap-2">
@@ -114,9 +96,7 @@ export function FilterBar() {
         <select
           id="genre"
           value={filters.genre || ''}
-          onChange={(e) =>
-            updateFilters({ genre: e.target.value || undefined })
-          }
+          onChange={(e) => updateFilters({ genre: e.target.value || undefined })}
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Genres</option>
@@ -142,9 +122,7 @@ export function FilterBar() {
         <select
           id="venue"
           value={filters.venue || ''}
-          onChange={(e) =>
-            updateFilters({ venue: e.target.value || undefined })
-          }
+          onChange={(e) => updateFilters({ venue: e.target.value || undefined })}
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Venues</option>
@@ -179,42 +157,9 @@ export function FilterBar() {
         </select>
       </div>
 
-      {/* Date Range */}
-      <div className="flex flex-col gap-2">
-        <label htmlFor="dateFrom" className="text-sm font-medium text-gray-700">
-          Date From (click to open calendar)
-        </label>
-        <input
-          id="dateFrom"
-          type="date"
-          value={filters.dateFrom ? filters.dateFrom.split('T')[0] : new Date().toISOString().split('T')[0]}
-          onChange={handleDateFromChange}
-          className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="dateTo" className="text-sm font-medium text-gray-700">
-          Date To (click to open calendar)
-        </label>
-        <input
-          id="dateTo"
-          type="date"
-          value={filters.dateTo ? filters.dateTo.split('T')[0] : (() => {
-            const now = new Date();
-            return `${now.getFullYear()}-12-31`;
-          })()}
-          onChange={handleDateToChange}
-          className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-
       {/* Artist Search */}
       <div className="flex flex-col gap-2">
-        <label
-          htmlFor="artistSearch"
-          className="text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="artistSearch" className="text-sm font-medium text-gray-700">
           Search Artists
         </label>
         <input
@@ -229,10 +174,7 @@ export function FilterBar() {
 
       {/* Event Search */}
       <div className="flex flex-col gap-2">
-        <label
-          htmlFor="eventSearch"
-          className="text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="eventSearch" className="text-sm font-medium text-gray-700">
           Search Events
         </label>
         <input

@@ -21,7 +21,7 @@ export const EventFiltersSchema = z.object({
   eventSearch: z.string().optional(),
   organizerSearch: z.string().optional(),
   cursor: z.string().optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(20)
+  limit: z.coerce.number().int().min(1).max(500).default(20)
 });
 
 /**

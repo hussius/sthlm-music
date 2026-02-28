@@ -33,8 +33,8 @@ export class EventsService {
     const limit = filters.limit ?? 20;
 
     // Validate limit bounds
-    if (limit < 1 || limit > 100) {
-      throw new Error(`Invalid limit: ${limit}. Must be between 1 and 100.`);
+    if (limit < 1 || limit > 500) {
+      throw new Error(`Invalid limit: ${limit}. Must be between 1 and 500.`);
     }
 
     // Call repository with validated filters
