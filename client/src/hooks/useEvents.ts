@@ -30,5 +30,6 @@ export function useEvents(filters: EventFilters = {}) {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false, // Avoid cursor issues on refetch
+    retry: 1, // Limit retries so pagination errors surface quickly rather than stalling for 30s
   });
 }

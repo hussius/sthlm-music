@@ -56,8 +56,11 @@ export function EventList() {
     );
   }
 
-  // Error state
-  if (isError) {
+  // Get all events from all pages (may be partial on error)
+  const allEvents = data?.pages.flatMap((page) => page.events) ?? [];
+
+  // Initial load error (no events loaded yet)
+  if (isError && allEvents.length === 0) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
         <h3 className="text-lg font-semibold mb-2">Failed to load events. Please try again.</h3>
@@ -66,10 +69,7 @@ export function EventList() {
     );
   }
 
-  // Get all events from all pages
-  const allEvents = data?.pages.flatMap((page) => page.events) ?? [];
-
-  // Empty state
+  // Empty state (no error, no events)
   if (allEvents.length === 0) {
     return (
       <div className="text-center py-12">
@@ -79,7 +79,7 @@ export function EventList() {
     );
   }
 
-  // Success state - render event grid
+  // Success state - render event grid (with inline pagination error if fetchNextPage failed)
   return (
     <>
       <div
@@ -99,6 +99,9 @@ export function EventList() {
       <div ref={ref} className="py-5 text-center">
         {isFetchingNextPage && (
           <p className="text-gray-600">Loading more events...</p>
+        )}
+        {isError && allEvents.length > 0 && !isFetchingNextPage && (
+          <p className="text-sm text-red-600">Could not load more events. Scroll up to see what was loaded.</p>
         )}
       </div>
 

@@ -166,16 +166,46 @@ export class EventsRepository {
       ? buildCursor(items[items.length - 1].date, items[items.length - 1].id)
       : null;
 
-    // Transform Date objects to ISO strings for API response
+    // Transform Date objects to ISO strings for API response.
+    // Defensively sanitize ticketSources to prevent ResponseSerializationError from
+    // bad data in the DB (non-URL strings, missing addedAt, etc.) that would cause
+    // Fastify/Zod to throw a 500 and silently stall infinite scroll.
     const transformedEvents = items.map(event => ({
       ...event,
       date: event.date.toISOString(),
       ticketSources: Array.isArray(event.ticketSources)
-        ? event.ticketSources.map((source: any) => ({
-            ...source,
-            url: typeof source.url === 'string' ? source.url.trim() : source.url,
-            addedAt: typeof source.addedAt === 'string' ? source.addedAt : new Date(source.addedAt).toISOString()
-          }))
+        ? event.ticketSources
+            .filter((source: any) => source && typeof source === 'object')
+            .map((source: any) => {
+              // Sanitize URL: trim whitespace, fall back to # if empty or not an absolute URL
+              const rawUrl = typeof source.url === 'string' ? source.url.trim() : '';
+              const safeUrl = rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
+                ? rawUrl
+                : 'https://stockholmmusic.se';
+
+              // Sanitize addedAt: must be a UTC ISO datetime string (Z suffix) for z.string().datetime()
+              // Handles: undefined, null, non-string, non-UTC ISO strings, invalid dates
+              let safeAddedAt: string;
+              try {
+                const raw = source.addedAt;
+                if (typeof raw === 'string' && raw.endsWith('Z') && !isNaN(new Date(raw).getTime())) {
+                  safeAddedAt = raw;
+                } else if (raw != null) {
+                  const d = new Date(raw);
+                  safeAddedAt = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+                } else {
+                  safeAddedAt = new Date().toISOString();
+                }
+              } catch {
+                safeAddedAt = new Date().toISOString();
+              }
+
+              return {
+                ...source,
+                url: safeUrl,
+                addedAt: safeAddedAt,
+              };
+            })
         : []
     })) as any; // Type assertion: we transform Date to string for API compatibility
 
