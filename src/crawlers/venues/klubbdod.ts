@@ -94,9 +94,23 @@ export async function crawlKlubbDod(): Promise<{ success: number; failed: number
       const name = jsonLd?.name || $('h1').first().text().trim() || $('h2').first().text().trim();
       const startDate = jsonLd?.startDate;
       const addressLocality: string = jsonLd?.location?.address?.addressLocality || '';
+      const addressRegion: string = jsonLd?.location?.address?.addressRegion || '';
 
-      // Skip non-Stockholm events (Klubb Död also hosts events in Göteborg etc.)
-      if (addressLocality && !addressLocality.toLowerCase().includes('stockholm')) {
+      // Stockholm districts have addressLocality like "Johanneshov", "Hammarby" etc.
+      // Accept if addressRegion contains "stockholm", OR addressLocality contains "stockholm",
+      // OR addressLocality is a known Stockholm district.
+      const STOCKHOLM_DISTRICTS = ['johanneshov', 'hammarby', 'södermalm', 'norrmalm', 'östermalm',
+        'kungsholmen', 'vasastan', 'bromma', 'kista', 'farsta', 'skärholmen', 'älvsjö',
+        'hägersten', 'liljeholmen', 'enskede', 'skarpnäck', 'spånga', 'hässelby'];
+      const locality = addressLocality.toLowerCase();
+      const region = addressRegion.toLowerCase();
+      const isStockholm =
+        !addressLocality || // no location data → don't filter out
+        locality.includes('stockholm') ||
+        region.includes('stockholm') ||
+        STOCKHOLM_DISTRICTS.includes(locality);
+
+      if (!isStockholm) {
         log.info(`Klubb Död: skipping non-Stockholm event at ${request.url} (${addressLocality})`);
         return;
       }
