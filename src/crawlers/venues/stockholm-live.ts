@@ -21,6 +21,49 @@ const SITES = [
 
 const LISTING_SUFFIX = '/evenemang/musik-show/';
 
+const SWEDISH_MONTHS: Record<string, number> = {
+  januari: 0, februari: 1, mars: 2, april: 3, maj: 4, juni: 5,
+  juli: 6, augusti: 7, september: 8, oktober: 9, november: 10, december: 11,
+};
+
+/**
+ * Parse a Swedish date string like "14 mars 2026" into an ISO date string.
+ */
+function parseSwedishDate(text: string): string | null {
+  const m = text.match(/(\d{1,2})\s+(januari|februari|mars|april|maj|juni|juli|augusti|september|oktober|november|december)\s+(\d{4})/i);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const month = SWEDISH_MONTHS[m[2].toLowerCase()];
+  const year = parseInt(m[3], 10);
+  const d = new Date(year, month, day, 20, 0, 0); // default 20:00
+  return d.toISOString();
+}
+
+/**
+ * Fallback HTML extraction for event pages without MusicEvent JSON-LD.
+ * Looks for Swedish date text, h1 title, and AXS ticket links.
+ */
+function extractFromHtml($: any, siteBase: string, pageUrl: string): { name: string; startDate: string; ticketUrl: string } | null {
+  const name = $('h1').first().text().trim();
+  if (!name) return null;
+
+  // Look for Swedish date pattern anywhere in the page text
+  const bodyText = $('body').text();
+  const startDate = parseSwedishDate(bodyText);
+  if (!startDate) return null;
+
+  // Prefer AXS ticket link, fall back to page URL
+  let ticketUrl = pageUrl;
+  $('a[href]').each((_: number, el: any) => {
+    const href = ($( el).attr('href') || '').trim();
+    if (!ticketUrl.includes('axs.com') && href.includes('axs.com')) {
+      ticketUrl = href;
+    }
+  });
+
+  return { name, startDate, ticketUrl };
+}
+
 /**
  * Parse the first Event/MusicEvent from all JSON-LD script tags on a page.
  * Handles top-level object, top-level array, and @graph format.
@@ -101,25 +144,41 @@ export async function crawlStockholmLive(): Promise<{ success: number; failed: n
 
         const jsonLd = parseJsonLd($);
 
-        if (!jsonLd) {
-          log.warning(`Stockholm Live: no MusicEvent JSON-LD on ${request.url}`);
-          failed++;
-          return;
+        let name: string;
+        let startDate: string;
+        let venueName: string;
+        let artist: string;
+        let ticketUrl: string;
+        let price: string | undefined;
+
+        if (jsonLd) {
+          name = jsonLd.name || $('h1').first().text().trim();
+          startDate = jsonLd.startDate;
+          venueName = jsonLd.location?.name || site.venueName;
+          artist = jsonLd.performer?.name || name;
+          const offers = jsonLd.offers;
+          ticketUrl = offers?.url || jsonLd.url || request.url;
+          price = offers?.lowPrice
+            ? `${offers.lowPrice}–${offers.highPrice ?? offers.lowPrice} ${offers.priceCurrency || 'SEK'}`
+            : offers?.price
+            ? `${offers.price} ${offers.priceCurrency || 'SEK'}`
+            : undefined;
+        } else {
+          // Fallback: extract from HTML for pages without MusicEvent JSON-LD
+          const html = extractFromHtml($, site.base, request.url);
+          if (!html) {
+            log.warning(`Stockholm Live: no usable event data on ${request.url}`);
+            failed++;
+            return;
+          }
+          name = html.name;
+          startDate = html.startDate;
+          venueName = site.venueName;
+          artist = name;
+          ticketUrl = html.ticketUrl;
+          price = undefined;
+          log.info(`Stockholm Live: used HTML fallback for ${name}`);
         }
-
-        const name: string = jsonLd.name || $('h1').first().text().trim();
-        const startDate: string = jsonLd.startDate;
-        const venueName: string = jsonLd.location?.name || site.venueName;
-        const artist: string = jsonLd.performer?.name || name;
-
-        // offers may be AggregateOffer or Offer
-        const offers = jsonLd.offers;
-        const ticketUrl: string = offers?.url || jsonLd.url || request.url;
-        const price: string | undefined = offers?.lowPrice
-          ? `${offers.lowPrice}–${offers.highPrice ?? offers.lowPrice} ${offers.priceCurrency || 'SEK'}`
-          : offers?.price
-          ? `${offers.price} ${offers.priceCurrency || 'SEK'}`
-          : undefined;
 
         if (!name || !startDate) {
           log.warning(`Stockholm Live: missing name or date on ${request.url}`);
