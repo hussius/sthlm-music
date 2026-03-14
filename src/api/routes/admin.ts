@@ -8,10 +8,7 @@
  */
 
 import { FastifyInstance } from 'fastify';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { spawn } from 'child_process';
 
 export async function adminRoutes(fastify: FastifyInstance) {
   fastify.post('/admin/refresh', async (request, reply) => {
@@ -31,18 +28,17 @@ export async function adminRoutes(fastify: FastifyInstance) {
     // Respond immediately — crawl runs in background
     reply.code(202).send({ status: 'refresh started', startedAt: new Date().toISOString() });
 
-    // Run in background so HTTP response is not blocked
-    execAsync('node clear-db.js && node crawl-all.js', {
+    // Spawn with real-time log piping so output appears in Railway logs immediately
+    const child = spawn('sh', ['-c', 'node clear-db.js && node crawl-all.js'], {
       cwd: process.cwd(),
-      timeout: 30 * 60 * 1000, // 30 min max
-    })
-      .then(({ stdout, stderr }) => {
-        fastify.log.info('Admin refresh completed');
-        if (stdout) fastify.log.info(stdout.slice(-500));
-        if (stderr) fastify.log.warn(stderr.slice(-500));
-      })
-      .catch((err) => {
-        fastify.log.error({ err }, 'Admin refresh failed');
-      });
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    child.stdout.on('data', (chunk: Buffer) => process.stdout.write(chunk));
+    child.stderr.on('data', (chunk: Buffer) => process.stderr.write(chunk));
+
+    child.on('close', (code: number) => {
+      fastify.log.info(`Admin refresh finished with exit code ${code}`);
+    });
   });
 }
