@@ -202,6 +202,7 @@ export function FilterBar() {
         >
           <option value="">All Organizers</option>
           <option value="Klubb Död">Klubb Död</option>
+          <option value="Jazz är farligt">Jazz är farligt</option>
         </select>
       </div>
 

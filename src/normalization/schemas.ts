@@ -123,8 +123,25 @@ export type NormalizedEventResult =
  * @param raw - Raw event data from any platform
  * @returns Validation result with normalized data or detailed errors
  */
+const ORGANIZER_PATTERNS: Array<{ pattern: RegExp; organizer: string }> = [
+  { pattern: /jazz\s+är\s+farligt/i, organizer: 'Jazz är farligt' },
+];
+
+function inferOrganizer(name: string, existing?: string): string | undefined {
+  if (existing) return existing;
+  for (const { pattern, organizer } of ORGANIZER_PATTERNS) {
+    if (pattern.test(name)) return organizer;
+  }
+  return undefined;
+}
+
 export function normalizeEventData(raw: unknown): NormalizedEventResult {
-  const result = EventSchema.safeParse(raw);
+  const input = typeof raw === 'object' && raw !== null ? raw as Record<string, unknown> : {};
+  const withOrganizer = {
+    ...input,
+    organizer: inferOrganizer(String(input.name ?? ''), input.organizer as string | undefined),
+  };
+  const result = EventSchema.safeParse(withOrganizer);
 
   if (result.success) {
     return { success: true, data: result.data };
