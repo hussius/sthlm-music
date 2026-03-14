@@ -13,6 +13,8 @@ async function runTsCrawlers() {
     { name: 'Ticketmaster API', fn: async () => (await import('./dist/crawlers/ticketmaster.js')).crawlTicketmaster() },
     { name: 'AXS', fn: async () => (await import('./dist/crawlers/axs.js')).crawlAXS() },
     { name: 'DICE', fn: async () => (await import('./dist/crawlers/dice.js')).crawlDICE() },
+    { name: 'Klubb Död', fn: async () => (await import('./dist/crawlers/venues/klubbdod.js')).crawlKlubbDod() },
+    { name: 'Stockholm Live (Avicii Arena + Annexet)', fn: async () => (await import('./dist/crawlers/venues/stockholm-live.js')).crawlStockholmLive() },
   ];
 
   let successCount = 0;
@@ -110,7 +112,7 @@ for (const crawler of crawlers) {
   }
 }
 
-const total = 3 + crawlers.length; // 3 TS + JS crawlers
+const total = 5 + crawlers.length; // 5 TS + JS crawlers
 console.log('\n' + '='.repeat(60));
 console.log('📊 CRAWL SUMMARY');
 console.log('='.repeat(60));
