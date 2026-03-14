@@ -154,6 +154,8 @@ export function FilterBar() {
           <option value="B-K">B-K</option>
           <option value="Rival">Rival</option>
           <option value="Under Bron">Under Bron</option>
+          <option value="Avicii Arena">Avicii Arena</option>
+          <option value="Annexet">Annexet</option>
         </select>
       </div>
 

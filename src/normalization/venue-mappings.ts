@@ -90,6 +90,16 @@ export const venueAliases: Record<string, string> = {
   'debaser strand': 'Debaser',
   'debaser stockholm': 'Debaser',
   'debaser medis': 'Debaser',
+
+  // Avicii Arena variations
+  'avicii arena': 'Avicii Arena',
+  'aviciiarena': 'Avicii Arena',
+  'globen': 'Avicii Arena',
+  'avicii arena stockholm': 'Avicii Arena',
+
+  // Annexet variations
+  'annexet': 'Annexet',
+  'annexet stockholm': 'Annexet',
 };
 
 /**

@@ -24,6 +24,7 @@ export { crawlKagelbanan } from './kagelbanan.js';
 export { crawlPetSounds } from './pet-sounds.js';
 export { crawlDebaser } from './debaser.js';
 export { crawlKlubbDod } from './klubbdod.js';
+export { crawlStockholmLive } from './stockholm-live.js';
 
 /**
  * Crawl all venues sequentially.
@@ -62,6 +63,7 @@ export async function crawlAllVenues() {
     { name: 'Pet Sounds', fn: async () => (await import('./pet-sounds.js')).crawlPetSounds() },
     { name: 'Debaser', fn: async () => (await import('./debaser.js')).crawlDebaser() },
     { name: 'Klubb Död', fn: async () => (await import('./klubbdod.js')).crawlKlubbDod() },
+    { name: 'Stockholm Live (Avicii Arena + Annexet)', fn: async () => (await import('./stockholm-live.js')).crawlStockholmLive() },
     // JavaScript crawlers (26) — loaded via runJsCrawler to bypass TS7016
     { name: 'Stadsgårdsterminalen', fn: () => runJsCrawler('../../../crawl-stadsgarden.js') },
     { name: 'Debaser (JS)', fn: () => runJsCrawler('../../../crawl-debaser-fixed.js') },
