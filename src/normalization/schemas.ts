@@ -75,7 +75,11 @@ export const EventSchema = z.object({
   venue: z.string().trim().transform(normalizeVenueName),
   date: z.coerce
     .date()
-    .refine((d) => d > new Date(), { message: 'Event must be in future' }),
+    .refine((d) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today;
+    }, { message: 'Event must be in future' }),
   time: z.string().optional(),
   genre: z
     .enum(CANONICAL_GENRES)
