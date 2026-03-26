@@ -16,6 +16,7 @@ async function runTsCrawlers() {
     { name: 'Klubb Död', fn: async () => (await import('./dist/crawlers/venues/klubbdod.js')).crawlKlubbDod() },
     { name: 'Stockholm Live (Avicii Arena + Annexet)', fn: async () => (await import('./dist/crawlers/venues/stockholm-live.js')).crawlStockholmLive() },
     { name: 'Tickster', fn: async () => (await import('./dist/crawlers/venues/tickster.js')).crawlTickster() },
+    { name: 'Resident Advisor', fn: async () => (await import('./dist/crawlers/venues/ra.js')).crawlRA() },
   ];
 
   let successCount = 0;
