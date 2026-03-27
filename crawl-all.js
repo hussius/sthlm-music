@@ -114,6 +114,17 @@ for (const crawler of crawlers) {
   }
 }
 
+// --- Genre inference (runs after all crawlers) ---
+console.log('\n' + '='.repeat(60));
+console.log('🎵 GENRE INFERENCE');
+console.log('='.repeat(60));
+try {
+  const { inferGenres } = await import('./dist/genre-inference.js');
+  await inferGenres();
+} catch (err) {
+  console.error('❌ Genre inference failed:', err.message);
+}
+
 const total = 5 + crawlers.length; // 5 TS + JS crawlers
 console.log('\n' + '='.repeat(60));
 console.log('📊 CRAWL SUMMARY');
