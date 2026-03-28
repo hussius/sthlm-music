@@ -69,6 +69,8 @@ const crawlers = [
   { name: 'Under Bron', file: './crawl-underbron-fixed.js' },
 ];
 
+const CRAWLER_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes per crawler
+
 function runCrawler(crawler) {
   return new Promise((resolve) => {
     console.log(`\n${'='.repeat(60)}`);
@@ -81,7 +83,14 @@ function runCrawler(crawler) {
       env: { ...process.env }
     });
 
+    const timer = setTimeout(() => {
+      console.error(`\n⏱️  ${crawler.name} timed out after 3 minutes — killing`);
+      child.kill('SIGKILL');
+      resolve({ success: false });
+    }, CRAWLER_TIMEOUT_MS);
+
     child.on('close', (code) => {
+      clearTimeout(timer);
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       if (code === 0) {
         console.log(`\n✅ ${crawler.name} complete (${duration}s)`);
@@ -93,6 +102,7 @@ function runCrawler(crawler) {
     });
 
     child.on('error', (error) => {
+      clearTimeout(timer);
       console.error(`\n❌ ${crawler.name} error:`, error.message);
       resolve({ success: false });
     });
