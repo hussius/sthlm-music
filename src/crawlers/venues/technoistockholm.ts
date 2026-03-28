@@ -7,101 +7,91 @@
  *
  * Strategy:
  * 1. Fetch the homepage HTML
- * 2. Extract all text content from the page
- * 3. Use Claude Haiku to parse the unstructured Swedish event descriptions
- *    into structured JSON (name, venue, date, genre, ticket URL)
+ * 2. Decode all Next.js __next_f.push() script payloads into a single text blob
+ * 3. Extract structured JSON event objects embedded in the RSC payload —
+ *    each has startDate (ISO), title ("Artist | Venue"), tags ([{name}]), tickets ([{url,price}])
  * 4. Normalize and save via deduplicateAndSave
  *
- * Why LLM parsing:
- * - The site is Next.js SSR with no JSON-LD or structured data
- * - Event blocks use inconsistent Swedish text labels
- * - Claude handles varying date formats and inline genre tags reliably
+ * Why direct JSON extraction (not LLM):
+ * - The page embeds structured event data in its RSC payload
+ * - Extracting JSON is faster, cheaper, and requires no external API
+ * - Genre data comes directly from the site's tag taxonomy
  *
  * Site: https://technoistockholm.se
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import { log } from 'crawlee';
 import { normalizeEventData } from '../../normalization/schemas.js';
 import { deduplicateAndSave } from '../../deduplication/deduplicator.js';
-import { CANONICAL_GENRES } from '../../normalization/genre-mappings.js';
+import type { CANONICAL_GENRES } from '../../normalization/genre-mappings.js';
 
 const BASE_URL = 'https://technoistockholm.se';
 const SOURCE_PLATFORM = 'venue-direct' as const;
 
-const SWEDISH_MONTHS: Record<string, string> = {
-  januari: '01', februari: '02', mars: '03', april: '04',
-  maj: '05', juni: '06', juli: '07', augusti: '08',
-  september: '09', oktober: '10', november: '11', december: '12',
-};
+// Regex to extract JSON event blobs from the RSC payload.
+// Each event has: startDate, slug, title, tags, type, id, tickets
+const EVENT_BLOB_RE =
+  /\{"startDate":"(\d{4}-\d{2}-\d{2}T[^"]+)","createdAt":"[^"]+","slug":"([^"]+)","title":"([^"]+)","secretLocation":[^,]+,"tags":(\[[^\]]*\]),"type":"([^"]+)","id":"([^"]+)","description":"[^"]*","url":[^,]*,"tickets":(\[[^\]]*\])/g;
 
-/**
- * Convert a Swedish date string to ISO 8601 format.
- * Handles patterns like "8 april 2026", "april 11", "måndag 15 juni", etc.
- * Falls back to null if the date cannot be parsed.
- */
-function parseSwedishDate(raw: string): string | null {
-  const cleaned = raw.trim().toLowerCase();
-
-  // Already ISO: "2026-04-08" or "2026-04-08T20:00:00"
-  if (/^\d{4}-\d{2}-\d{2}/.test(cleaned)) {
-    return cleaned.slice(0, 10);
-  }
-
-  const currentYear = new Date().getFullYear();
-
-  // "8 april 2026" or "8 april"
-  const dmy = cleaned.match(/(\d{1,2})\s+([a-zåäö]+)(?:\s+(\d{4}))?/);
-  if (dmy) {
-    const day = dmy[1].padStart(2, '0');
-    const month = SWEDISH_MONTHS[dmy[2]];
-    const year = dmy[3] || String(currentYear);
-    if (month) {
-      const candidate = `${year}-${month}-${day}`;
-      // If date is in the past, try next year
-      if (new Date(candidate) < new Date() && !dmy[3]) {
-        return `${currentYear + 1}-${month}-${day}`;
-      }
-      return candidate;
-    }
-  }
-
-  // "april 8 2026" or "april 8"
-  const mdy = cleaned.match(/([a-zåäö]+)\s+(\d{1,2})(?:\s+(\d{4}))?/);
-  if (mdy) {
-    const month = SWEDISH_MONTHS[mdy[1]];
-    const day = mdy[2].padStart(2, '0');
-    const year = mdy[3] || String(currentYear);
-    if (month) {
-      const candidate = `${year}-${month}-${day}`;
-      if (new Date(candidate) < new Date() && !mdy[3]) {
-        return `${currentYear + 1}-${month}-${day}`;
-      }
-      return candidate;
-    }
-  }
-
-  return null;
-}
-
-interface RawEvent {
-  name: string;
+interface ExtractedEvent {
+  startDate: string;
+  slug: string;
+  title: string;
+  artist: string;
   venue: string;
-  date: string;       // raw date string from the page
-  time?: string;      // e.g. "20:00"
-  genres: string[];   // raw genre strings from the page
-  ticketUrl?: string;
+  tags: string[];
+  ticketUrl: string;
   price?: string;
 }
 
 /**
- * Fetch the page HTML and use Claude Haiku to extract structured event data.
+ * Parse artist and venue out of a title like "Artist | Venue" or
+ * "Artist | Stockholm, Venue Name" or just "Event Name".
  */
-async function extractEventsFromPage(client: Anthropic): Promise<RawEvent[]> {
+function parseTitleToArtistVenue(title: string): { artist: string; venue: string } {
+  const parts = title.split(' | ');
+
+  if (parts.length === 1) {
+    return { artist: title.trim(), venue: 'Stockholm' };
+  }
+
+  const artistPart = parts.slice(0, -1).join(' | ').trim();
+  const venuePart = parts[parts.length - 1].trim();
+
+  // "Stockholm, Kollektivet Livet" → "Kollektivet Livet"
+  const commaIdx = venuePart.indexOf(', ');
+  const venue = commaIdx !== -1 ? venuePart.slice(commaIdx + 2) : venuePart;
+
+  return { artist: artistPart, venue: venue || 'Stockholm' };
+}
+
+/**
+ * Map the site's tag names to a canonical genre.
+ */
+function resolveGenre(tags: string[]): typeof CANONICAL_GENRES[number] {
+  const t = tags.join(' ').toLowerCase();
+  if (/trance|psytrance|psy-trance|goa/.test(t)) return 'trance';
+  if (/industrial|ebm|dark electro|darkwave|dark wave/.test(t)) return 'industrial';
+  if (/techno|house|acid|electro|rave|club|dnb|drum|bass|dubstep|breakbeat|garage|jungle/.test(t)) return 'electronic';
+  if (/ambient/.test(t)) return 'electronic';
+  if (/metal|grind|sludge|doom/.test(t)) return 'metal';
+  if (/punk|kraut|post.rock|postrock|shoegaze|new.wave|wave/.test(t)) return 'rock';
+  if (/rock/.test(t)) return 'rock';
+  if (/jazz/.test(t)) return 'jazz';
+  if (/hip.?hop|rap|trap/.test(t)) return 'hip-hop';
+  if (/pop/.test(t)) return 'pop';
+  if (/folk|country/.test(t)) return 'folk';
+  if (/classical|orchestra|chamber/.test(t)) return 'classical';
+  return 'other';
+}
+
+/**
+ * Fetch the page and extract structured event objects from the RSC payload.
+ * Returns a deduplicated list (by event ID).
+ */
+async function extractEventsFromPage(): Promise<ExtractedEvent[]> {
   const res = await fetch(BASE_URL, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; events-aggregator/1.0)',
-    },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; events-aggregator/1.0)' },
     signal: AbortSignal.timeout(30_000),
   });
 
@@ -111,100 +101,58 @@ async function extractEventsFromPage(client: Anthropic): Promise<RawEvent[]> {
 
   const html = await res.text();
 
-  // Strip HTML tags and collapse whitespace for a compact text payload
-  const text = html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    // Keep only the first 25 000 chars to stay within token limits
-    .slice(0, 25_000);
-
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5',
-    max_tokens: 4096,
-    messages: [
-      {
-        role: 'user',
-        content: `You are an event data extractor. Extract ALL upcoming music events from this Stockholm event listing page.
-
-Page text (Swedish):
-${text}
-
-Return a JSON array of events. Each event must have:
-- "name": event/headliner name (required)
-- "venue": venue name in Stockholm (required)
-- "date": date string exactly as it appears on the page (required)
-- "time": door time or start time if present (optional, e.g. "20:00")
-- "genres": array of genre strings mentioned for this event (optional, e.g. ["techno", "acid", "EBM"])
-- "ticketUrl": ticket purchase URL if found (optional)
-- "price": price if mentioned (optional)
-
-Rules:
-- Only include events in Stockholm, Sweden
-- Only include future events (it is currently ${new Date().toISOString().slice(0, 10)})
-- Do not invent data — only include what is explicitly stated on the page
-- If an event has no genres listed, use an empty array []
-- Respond with a JSON array only — no explanation, no markdown fences`,
-      },
-    ],
-  });
-
-  const raw = response.content[0].type === 'text' ? response.content[0].text.trim() : '[]';
-  const json = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-
-  try {
-    const parsed = JSON.parse(json);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (e: any) => typeof e.name === 'string' && typeof e.venue === 'string' && typeof e.date === 'string',
-    );
-  } catch {
-    log.error('Techno i Stockholm: failed to parse LLM response', { raw: raw.slice(0, 200) });
-    return [];
+  // Decode all __next_f.push([1, "..."]) string payloads
+  const chunks: string[] = [];
+  const pushRe = /self\.__next_f\.push\(\[1,"((?:[^"\\]|\\.)*)"\]\)/g;
+  let pm: RegExpExecArray | null;
+  while ((pm = pushRe.exec(html)) !== null) {
+    try {
+      chunks.push(JSON.parse('"' + pm[1] + '"') as string);
+    } catch {
+      // skip malformed chunks
+    }
   }
-}
+  const text = chunks.join('\n');
 
-/**
- * Map raw genre strings from the site to canonical genres.
- * Uses the existing mapGenre function as a fallback.
- */
-function resolveGenre(genres: string[]): typeof CANONICAL_GENRES[number] {
-  const text = genres.join(' ').toLowerCase();
+  // Extract and deduplicate event blobs
+  const seen = new Set<string>();
+  const events: ExtractedEvent[] = [];
+  let m: RegExpExecArray | null;
+  const re = new RegExp(EVENT_BLOB_RE.source, 'g');
 
-  if (/trance|psytrance|psy-trance|goa/.test(text)) return 'trance';
-  if (/industrial|ebm|dark electro|darkwave|noise/.test(text)) return 'industrial';
-  if (/techno|house|acid|electro|rave|club|dnb|drum|bass|dubstep|breakbeat/.test(text)) return 'electronic';
-  if (/ambient|experimental electronic/.test(text)) return 'electronic';
-  if (/metal|grind|sludge|doom/.test(text)) return 'metal';
-  if (/punk|kraut|post-rock|postrock|shoegaze|new wave/.test(text)) return 'rock';
-  if (/rock/.test(text)) return 'rock';
-  if (/jazz/.test(text)) return 'jazz';
-  if (/hip.?hop|rap|trap/.test(text)) return 'hip-hop';
-  if (/pop/.test(text)) return 'pop';
-  if (/folk|country/.test(text)) return 'folk';
-  if (/classical|orchestra|chamber/.test(text)) return 'classical';
+  while ((m = re.exec(text)) !== null) {
+    const [, startDate, slug, title, tagsJson, , id, ticketsJson] = m;
+    if (seen.has(id)) continue;
+    seen.add(id);
 
-  return 'other';
+    let tags: string[] = [];
+    try { tags = (JSON.parse(tagsJson) as Array<{ name: string }>).map(t => t.name); } catch { /* ignore */ }
+
+    let ticketUrl = BASE_URL;
+    let price: string | undefined;
+    try {
+      const tickets = JSON.parse(ticketsJson) as Array<{ url?: string; price?: string }>;
+      if (tickets[0]?.url) ticketUrl = tickets[0].url;
+      if (tickets[0]?.price) price = `${tickets[0].price} SEK`;
+    } catch { /* ignore */ }
+
+    const { artist, venue } = parseTitleToArtistVenue(title);
+
+    events.push({ startDate, slug, title, artist, venue, tags, ticketUrl, price });
+  }
+
+  return events;
 }
 
 export async function crawlTechnoiStockholm(): Promise<{ success: number; failed: number }> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    log.warning('Techno i Stockholm: ANTHROPIC_API_KEY not set — skipping');
-    return { success: 0, failed: 0 };
-  }
-
   let success = 0;
   let failed = 0;
 
-  const client = new Anthropic();
+  log.info('Techno i Stockholm: fetching page and extracting events...');
 
-  log.info('Techno i Stockholm: fetching page and extracting events with LLM...');
-
-  let rawEvents: RawEvent[];
+  let rawEvents: ExtractedEvent[];
   try {
-    rawEvents = await extractEventsFromPage(client);
+    rawEvents = await extractEventsFromPage();
   } catch (err) {
     log.error('Techno i Stockholm: page extraction failed', {
       error: err instanceof Error ? err.message : String(err),
@@ -212,53 +160,40 @@ export async function crawlTechnoiStockholm(): Promise<{ success: number; failed
     return { success: 0, failed: 1 };
   }
 
-  log.info(`Techno i Stockholm: LLM extracted ${rawEvents.length} events`);
+  log.info(`Techno i Stockholm: extracted ${rawEvents.length} unique events`);
 
-  for (const raw of rawEvents) {
-    const isoDate = parseSwedishDate(raw.date);
-    if (!isoDate) {
-      log.warning(`Techno i Stockholm: could not parse date "${raw.date}" for "${raw.name}"`);
-      failed++;
-      continue;
-    }
-
-    // Combine date and time if present
-    const dateTime = raw.time ? `${isoDate}T${raw.time}:00` : `${isoDate}T20:00:00`;
-
-    const genre = resolveGenre(raw.genres ?? []);
-
-    const ticketUrl = raw.ticketUrl || BASE_URL;
-
-    // Stable source ID based on name + date
-    const sourceId = `technoistockholm-${raw.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${isoDate}`;
+  for (const evt of rawEvents) {
+    const genre = resolveGenre(evt.tags);
+    const sourceId = `technoistockholm-${evt.slug || evt.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
 
     const normalized = normalizeEventData({
-      name: raw.name,
-      artist: raw.name,
-      venue: raw.venue,
-      date: dateTime,
+      name: evt.title,
+      artist: evt.artist,
+      venue: evt.venue,
+      date: evt.startDate,
       genre,
       ticketSources: [{
         platform: SOURCE_PLATFORM,
-        url: ticketUrl,
+        url: evt.ticketUrl,
         addedAt: new Date().toISOString(),
       }],
       sourceId,
       sourcePlatform: SOURCE_PLATFORM,
-      price: raw.price,
+      price: evt.price,
     });
 
     if (!normalized.success) {
-      log.warning(`Techno i Stockholm: normalization failed for "${raw.name}":`, (normalized as any).errors);
+      log.warning(`Techno i Stockholm: normalization failed for "${evt.title}":`, (normalized as any).errors);
       failed++;
       continue;
     }
 
     try {
       await deduplicateAndSave(normalized.data as any);
+      log.info(`Techno i Stockholm: saved "${evt.artist}" @ ${evt.venue} [${genre}]`);
       success++;
     } catch (err) {
-      log.error(`Techno i Stockholm: save failed for "${raw.name}":`, {
+      log.error(`Techno i Stockholm: save failed for "${evt.title}":`, {
         error: err instanceof Error ? err.message : String(err),
       });
       failed++;
