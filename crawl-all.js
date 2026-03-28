@@ -7,11 +7,20 @@ dotenv.config({ path: '.env.local' });
 console.log('🎸 Stockholm Music Events Crawler');
 console.log('==================================\n');
 
+const TS_CRAWLER_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes per TS crawler
+
+function withTimeout(promise, ms, name) {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`Timed out after ${ms / 1000}s`)), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
+
 // --- TS crawlers (imported from compiled dist/) ---
 async function runTsCrawlers() {
   const tsCrawlers = [
     { name: 'Ticketmaster API', fn: async () => (await import('./dist/crawlers/ticketmaster.js')).crawlTicketmaster() },
-    { name: 'AXS', fn: async () => (await import('./dist/crawlers/axs.js')).crawlAXS() },
+    // AXS skipped — always 403s on Railway
     { name: 'DICE', fn: async () => (await import('./dist/crawlers/dice.js')).crawlDICE() },
     { name: 'Klubb Död', fn: async () => (await import('./dist/crawlers/venues/klubbdod.js')).crawlKlubbDod() },
     { name: 'Stockholm Live (Avicii Arena + Annexet)', fn: async () => (await import('./dist/crawlers/venues/stockholm-live.js')).crawlStockholmLive() },
@@ -27,7 +36,7 @@ async function runTsCrawlers() {
     console.log(`📍 ${crawler.name}`);
     console.log('='.repeat(60));
     try {
-      const result = await crawler.fn();
+      const result = await withTimeout(crawler.fn(), TS_CRAWLER_TIMEOUT_MS, crawler.name);
       console.log(`\n✅ ${crawler.name} complete (${result.success} saved, ${result.failed} failed)`);
       successCount++;
     } catch (err) {
