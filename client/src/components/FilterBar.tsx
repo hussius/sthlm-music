@@ -103,12 +103,15 @@ export function FilterBar() {
           <option value="rock">Rock</option>
           <option value="pop">Pop</option>
           <option value="electronic">Electronic</option>
+          <option value="trance">Trance</option>
           <option value="jazz">Jazz</option>
           <option value="hip-hop">Hip-hop</option>
           <option value="metal">Metal</option>
+          <option value="industrial">Industrial</option>
           <option value="indie">Indie</option>
           <option value="folk">Folk</option>
           <option value="classical">Classical</option>
+          <option value="reggae">Reggae</option>
           <option value="world">World</option>
           <option value="other">Other</option>
         </select>

@@ -8,7 +8,7 @@
  * - Returns typed JSON responses
  */
 
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
 
 export async function apiClient<T>(
   endpoint: string,

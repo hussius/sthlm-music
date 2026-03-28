@@ -18,16 +18,26 @@
  * Canonical genre taxonomy (10-12 core genres).
  * Used for filtering and categorization across all platforms.
  */
+/**
+ * To add a new canonical genre:
+ * 1. Add it to this array
+ * 2. Add mappings below under a new comment section
+ * 3. Re-point any existing mappings that belong to it (e.g. move 'reggae' from 'world')
+ * 4. Add the option to client/src/components/FilterBar.tsx
+ */
 export const CANONICAL_GENRES = [
   'rock',
   'pop',
   'electronic',
+  'trance',
   'jazz',
   'hip-hop',
   'metal',
+  'industrial',
   'indie',
   'folk',
   'classical',
+  'reggae',
   'world',
   'other',
 ] as const;
@@ -69,12 +79,31 @@ const genreMappings: Record<string, typeof CANONICAL_GENRES[number]> = {
   'electronic dance music': 'electronic',
   'dance': 'electronic',
   'club': 'electronic',
-  'trance': 'electronic',
   'dubstep': 'electronic',
   'drum and bass': 'electronic',
   'dnb': 'electronic',
   'ambient': 'electronic',
   'downtempo': 'electronic',
+
+  // Trance variations
+  'trance': 'trance',
+  'psytrance': 'trance',
+  'psy-trance': 'trance',
+  'psychedelic trance': 'trance',
+  'progressive trance': 'trance',
+  'uplifting trance': 'trance',
+  'goa': 'trance',
+
+  // Industrial variations
+  'industrial': 'industrial',
+  'industrial rock': 'industrial',
+  'industrial metal': 'industrial',
+  'ebm': 'industrial',
+  'electronic body music': 'industrial',
+  'dark electro': 'industrial',
+  'power electronics': 'industrial',
+  'noise': 'industrial',
+  'post-industrial': 'industrial',
 
   // Jazz variations
   'jazz': 'jazz',
@@ -131,12 +160,19 @@ const genreMappings: Record<string, typeof CANONICAL_GENRES[number]> = {
   'opera': 'classical',
   'baroque': 'classical',
 
+  // Reggae variations
+  'reggae': 'reggae',
+  'ska': 'reggae',
+  'ska punk': 'reggae',
+  'dub': 'reggae',
+  'dancehall': 'reggae',
+  'roots reggae': 'reggae',
+  'rocksteady': 'reggae',
+
   // World variations
   'world': 'world',
   'world music': 'world',
   'latin': 'world',
-  'reggae': 'world',
-  'ska': 'world',
   'afrobeat': 'world',
   'salsa': 'world',
   'cumbia': 'world',
