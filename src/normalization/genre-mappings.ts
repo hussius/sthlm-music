@@ -59,6 +59,17 @@ const genreMappings: Record<string, typeof CANONICAL_GENRES[number]> = {
   'garage rock': 'rock',
   'classic rock': 'rock',
   'psychedelic rock': 'rock',
+  'post-punk': 'rock',
+  'post punk': 'rock',
+  'krautrock': 'rock',
+  'kraut': 'rock',
+  'experimental rock': 'rock',
+  'postrock': 'rock',
+  'post-rock': 'rock',
+  'post rock': 'rock',
+  'math rock': 'rock',
+  'shoegaze': 'rock',
+  'new wave': 'rock',
 
   // Pop variations
   'pop': 'pop',
@@ -104,6 +115,11 @@ const genreMappings: Record<string, typeof CANONICAL_GENRES[number]> = {
   'power electronics': 'industrial',
   'noise': 'industrial',
   'post-industrial': 'industrial',
+  'dark pop': 'industrial',
+  'darkwave': 'industrial',
+  'dark wave': 'industrial',
+  'death industrial': 'industrial',
+  'harsh noise': 'industrial',
 
   // Jazz variations
   'jazz': 'jazz',
@@ -133,6 +149,13 @@ const genreMappings: Record<string, typeof CANONICAL_GENRES[number]> = {
   'thrash metal': 'metal',
   'metalcore': 'metal',
   'progressive metal': 'metal',
+  'grindcore': 'metal',
+  'sludge': 'metal',
+  'sludge metal': 'metal',
+  'doom metal': 'metal',
+  'noise rock': 'metal',
+  'death noise': 'metal',
+  'stoner': 'metal',
 
   // Indie variations
   'indie': 'indie',
