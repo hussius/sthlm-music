@@ -26,6 +26,7 @@ async function runTsCrawlers() {
     { name: 'Stockholm Live (Avicii Arena + Annexet)', fn: async () => (await import('./dist/crawlers/venues/stockholm-live.js')).crawlStockholmLive() },
     { name: 'Tickster', fn: async () => (await import('./dist/crawlers/venues/tickster.js')).crawlTickster() },
     { name: 'Resident Advisor', fn: async () => (await import('./dist/crawlers/venues/ra.js')).crawlRA() },
+    { name: 'Techno i Stockholm', fn: async () => (await import('./dist/crawlers/venues/technoistockholm.js')).crawlTechnoiStockholm() },
   ];
 
   let successCount = 0;
@@ -144,7 +145,7 @@ try {
   console.error('❌ Genre inference failed:', err.message);
 }
 
-const total = 5 + crawlers.length; // 5 TS + JS crawlers
+const total = 6 + crawlers.length; // 6 TS + JS crawlers
 console.log('\n' + '='.repeat(60));
 console.log('📊 CRAWL SUMMARY');
 console.log('='.repeat(60));
