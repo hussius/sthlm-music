@@ -1,8 +1,8 @@
 :{$PORT}
 
-root * /app/dist
+root * /srv
 
-encode zstd gzip
+encode gzip
 
 try_files {path} /index.html
 
