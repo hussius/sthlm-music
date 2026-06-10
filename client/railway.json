@@ -5,7 +5,7 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "npm run preview",
+    "startCommand": "caddy run --config /assets/Caddyfile --adapter caddyfile",
     "healthcheckPath": "/",
     "healthcheckTimeout": 60
   }
