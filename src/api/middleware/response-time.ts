@@ -18,20 +18,18 @@ declare module 'fastify' {
  * Uses high-resolution performance timer for accurate measurements.
  */
 export async function responseTimePlugin(fastify: FastifyInstance) {
-  // Capture start time at beginning of request
-  fastify.addHook('onRequest', async (request, reply) => {
+  fastify.addHook('onRequest', async (request) => {
     request.startTime = performance.now();
   });
 
-  // Calculate and log duration after response sent
-  fastify.addHook('onResponse', async (request, reply) => {
+  // onSend fires before headers are written — correct hook for adding headers
+  fastify.addHook('onSend', async (request, reply, payload) => {
     if (request.startTime === undefined) {
-      return; // Skip if startTime not set
+      return payload;
     }
 
     const duration = performance.now() - request.startTime;
 
-    // Log slow requests (>200ms target)
     if (duration > 200) {
       fastify.log.warn({
         method: request.method,
@@ -41,7 +39,7 @@ export async function responseTimePlugin(fastify: FastifyInstance) {
       }, 'Slow request detected');
     }
 
-    // Add header for debugging
     reply.header('X-Response-Time', `${duration.toFixed(2)}ms`);
+    return payload;
   });
 }
