@@ -5,6 +5,8 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "npm run preview"
+    "startCommand": "npm run preview",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 60
   }
 }
