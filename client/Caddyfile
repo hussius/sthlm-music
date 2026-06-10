@@ -4,8 +4,6 @@ root * /app/dist
 
 encode zstd gzip
 
-@notFound not file
-
-rewrite @notFound /index.html
+try_files {path} /index.html
 
 file_server

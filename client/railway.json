@@ -5,7 +5,7 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "/bin/bash -l -c 'caddy run --config /app/Caddyfile'",
+    "startCommand": "/bin/bash -l -c 'echo Starting && exec caddy run --config /app/Caddyfile --adapter caddyfile'",
     "healthcheckPath": "/",
     "healthcheckTimeout": 60
   }
