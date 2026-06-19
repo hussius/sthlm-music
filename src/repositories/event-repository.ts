@@ -46,6 +46,28 @@ export async function upsertEvent(event: NewEvent) {
       return updated;
     }
 
+    // Check by ticket URL — same URL on any platform means same event
+    // Catches cases where the same Tickster listing has two different event IDs
+    for (const source of event.ticketSources) {
+      const byUrl = await db
+        .select()
+        .from(events)
+        .where(sql`${events.ticketSources} @> ${JSON.stringify([{ url: source.url }])}::jsonb`)
+        .limit(1);
+
+      if (byUrl.length > 0) {
+        const existingPlatforms = new Set(byUrl[0].ticketSources.map((s: TicketSource) => s.platform));
+        const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
+        const [updated] = await db
+          .update(events)
+          .set({ ticketSources: [...byUrl[0].ticketSources, ...newSources], updatedAt: new Date() })
+          .where(eq(events.id, byUrl[0].id))
+          .returning();
+        log.debug(`Merged by ticket URL: ${event.name}`);
+        return updated;
+      }
+    }
+
     // Fall back to venue+date check
     const existing = await db
       .select()
