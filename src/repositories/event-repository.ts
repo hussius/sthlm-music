@@ -22,7 +22,31 @@ import { log } from 'crawlee';
  */
 export async function upsertEvent(event: NewEvent) {
   try {
-    // Check if event exists with same venue+date
+    // Check by sourceId first — same API event can return with different timestamps
+    const bySourceId = await db
+      .select()
+      .from(events)
+      .where(
+        and(
+          eq(events.sourceId, event.sourceId),
+          eq(events.sourcePlatform, event.sourcePlatform)
+        )
+      )
+      .limit(1);
+
+    if (bySourceId.length > 0) {
+      const existingPlatforms = new Set(bySourceId[0].ticketSources.map((s: TicketSource) => s.platform));
+      const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
+      const [updated] = await db
+        .update(events)
+        .set({ ticketSources: [...bySourceId[0].ticketSources, ...newSources], updatedAt: new Date() })
+        .where(eq(events.id, bySourceId[0].id))
+        .returning();
+      log.debug(`Merged by sourceId: ${event.name}`);
+      return updated;
+    }
+
+    // Fall back to venue+date check
     const existing = await db
       .select()
       .from(events)
