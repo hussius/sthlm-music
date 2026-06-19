@@ -7,8 +7,9 @@
 
 import { db } from '../db/client.js';
 import { events, type NewEvent, type TicketSource } from '../db/schema.js';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, gte, lt } from 'drizzle-orm';
 import { log } from 'crawlee';
+import { calculateSimilarity } from '../deduplication/fuzzy-match.js';
 
 /**
  * Upsert an event into the database.
@@ -59,8 +60,6 @@ export async function upsertEvent(event: NewEvent) {
       .limit(1);
 
     if (existing.length > 0) {
-      // Update existing event with ticket source merging
-      // Merge ticket sources: keep existing, add new platforms
       const existingPlatforms = new Set(existing[0].ticketSources.map((s: TicketSource) => s.platform));
       const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
       const mergedTicketSources = [...existing[0].ticketSources, ...newSources];
@@ -75,18 +74,51 @@ export async function upsertEvent(event: NewEvent) {
         .where(eq(events.id, existing[0].id))
         .returning();
 
-      log.debug(`Updated existing event: ${event.name} at ${event.venue}`);
+      log.debug(`Merged by venue+date: ${event.name} at ${event.venue}`);
       return updated;
-    } else {
-      // Insert new event
-      const [inserted] = await db
-        .insert(events)
-        .values(event)
-        .returning();
-
-      log.debug(`Inserted new event: ${event.name} at ${event.venue}`);
-      return inserted;
     }
+
+    // Same venue, same calendar day, high name similarity — catches timestamp variants
+    // and cross-platform listings where times differ (e.g. 00:00 vs 18:30)
+    const dayStart = new Date(event.date as Date);
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const sameVenueDay = await db
+      .select()
+      .from(events)
+      .where(
+        and(
+          eq(events.venue, event.venue),
+          gte(events.date, dayStart),
+          lt(events.date, dayEnd)
+        )
+      );
+
+    for (const candidate of sameVenueDay) {
+      const nameSim = calculateSimilarity(event.name, candidate.name);
+      const artistSim = calculateSimilarity(event.artist, candidate.artist);
+      if (nameSim >= 90 || (artistSim >= 90 && nameSim >= 70)) {
+        const existingPlatforms = new Set(candidate.ticketSources.map((s: TicketSource) => s.platform));
+        const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
+        const [updated] = await db
+          .update(events)
+          .set({ ticketSources: [...candidate.ticketSources, ...newSources], updatedAt: new Date() })
+          .where(eq(events.id, candidate.id))
+          .returning();
+        log.debug(`Merged by venue+day+name (${nameSim}%/${artistSim}%): ${event.name}`);
+        return updated;
+      }
+    }
+
+    // Genuinely new event
+    const [inserted] = await db
+      .insert(events)
+      .values(event)
+      .returning();
+
+    log.debug(`Inserted new event: ${event.name} at ${event.venue}`);
+    return inserted;
   } catch (error) {
     log.error(`Failed to upsert event ${event.name}:`, {
       error: error instanceof Error ? error.message : String(error)
