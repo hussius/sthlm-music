@@ -162,6 +162,8 @@ export async function deduplicateAndSave(event: NewEvent): Promise<Event> {
           event: { id: candidateId } as Event,
           artistSimilarity: 0, // Will be calculated again in review UI
           nameSimilarity: 0,
+          venueSimilarity: 0,
+          sameStockholmDay: false,
           overallSimilarity: 0
         });
       }

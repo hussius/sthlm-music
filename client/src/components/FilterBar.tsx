@@ -45,7 +45,7 @@ export function FilterBar() {
 
   const handleClearFilters = () => {
     const now = new Date();
-    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     updateFilters({
       genre: undefined,

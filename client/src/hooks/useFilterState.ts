@@ -6,15 +6,15 @@ import type { EventFilters } from '@/types/events';
  * URL-based filter state management hook.
  * Uses URL search params as single source of truth for filter state.
  *
- * dateFrom/dateTo default to the current month if not present in URL,
+ * dateFrom/dateTo default to today through the end of the current month,
  * so no mount effects or ref guards are needed to set initial state.
  */
 export function useFilterState() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Default to current month start/end if not in URL
+  // Default to today through the end of the current month if not in URL.
   const now = new Date();
-  const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const defaultFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const defaultTo = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
 
   const filters: EventFilters = {

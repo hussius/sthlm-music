@@ -37,7 +37,33 @@ export interface FuzzyCandidate {
   event: Event;
   artistSimilarity: number;
   nameSimilarity: number;
+  venueSimilarity: number;
+  sameStockholmDay: boolean;
   overallSimilarity: number;
+}
+
+const stockholmDayFormatter = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Europe/Stockholm',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+function normalizeForDedupe(value: string | null | undefined): string {
+  return (value || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/&/g, ' and ')
+    .replace(/['"`´]/g, '')
+    .replace(/[^a-z0-9åäö]+/gi, ' ')
+    .replace(/\b(stockholm|sthlm|biljetter|tickets|ticket|live|konsert)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function stockholmDayKey(date: Date): string {
+  return stockholmDayFormatter.format(date);
 }
 
 /**
@@ -63,7 +89,7 @@ export interface FuzzyCandidate {
  * @returns Array of candidates sorted by similarity (highest first)
  */
 export async function findFuzzyCandidates(event: Partial<Event>): Promise<FuzzyCandidate[]> {
-  if (!event.date || !event.artist || !event.name) {
+  if (!event.date || !event.name) {
     return [];
   }
 
@@ -91,18 +117,33 @@ export async function findFuzzyCandidates(event: Partial<Event>): Promise<FuzzyC
     }
 
     // Calculate string similarities using token_set_ratio (handles word order differences)
-    const artistSimilarity = Fuzzball.token_set_ratio(
-      event.artist.toLowerCase(),
-      candidate.artist.toLowerCase()
-    );
+    const normalizedArtist = normalizeForDedupe(event.artist);
+    const normalizedCandidateArtist = normalizeForDedupe(candidate.artist);
+    const normalizedName = normalizeForDedupe(event.name);
+    const normalizedCandidateName = normalizeForDedupe(candidate.name);
+    const normalizedVenue = normalizeForDedupe(event.venue);
+    const normalizedCandidateVenue = normalizeForDedupe(candidate.venue);
+
+    const artistSimilarity = normalizedArtist && normalizedCandidateArtist
+      ? Fuzzball.token_set_ratio(normalizedArtist, normalizedCandidateArtist)
+      : 0;
 
     const nameSimilarity = Fuzzball.token_set_ratio(
-      event.name.toLowerCase(),
-      candidate.name.toLowerCase()
+      normalizedName,
+      normalizedCandidateName
     );
 
-    // Overall similarity: weighted average (artist more important than event name)
-    const overallSimilarity = (artistSimilarity * 0.6) + (nameSimilarity * 0.4);
+    const venueSimilarity = normalizedVenue && normalizedCandidateVenue
+      ? Fuzzball.token_set_ratio(normalizedVenue, normalizedCandidateVenue)
+      : 0;
+
+    const sameStockholmDay = stockholmDayKey(new Date(event.date)) === stockholmDayKey(candidate.date);
+
+    // Overall similarity: artist is useful when present, but event feeds often
+    // use missing/generic artist values. Title + venue should still catch obvious duplicates.
+    const overallSimilarity = artistSimilarity > 0
+      ? (artistSimilarity * 0.5) + (nameSimilarity * 0.35) + (venueSimilarity * 0.15)
+      : (nameSimilarity * 0.7) + (venueSimilarity * 0.3);
 
     // Only include if similarity is above threshold (50%)
     if (overallSimilarity > 50) {
@@ -110,6 +151,8 @@ export async function findFuzzyCandidates(event: Partial<Event>): Promise<FuzzyC
         event: candidate,
         artistSimilarity,
         nameSimilarity,
+        venueSimilarity,
+        sameStockholmDay,
         overallSimilarity
       });
     }
@@ -129,7 +172,7 @@ export async function findFuzzyCandidates(event: Partial<Event>): Promise<FuzzyC
  * @returns Similarity score 0-100
  */
 export function calculateSimilarity(str1: string, str2: string): number {
-  return Fuzzball.token_set_ratio(str1.toLowerCase(), str2.toLowerCase());
+  return Fuzzball.token_set_ratio(normalizeForDedupe(str1), normalizeForDedupe(str2));
 }
 
 /**
@@ -155,9 +198,19 @@ export function calculateSimilarity(str1: string, str2: string): number {
  * @returns Classification: 'duplicate', 'maybe', or 'not_duplicate'
  */
 export function isDuplicateMatch(candidate: FuzzyCandidate): 'duplicate' | 'maybe' | 'not_duplicate' {
+  // Many venue/ticket feeds have weak artist fields. If title, venue, and
+  // Stockholm calendar day agree strongly, treat it as an obvious duplicate.
+  if (candidate.sameStockholmDay && candidate.nameSimilarity >= 94 && candidate.venueSimilarity >= 85) {
+    return 'duplicate';
+  }
+
   // High confidence duplicate: both artist and name very similar
   if (candidate.artistSimilarity > 90 && candidate.nameSimilarity > 85) {
     return 'duplicate';
+  }
+
+  if (candidate.sameStockholmDay && candidate.nameSimilarity >= 86 && candidate.venueSimilarity >= 75) {
+    return 'maybe';
   }
 
   // Potential duplicate: needs manual review
