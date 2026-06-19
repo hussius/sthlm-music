@@ -52,7 +52,7 @@ export async function upsertEvent(event: NewEvent) {
       const byUrl = await db
         .select()
         .from(events)
-        .where(sql`${events.ticketSources} @> ${JSON.stringify([{ url: source.url }])}::jsonb`)
+        .where(sql`EXISTS (SELECT 1 FROM jsonb_array_elements(${events.ticketSources}) e WHERE e->>'url' = ${source.url})`)
         .limit(1);
 
       if (byUrl.length > 0) {
