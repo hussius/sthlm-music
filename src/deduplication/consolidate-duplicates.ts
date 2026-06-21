@@ -110,8 +110,8 @@ export async function consolidateDuplicateEvents(): Promise<void> {
         }
 
         const { keep, remove } = chooseKeeper(left, right);
-        await db.update(events).set(mergedUpdate(keep, remove)).where(eq(events.id, keep.id));
         await db.delete(events).where(eq(events.id, remove.id));
+        await db.update(events).set(mergedUpdate(keep, remove)).where(eq(events.id, keep.id));
 
         deleted.add(remove.id);
         merged++;
