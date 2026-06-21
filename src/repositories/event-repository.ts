@@ -6,10 +6,26 @@
  */
 
 import { db } from '../db/client.js';
-import { events, type NewEvent, type TicketSource } from '../db/schema.js';
-import { eq, and, gte, lt } from 'drizzle-orm';
+import { events, type Event, type NewEvent } from '../db/schema.js';
+import { eq, and, gte, lte } from 'drizzle-orm';
 import { log } from 'crawlee';
-import { calculateSimilarity } from '../deduplication/fuzzy-match.js';
+import {
+  classifySimilarity,
+  hasSharedTicketUrl,
+  mergeTicketSources,
+  scoreEventSimilarity,
+  ticketUrlSet,
+} from '../deduplication/canonical.js';
+
+function mergedEventUpdate(existing: Event, incoming: NewEvent) {
+  return {
+    genre: incoming.genre && incoming.genre !== 'other' ? incoming.genre : existing.genre,
+    price: incoming.price || existing.price,
+    organizer: incoming.organizer || existing.organizer,
+    ticketSources: mergeTicketSources(existing.ticketSources, incoming.ticketSources),
+    updatedAt: new Date(),
+  };
+}
 
 /**
  * Upsert an event into the database.
@@ -36,15 +52,28 @@ export async function upsertEvent(event: NewEvent) {
       .limit(1);
 
     if (bySourceId.length > 0) {
-      const existingPlatforms = new Set(bySourceId[0].ticketSources.map((s: TicketSource) => s.platform));
-      const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
       const [updated] = await db
         .update(events)
-        .set({ ticketSources: [...bySourceId[0].ticketSources, ...newSources], updatedAt: new Date() })
+        .set(mergedEventUpdate(bySourceId[0], event))
         .where(eq(events.id, bySourceId[0].id))
         .returning();
       log.debug(`Merged by sourceId: ${event.name}`);
       return updated;
+    }
+
+    // Same normalized ticket/event URL is a hard duplicate signal.
+    if (ticketUrlSet(event).size > 0) {
+      const allEvents = await db.select().from(events);
+      const byUrl = allEvents.find((candidate) => hasSharedTicketUrl(event, candidate));
+      if (byUrl) {
+        const [updated] = await db
+          .update(events)
+          .set(mergedEventUpdate(byUrl, event))
+          .where(eq(events.id, byUrl.id))
+          .returning();
+        log.debug(`Merged by ticket URL: ${event.name}`);
+        return updated;
+      }
     }
 
     // venue+date check
@@ -60,16 +89,10 @@ export async function upsertEvent(event: NewEvent) {
       .limit(1);
 
     if (existing.length > 0) {
-      const existingPlatforms = new Set(existing[0].ticketSources.map((s: TicketSource) => s.platform));
-      const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
-      const mergedTicketSources = [...existing[0].ticketSources, ...newSources];
-
       const [updated] = await db
         .update(events)
         .set({
-          ...event,
-          ticketSources: mergedTicketSources,
-          updatedAt: new Date(),
+          ...mergedEventUpdate(existing[0], event),
         })
         .where(eq(events.id, existing[0].id))
         .returning();
@@ -78,35 +101,34 @@ export async function upsertEvent(event: NewEvent) {
       return updated;
     }
 
-    // Same venue, same calendar day, high name similarity — catches timestamp variants
-    // and cross-platform listings where times differ (e.g. 00:00 vs 18:30)
+    // Fuzzy pass for timestamp variants and cross-platform listings where names differ.
     const dayStart = new Date(event.date as Date);
-    dayStart.setUTCHours(0, 0, 0, 0);
-    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    dayStart.setHours(dayStart.getHours() - 36);
+    const dayEnd = new Date(event.date as Date);
+    dayEnd.setHours(dayEnd.getHours() + 36);
 
-    const sameVenueDay = await db
+    const nearby = await db
       .select()
       .from(events)
       .where(
         and(
-          eq(events.venue, event.venue),
           gte(events.date, dayStart),
-          lt(events.date, dayEnd)
+          lte(events.date, dayEnd)
         )
       );
 
-    for (const candidate of sameVenueDay) {
-      const nameSim = calculateSimilarity(event.name, candidate.name);
-      const artistSim = calculateSimilarity(event.artist, candidate.artist);
-      if (nameSim >= 90 || (artistSim >= 90 && nameSim >= 70)) {
-        const existingPlatforms = new Set(candidate.ticketSources.map((s: TicketSource) => s.platform));
-        const newSources = event.ticketSources.filter(s => !existingPlatforms.has(s.platform));
+    for (const candidate of nearby) {
+      const score = scoreEventSimilarity(event, candidate);
+      if (classifySimilarity(score) === 'duplicate') {
         const [updated] = await db
           .update(events)
-          .set({ ticketSources: [...candidate.ticketSources, ...newSources], updatedAt: new Date() })
+          .set(mergedEventUpdate(candidate, event))
           .where(eq(events.id, candidate.id))
           .returning();
-        log.debug(`Merged by venue+day+name (${nameSim}%/${artistSim}%): ${event.name}`);
+        log.debug(
+          `Merged by fuzzy identity: ${event.name} → ${candidate.name} ` +
+          `(title=${score.titleSimilarity}, artist=${score.artistSimilarity}, venue=${score.venueSimilarity})`
+        );
         return updated;
       }
     }

@@ -145,6 +145,17 @@ try {
   console.error('❌ Non-concert pruning failed:', err.message);
 }
 
+// --- Duplicate consolidation (runs after pruning, before genre inference) ---
+console.log('\n' + '='.repeat(60));
+console.log('🧬 DUPLICATE CONSOLIDATION');
+console.log('='.repeat(60));
+try {
+  const { consolidateDuplicateEvents } = await import('./dist/deduplication/consolidate-duplicates.js');
+  await consolidateDuplicateEvents();
+} catch (err) {
+  console.error('❌ Duplicate consolidation failed:', err.message);
+}
+
 // --- Genre inference (runs after all crawlers) ---
 console.log('\n' + '='.repeat(60));
 console.log('🎵 GENRE INFERENCE');

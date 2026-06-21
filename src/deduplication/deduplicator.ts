@@ -164,6 +164,9 @@ export async function deduplicateAndSave(event: NewEvent): Promise<Event> {
           nameSimilarity: 0,
           venueSimilarity: 0,
           sameStockholmDay: false,
+          timeDistanceMinutes: null,
+          sharedTicketUrl: false,
+          artistReliable: false,
           overallSimilarity: 0
         });
       }

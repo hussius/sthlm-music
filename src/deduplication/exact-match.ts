@@ -25,6 +25,7 @@
 import { db } from '../db/client.js';
 import { events, type Event } from '../db/schema.js';
 import { and, eq } from 'drizzle-orm';
+import { hasSharedTicketUrl, mergeTicketSources, ticketUrlSet } from './canonical.js';
 
 /**
  * Check if an event with the same venue and date already exists.
@@ -35,6 +36,31 @@ import { and, eq } from 'drizzle-orm';
  * @returns Existing event if found, null otherwise
  */
 export async function checkExactMatch(event: Partial<Event>): Promise<Event | null> {
+  if (event.sourcePlatform && event.sourceId) {
+    const sourceMatches = await db
+      .select()
+      .from(events)
+      .where(
+        and(
+          eq(events.sourcePlatform, event.sourcePlatform),
+          eq(events.sourceId, event.sourceId)
+        )
+      )
+      .limit(1);
+
+    if (sourceMatches[0]) {
+      return sourceMatches[0];
+    }
+  }
+
+  if (ticketUrlSet(event).size > 0) {
+    const rows = await db.select().from(events);
+    const urlMatch = rows.find((candidate) => hasSharedTicketUrl(event, candidate));
+    if (urlMatch) {
+      return urlMatch;
+    }
+  }
+
   if (!event.venue || !event.date) {
     return null;
   }
@@ -73,10 +99,6 @@ export async function checkExactMatch(event: Partial<Event>): Promise<Event | nu
  * @returns Merged event data
  */
 export async function mergeEventData(existing: Event, incoming: Partial<Event>): Promise<Event> {
-  // Merge ticket sources (deduplicate by platform)
-  const existingPlatforms = new Set(existing.ticketSources.map(s => s.platform));
-  const newSources = incoming.ticketSources?.filter(s => !existingPlatforms.has(s.platform)) || [];
-
   return {
     ...existing,
     // If incoming has better genre data, use it
@@ -84,7 +106,7 @@ export async function mergeEventData(existing: Event, incoming: Partial<Event>):
     // If incoming has price and existing doesn't, use it
     price: incoming.price || existing.price,
     // Merge ticket sources arrays
-    ticketSources: [...existing.ticketSources, ...newSources],
+    ticketSources: mergeTicketSources(existing.ticketSources, incoming.ticketSources),
     // Update timestamp to reflect latest data refresh
     updatedAt: new Date()
   };
