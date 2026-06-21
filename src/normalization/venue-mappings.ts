@@ -91,10 +91,10 @@ export const venueAliases: Record<string, string> = {
   'mosebacke stockholm': 'Mosebacke',
   'etablissementet mosebacke': 'Mosebacke',
 
-  // Kägelbanan variations
-  'kägelbanan': 'Kägelbanan',
-  'kagelbanan': 'Kägelbanan',
-  'kägelbanan stockholm': 'Kägelbanan',
+  // Kägelbanan is a stage inside Södra Teatern — normalize to parent venue
+  'kägelbanan': 'Södra Teatern',
+  'kagelbanan': 'Södra Teatern',
+  'kägelbanan stockholm': 'Södra Teatern',
 
   // Pet Sounds variations
   'pet sounds': 'Pet Sounds Bar',

@@ -100,12 +100,15 @@ const BLOCKLIST_TERMS = [
   'after work',
   // Brunch events
   'brunch',
+  // Coffee/social gatherings (not concerts)
+  'fika',
 ];
 
 const BLOCKLIST_VENUES = [
   'bio skandia',
   'prins eugens waldemarsudde',
   'etnografiska museet',
+  'livrustkammaren',
 ];
 
 /**

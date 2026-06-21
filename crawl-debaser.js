@@ -83,8 +83,9 @@ try {
 
       if (!isConcert || !currentDate) return;
 
-      // Get event name - try various selectors
-      const name = $elem.find('h2, h3, h4, .event-title, a[href^="/events/"]').first().text().trim();
+      // Get event name - prefer heading elements to avoid concatenating subtitle text from anchor wrappers
+      const headingElem = $elem.find('h1, h2, h3, h4, .event-title').first();
+      const name = (headingElem.length ? headingElem : $elem.find('a[href^="/events/"]').first()).text().trim();
       if (!name || name.length < 2) return;
 
       // Get venue (Debaser Strand or Debaser Nova)
