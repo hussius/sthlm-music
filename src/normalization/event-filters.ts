@@ -50,6 +50,27 @@ const BLOCKLIST_TERMS = [
   'craft',
   'pyssel',
 
+  // Guided tours, venue viewings, lectures, and education formats
+  'guidad visning',
+  'guided tour',
+  'guided tours',
+  'takvisning',
+  'nobel tours',
+  'visning',
+  'seminarium',
+  'seminar',
+  'masterclass',
+  'mästarklass',
+  'oppen masterclass',
+  'öppen mästarklass',
+  'yoga',
+
+  // Sports/watch-party listings
+  'worldcup party',
+  'world cup party',
+  'worldcup',
+  'world cup',
+
   // Ticket-sale-only entries
   'flash sale',
   'ticket sale',
