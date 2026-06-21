@@ -23,6 +23,23 @@ export const venueAliases: Record<string, string> = {
   'kollektivet livet stockholm': 'Kollektivet Livet',
   'kollektivet stockholm': 'Kollektivet Livet',
   'live at kollektivet': 'Kollektivet Livet',
+  'kl': 'Kollektivet Livet',
+  'kl terrassen': 'Kollektivet Livet',
+  'kl terrasse': 'Kollektivet Livet',
+  'klubben livet': 'Kollektivet Livet',
+  'livet': 'Kollektivet Livet',
+  'stadsgårdsterminalen': 'Kollektivet Livet',
+  'stadsgardsterminalen': 'Kollektivet Livet',
+
+  // Banan-Kompaniet / B-K variations
+  'bk': 'Banankompaniet',
+  'b-k': 'Banankompaniet',
+  'b k': 'Banankompaniet',
+  'banankompaniet': 'Banankompaniet',
+  'banan-kompaniet': 'Banankompaniet',
+  'banan kompaniet': 'Banankompaniet',
+  'banan kompaniet stockholm': 'Banankompaniet',
+  'banan-kompaniet stockholm': 'Banankompaniet',
 
   // Slaktkyrkan variations
   'slaktkyrkan': 'Slaktkyrkan',
@@ -102,6 +119,10 @@ export const venueAliases: Record<string, string> = {
   'annexet stockholm': 'Annexet',
 };
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * Normalizes venue names to canonical form.
  *
@@ -123,8 +144,12 @@ export function normalizeVenueName(venue: string): string {
 
   // Check if any alias key is contained in the venue name
   // (handles "Concert at Kollektivet Livet" -> "Kollektivet Livet")
-  for (const [alias, canonical] of Object.entries(venueAliases)) {
-    if (cleaned.includes(alias)) {
+  const aliases = Object.entries(venueAliases)
+    .sort(([a], [b]) => b.length - a.length);
+
+  for (const [alias, canonical] of aliases) {
+    const pattern = new RegExp(`(^|\\b)${escapeRegex(alias)}(\\b|$)`, 'i');
+    if (pattern.test(cleaned)) {
       return canonical;
     }
   }

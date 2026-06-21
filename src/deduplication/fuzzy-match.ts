@@ -46,6 +46,7 @@ export interface FuzzyCandidate {
   timeDistanceMinutes: number | null;
   sharedTicketUrl: boolean;
   artistReliable: boolean;
+  venueReliable: boolean;
   overallSimilarity: number;
 }
 
@@ -114,6 +115,7 @@ export async function findFuzzyCandidates(event: Partial<Event>): Promise<FuzzyC
         timeDistanceMinutes: score.timeDistanceMinutes,
         sharedTicketUrl: score.sharedTicketUrl,
         artistReliable: score.artistReliable,
+        venueReliable: score.venueReliable,
         overallSimilarity: score.overallSimilarity,
       });
     }
@@ -172,5 +174,6 @@ export function isDuplicateMatch(candidate: FuzzyCandidate): 'duplicate' | 'mayb
     sharedTicketUrl: candidate.sharedTicketUrl,
     sameSource: false,
     artistReliable: candidate.artistReliable,
+    venueReliable: candidate.venueReliable,
   });
 }

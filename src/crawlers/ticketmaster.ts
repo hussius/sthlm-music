@@ -33,6 +33,45 @@ function formatTicketmasterDate(date: Date): string {
   return date.toISOString().split('.')[0] + 'Z';
 }
 
+function hasTicketmasterVenue(rawEvent: any): boolean {
+  return Boolean(
+    rawEvent._embedded?.venues?.[0]?.name ||
+    rawEvent._embedded?.venues?.[0]?.commonName ||
+    rawEvent.place?.name ||
+    rawEvent.venue?.name ||
+    rawEvent.location?.name
+  );
+}
+
+async function hydrateVenueIfMissing(
+  client: TicketmasterClient,
+  rawEvent: any
+): Promise<any> {
+  if (hasTicketmasterVenue(rawEvent) || !rawEvent.id) {
+    return rawEvent;
+  }
+
+  try {
+    const detailedEvent = await client.getEventDetails(rawEvent.id);
+    if (hasTicketmasterVenue(detailedEvent)) {
+      const venueName = detailedEvent._embedded?.venues?.[0]?.name ||
+        detailedEvent._embedded?.venues?.[0]?.commonName ||
+        detailedEvent.place?.name ||
+        detailedEvent.venue?.name ||
+        detailedEvent.location?.name;
+      console.log(`  ✓ Hydrated Ticketmaster venue for ${rawEvent.name || rawEvent.id}: ${venueName}`);
+      return detailedEvent;
+    }
+  } catch (error) {
+    console.warn(
+      `  ⚠️  Failed to hydrate Ticketmaster venue for ${rawEvent.id}:`,
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+
+  return rawEvent;
+}
+
 /**
  * Crawl Ticketmaster for Stockholm music events within the next 12 months.
  *
@@ -97,8 +136,10 @@ export async function crawlTicketmaster(): Promise<CrawlResult> {
       // Process each event on this page
       for (const rawEvent of rawEvents) {
         try {
+          const eventWithVenue = await hydrateVenueIfMissing(client, rawEvent);
+
           // Transform to normalized schema
-          const normalized = transformTicketmasterEvent(rawEvent);
+          const normalized = transformTicketmasterEvent(eventWithVenue);
 
           if (!normalized.success) {
             console.warn(`⚠️  Failed to normalize event ${rawEvent.id}:`, normalized.errors);

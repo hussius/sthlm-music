@@ -18,6 +18,15 @@
 
 import { normalizeEventData } from './schemas.js';
 
+function ticketmasterVenueName(raw: any): string {
+  return raw._embedded?.venues?.[0]?.name ||
+    raw._embedded?.venues?.[0]?.commonName ||
+    raw.place?.name ||
+    raw.venue?.name ||
+    raw.location?.name ||
+    'Unknown Venue';
+}
+
 /**
  * Transforms Ticketmaster Discovery API event data to normalized schema.
  *
@@ -36,7 +45,7 @@ export function transformTicketmasterEvent(raw: any) {
   return normalizeEventData({
     name: raw.name || raw._embedded?.attractions?.[0]?.name || 'Unknown Event',
     artist: raw._embedded?.attractions?.[0]?.name || 'Unknown',
-    venue: raw._embedded?.venues?.[0]?.name || 'Unknown Venue',
+    venue: ticketmasterVenueName(raw),
     date: raw.dates?.start?.dateTime,
     time: raw.dates?.start?.localTime,
     genre: raw.classifications?.[0]?.genre?.name || 'other',

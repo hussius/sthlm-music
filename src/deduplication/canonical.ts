@@ -1,5 +1,6 @@
 import type { TicketSource } from '../db/schema.js';
 import * as Fuzzball from 'fuzzball';
+import { normalizeVenueName } from '../normalization/venue-mappings.js';
 
 export type EventIdentity = {
   name?: string | null;
@@ -21,6 +22,7 @@ export type EventSimilarity = {
   sharedTicketUrl: boolean;
   sameSource: boolean;
   artistReliable: boolean;
+  venueReliable: boolean;
 };
 
 const stockholmDayFormatter = new Intl.DateTimeFormat('sv-SE', {
@@ -69,6 +71,16 @@ const GENERIC_VENUE_TOKENS = new Set([
   'stockholm',
 ]);
 
+const GENERIC_VENUES = new Set([
+  '',
+  'unknown',
+  'unknown venue',
+  'stockholm',
+  'stockholm venue',
+  'tba',
+  'to be announced',
+]);
+
 export function normalizeText(value: string | null | undefined): string {
   return (value || '')
     .toLowerCase()
@@ -82,7 +94,8 @@ export function normalizeText(value: string | null | undefined): string {
 }
 
 export function normalizeVenue(value: string | null | undefined): string {
-  return normalizeText(value)
+  const normalized = value ? normalizeVenueName(value) : '';
+  return normalizeText(normalized)
     .replace(/\b(klubben|stora scen|lilla scen|main stage)\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -137,6 +150,11 @@ export function isReliableArtist(event: EventIdentity): boolean {
   if (artist === title) return false;
 
   return true;
+}
+
+export function isReliableVenue(event: EventIdentity): boolean {
+  const venue = normalizeVenue(event.venue);
+  return Boolean(venue && !GENERIC_VENUES.has(venue));
 }
 
 export function stockholmDayKey(date: Date | string): string {
@@ -238,6 +256,7 @@ export function scoreEventSimilarity(a: EventIdentity, b: EventIdentity): EventS
   const sharedTicketUrl = hasSharedTicketUrl(a, b);
   const sameSource = hasSameSource(a, b);
   const artistReliable = isReliableArtist(a) && isReliableArtist(b);
+  const venueReliable = isReliableVenue(a) && isReliableVenue(b);
 
   const overallSimilarity = artistReliable
     ? (titleSimilarity * 0.45) + (artistSimilarity * 0.35) + (venueSimilarity * 0.2)
@@ -253,6 +272,7 @@ export function scoreEventSimilarity(a: EventIdentity, b: EventIdentity): EventS
     sharedTicketUrl,
     sameSource,
     artistReliable,
+    venueReliable,
   };
 }
 
@@ -274,6 +294,27 @@ export function classifySimilarity(score: EventSimilarity): 'duplicate' | 'maybe
     score.venueSimilarity >= 80 &&
     score.artistSimilarity >= 85 &&
     score.titleSimilarity >= 82
+  ) {
+    return 'duplicate';
+  }
+
+  if (
+    score.artistReliable &&
+    !score.venueReliable &&
+    score.artistSimilarity >= 90 &&
+    score.titleSimilarity >= 94 &&
+    (score.timeDistanceMinutes === null || score.timeDistanceMinutes <= 720)
+  ) {
+    return 'duplicate';
+  }
+
+  if (
+    score.artistReliable &&
+    !score.venueReliable &&
+    score.artistSimilarity >= 96 &&
+    score.titleSimilarity >= 70 &&
+    score.timeDistanceMinutes !== null &&
+    score.timeDistanceMinutes <= 90
   ) {
     return 'duplicate';
   }

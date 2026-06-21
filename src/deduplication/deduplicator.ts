@@ -167,6 +167,7 @@ export async function deduplicateAndSave(event: NewEvent): Promise<Event> {
           timeDistanceMinutes: null,
           sharedTicketUrl: false,
           artistReliable: false,
+          venueReliable: false,
           overallSimilarity: 0
         });
       }
