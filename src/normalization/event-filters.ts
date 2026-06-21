@@ -13,10 +13,49 @@
  */
 
 /**
- * Terms that indicate a non-concert entry.
+ * Terms that indicate a non-concert entry when found in the event title.
  * Checked case-insensitively against the event name.
  */
 const BLOCKLIST_TERMS = [
+  // Film/cinema screenings
+  'bio',
+  'frukostbio',
+  'filmvisning',
+  'movie screening',
+  'film screening',
+  'screening',
+  'cinema',
+  'movie',
+  'documentary',
+
+  // Children's classes and activities
+  'för barn',
+  'for children',
+  'kids',
+  'children',
+  'barn 7',
+  'barn 8',
+  'barn 9',
+  'barn 10',
+  'barn 11',
+  'barn 12',
+  'barn 13',
+  'konstkurs',
+  'art class',
+  'workshop',
+  'kurs',
+
+  // Museum/craft/non-music activities
+  'batik',
+  'craft',
+  'pyssel',
+
+  // Ticket-sale-only entries
+  'flash sale',
+  'ticket sale',
+  'tickets only',
+  'early bird',
+
   // Swedish gift/voucher entries
   'presentkort',
   // English gift/voucher entries
@@ -40,6 +79,12 @@ const BLOCKLIST_TERMS = [
   'after work',
   // Brunch events
   'brunch',
+];
+
+const BLOCKLIST_VENUES = [
+  'bio skandia',
+  'prins eugens waldemarsudde',
+  'etnografiska museet',
 ];
 
 /**
@@ -76,4 +121,55 @@ export function isBlocklisted(name: string): boolean {
 export function blockedBy(name: string): string | null {
   const idx = BLOCKLIST_PATTERNS.findIndex((pattern) => pattern.test(name));
   return idx >= 0 ? BLOCKLIST_TERMS[idx] : null;
+}
+
+export type EventFilterInput = {
+  name?: string | null;
+  artist?: string | null;
+  venue?: string | null;
+  organizer?: string | null;
+};
+
+function normalize(value: string | null | undefined): string {
+  return (value || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Returns a removal reason for clearly non-concert/non-music events.
+ *
+ * The rules are intentionally conservative:
+ * - keep club nights, DJ nights, jams, parties, tours, and artist listings
+ * - remove clear cinema, children's classes, craft/workshop, and ticket-sale-only entries
+ */
+export function nonConcertReason(event: EventFilterInput): string | null {
+  const name = event.name || '';
+  const normalizedName = normalize(name);
+  const normalizedVenue = normalize(event.venue);
+
+  const term = blockedBy(name);
+  if (term) {
+    // "party" and "club" are common in real music listings, so they override
+    // broad workshop-ish terms only when the block term is weak. Ticket-sale
+    // and cinema/kids/craft terms remain blocked.
+    return `title matched "${term}"`;
+  }
+
+  if (BLOCKLIST_VENUES.some((venue) => normalizedVenue === venue)) {
+    return `venue matched "${event.venue}"`;
+  }
+
+  if (/barn\s+\d+\s*[-–]\s*\d+\s*ar/.test(normalizedName)) {
+    return 'children age range in title';
+  }
+
+  return null;
+}
+
+export function isNonConcertEvent(event: EventFilterInput): boolean {
+  return nonConcertReason(event) !== null;
 }

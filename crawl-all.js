@@ -134,6 +134,17 @@ for (const crawler of crawlers) {
   }
 }
 
+// --- Non-concert pruning (runs after all crawlers, before genre inference) ---
+console.log('\n' + '='.repeat(60));
+console.log('🧹 NON-CONCERT PRUNING');
+console.log('='.repeat(60));
+try {
+  const { pruneNonConcertEvents } = await import('./dist/non-concert-pruning.js');
+  await pruneNonConcertEvents();
+} catch (err) {
+  console.error('❌ Non-concert pruning failed:', err.message);
+}
+
 // --- Genre inference (runs after all crawlers) ---
 console.log('\n' + '='.repeat(60));
 console.log('🎵 GENRE INFERENCE');
