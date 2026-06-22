@@ -56,6 +56,7 @@ const BLOCKLIST_TERMS = [
   'guided tours',
   'takvisning',
   'nobel tours',
+  'nobel tour',
   'visning',
   'seminarium',
   'seminar',
