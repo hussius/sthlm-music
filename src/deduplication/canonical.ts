@@ -59,6 +59,11 @@ const TITLE_NOISE_TERMS = [
   'presents',
   'world tour',
   'tour',
+  // Debaser sub-venue labels that Tickster embeds in event titles
+  'debaser strand',
+  'debaser nova',
+  'debaser pontonen',
+  'debaser klubben',
 ];
 
 const GENERIC_VENUE_TOKENS = new Set([
