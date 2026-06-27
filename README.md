@@ -44,20 +44,15 @@ Individual crawlers live in `crawl-*.js` at the project root. `crawl-all.js` run
 | `crawl-stadsgarden.js` | stadsgardsterminalen.com | Kollektivet Livet |
 | `crawl-banan-kompaniet.js` | b-k.se | Banankompaniet |
 | `crawl-fasching.js` | fasching.se | Fasching |
-| `crawl-debaser.js` | debaser.se | Debaser Nova, Debaser Strand |
-| `crawl-slaktkyrkan.js` | slaktkyrkan.com | Slaktkyrkan |
+| `crawl-debaser-fixed.js` | debaser.se | Debaser Nova, Debaser Strand |
+| `crawl-slakthusen.js` | slaktkyrkan.com | Slaktkyrkan, Hus 7, Terrassen |
 | `crawl-fallan.js` | fallan.se | Fållan |
 | `crawl-petsounds.js` | petsounds.se | Pet Sounds |
 | `crawl-ronnells.js` | ronnells.se | Rönnells Antikvariat |
 | `crawl-sodrateatern.js` | sodrateatern.com | Södra Teatern |
-| `crawl-fylkingen.js` | fylkingen.se | Fylkingen |
-| `crawl-billetto.js` | billetto.se | Multiple venues |
-| `crawl-ticketmaster.js` | ticketmaster.se | Multiple venues |
-| `crawl-landet-billetto.js` | billetto.se | Landet |
-| `crawl-berns.js` | berns.se | Berns |
-| `crawl-cirkus.js` | cirkus.se | Cirkus |
-| `crawl-stampen.js` | stampen.se | Stampen |
-| `crawl-gamla-enskede-bryggeri.js` | gamlaenskedebryggeri.se | Gamla Enskede Bryggeri |
+| `crawl-fylkingen-fixed.js` | fylkingen.se | Fylkingen |
+| `crawl-bk.js` | b-k.se | Banankompaniet (B-K) |
+| `crawl-underbron-fixed.js` | underbron.se | Under Bron |
 
 To add a new venue, create a `crawl-<venue>.js` and add it to `crawl-all.js`.
 

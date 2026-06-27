@@ -75,18 +75,10 @@
 Every day at 3 AM UTC, Railway runs:
 1. Clear database (`node clear-db.js`)
 2. Crawl all venues (`node crawl-all.js`)
-   - Ticketmaster API
-   - Kollektivet Livet
-   - Debaser (Nova + Strand)
-   - Fylkingen
-   - Slakthusen (Slaktkyrkan, Hus 7, Terrassen, etc.)
-   - Fasching
-   - Pet Sounds
-   - Nalen
-   - Fållan
-   - Södra Teatern
-   - Rönnells Antikvariat
-   - Banan-Kompaniet
+   - Ticketmaster API, DICE, Klubb Död, Stockholm Live, Tickster, RA, Techno i Stockholm (TS crawlers)
+   - Kollektivet Livet, Debaser, Fylkingen, Slakthusen, Fasching, Pet Sounds, Nalen,
+     Fållan, Södra Teatern, Rönnells, Banan-Kompaniet, Under Bron, and more (JS crawlers)
+   - Non-concert pruning + duplicate consolidation + genre inference run at the end
 
 ## Costs
 
@@ -117,7 +109,7 @@ git push
 - Check Railway logs: `railway logs`
 - Test API: `curl https://your-railway-url/api/events`
 - Check browser console for CORS errors
-- Verify database has data: `railway run node check-events.js`
+- Verify database has data: `railway run node clear-db.js && railway run node crawl-all.js`
 
 **Cron not running:**
 - Check Railway "Observability" → "Cron" tab

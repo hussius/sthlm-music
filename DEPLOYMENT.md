@@ -132,10 +132,11 @@ The `railway.json` configures a cron job:
 
 This runs:
 1. `node clear-db.js` - Clears old events
-2. `node crawl-all.js` - Crawls all venues
+2. `node crawl-all.js` - Crawls all venues (TS + JS), prunes non-concert events, consolidates duplicates, infers genres
 
-**Crawled venues:**
+**Crawled venues include:**
 - Ticketmaster (API)
+- DICE (API)
 - Kollektivet Livet
 - Debaser (Nova + Strand)
 - Fylkingen
@@ -147,6 +148,8 @@ This runs:
 - Södra Teatern
 - Rönnells Antikvariat
 - Banan-Kompaniet
+- Under Bron
+- and others (see `crawl-all.js` for the full list)
 
 ---
 

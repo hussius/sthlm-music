@@ -24,6 +24,10 @@ playwright-state/
 # Environment
 .env
 
+# Auto-generated agent context stubs (mem-lite for Claude / Codex)
+AGENTS.md
+CLAUDE.md
+
 #custom macOs hidden files
 .DS_Store
 
