@@ -3,7 +3,6 @@
 ## Prerequisites
 - [ ] GitLab account (or push to GitHub)
 - [ ] Railway account (supports GitLab & GitHub)
-- [ ] Vercel account (supports GitLab & GitHub)
 - [ ] Neon account (for database)
 
 ## Deployment Steps
@@ -32,18 +31,19 @@
 - [ ] Run migrations: `railway run npm run db:push`
 - [ ] Initial crawl: `railway run npm run refresh-data` (takes ~30 seconds)
 
-### 4️⃣ Frontend (Vercel)
-- [ ] Go to https://vercel.com
-- [ ] Add New Project → Import this repository
-- [ ] Add environment variable:
-  - `VITE_API_URL` = (your Railway URL from step 2)
-- [ ] Deploy!
-- [ ] Test: Visit your Vercel URL (should show events)
+### 4️⃣ Frontend (Railway — second service)
+- [ ] In your Railway project: New Service → GitHub Repo → this repo
+- [ ] Set the service **root directory** to `client/`
+- [ ] Add environment variable (only if frontend & API are on different domains):
+  - `VITE_API_URL` = (your Railway API URL from step 2)
+  - If unset, the client falls back to `window.location.origin`
+- [ ] Deploy! (Railway runs `npm run build`, serves `client/dist`)
+- [ ] Test: Visit your Railway frontend URL (should show events)
 
 ### 5️⃣ Verify Everything Works
 - [ ] API health: `https://your-railway-url/health`
 - [ ] API events: `https://your-railway-url/api/events` (should return JSON)
-- [ ] Frontend: Visit your Vercel URL
+- [ ] Frontend: Visit your Railway frontend URL
 - [ ] Filters work (genre, venue, date range, search)
 - [ ] Events show correct data
 
@@ -55,15 +55,11 @@
 
 ## What Gets Deployed
 
-### Railway (API + Cron)
+### Railway (API + Cron + Frontend)
 - Fastify API server
+- Static frontend (Vite build of `client/`, served as a separate Railway service)
 - Daily cron job (3 AM UTC) that runs `npm run refresh-data`
 - Auto-restarts on failure
-
-### Vercel (Frontend)
-- Static React app (Vite build)
-- SPA routing configured
-- Auto-deploys on git push to your GitLab branch
 
 ### Neon (Database)
 - PostgreSQL database
@@ -83,8 +79,7 @@ Every day at 3 AM UTC, Railway runs:
 ## Costs
 
 - **Neon**: Free (up to 0.5 GB)
-- **Railway**: ~$5/month (500 free hours, then $0.01/hour)
-- **Vercel**: Free (up to 100 GB bandwidth)
+- **Railway**: ~$5/month (500 free hours, then $0.01/hour) — covers API + frontend services
 
 **Total: ~$5/month** (or free if under Railway's 500 hour limit)
 
@@ -100,9 +95,9 @@ git commit --allow-empty -m "Trigger deploy"
 git push
 ```
 
-**Vercel build fails:**
-- Check build logs in Vercel dashboard
-- Ensure `VITE_API_URL` is set
+**Frontend build fails:**
+- Check build logs in Railway dashboard (frontend service)
+- Ensure `VITE_API_URL` is set if frontend & API are on different domains
 - Try local build: `cd client && npm run build`
 
 **No events showing:**
@@ -119,9 +114,9 @@ git push
 ## Done! 🎉
 
 Your Stockholm events aggregator is now live with:
-- ✅ Public frontend on Vercel
+- ✅ Public frontend on Railway
 - ✅ API on Railway
 - ✅ Daily automatic updates at 3 AM
 - ✅ 400+ events across 12 venues
 
-**Share your Vercel URL and you're ready to go!**
+**Share your Railway frontend URL and you're ready to go!**
