@@ -77,6 +77,7 @@ const crawlers = [
   { name: 'B-K', file: './crawl-bk.js' },
   { name: 'Rival', file: './crawl-rival.js' },
   { name: 'Under Bron', file: './crawl-underbron-fixed.js' },
+  { name: 'Broder Tuck', file: './crawl-broder-tuck.js' },
 ];
 
 const CRAWLER_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes per crawler

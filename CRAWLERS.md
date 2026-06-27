@@ -21,6 +21,7 @@ node crawl-sodrateatern.js     # Södra Teatern (requires Playwright)
 node crawl-ronnells.js         # Rönnells Antikvariat
 node crawl-bk.js               # Banankompaniet (B-K) (requires Playwright)
 node crawl-underbron-fixed.js  # Under Bron
+node crawl-broder-tuck.js       # Broder Tuck (spelalive.nu widget, requires Playwright)
 ```
 
 The TS crawlers (Ticketmaster API, DICE, Klubb Död, Stockholm Live, Tickster,
@@ -46,6 +47,7 @@ Resident Advisor, Techno i Stockholm) are compiled to `dist/` and invoked from
 - `crawl-ronnells.js` - Rönnells Antikvariat bookshop/venue (static HTML, Cheerio)
 - `crawl-bk.js` - Banankompaniet (B-K) concert venue (Webflow, Playwright)
 - `crawl-underbron-fixed.js` - Under Bron nightclub (static HTML, Cheerio)
+- `crawl-broder-tuck.js` - Broder Tuck / BT Bar (spelalive.nu, ZipperTic widget iframe, Playwright)
 
 ### TS Crawlers (`src/crawlers/`)
 - `src/crawlers/ticketmaster.ts` - Ticketmaster Discovery API (REST API)
@@ -65,4 +67,4 @@ Resident Advisor, Techno i Stockholm) are compiled to `dist/` and invoked from
 - All dates normalized to prevent duplicates (most to 20:00:00.000, some preserve actual event time)
 - Database has unique constraint on (venue, date)
 - Duplicate consolidation and non-concert pruning run automatically at the end of `crawl-all.js`
-- Playwright crawlers (Fylkingen, Fasching, Pet Sounds, Nalen, Fållan, Södra Teatern, B-K) require `TMPDIR=/tmp`
+- Playwright crawlers (Fylkingen, Fasching, Pet Sounds, Nalen, Fållan, Södra Teatern, B-K, Broder Tuck) require `TMPDIR=/tmp`
