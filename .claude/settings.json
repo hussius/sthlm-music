@@ -10,14 +10,6 @@
             "timeout": 10
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/gsd-check-update.js"
-          }
-        ]
       }
     ],
     "PreToolUse": [
@@ -42,19 +34,6 @@
       }
     ],
     "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd backend && uv run ruff check --fix $CLAUDE_FILE_PATHS 2>/dev/null || true"
-          },
-          {
-            "type": "command",
-            "command": "cd backend && uv run ty check $CLAUDE_FILE_PATHS 2>/dev/null || true"
-          }
-        ]
-      },
       {
         "matcher": "*",
         "hooks": [
@@ -110,9 +89,5 @@
       "Read(.env)",
       "Write(.env)"
     ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "node .claude/hooks/gsd-statusline.js"
   }
 }
