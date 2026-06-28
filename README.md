@@ -1,5 +1,7 @@
 # Stockholm Music Events
 
+Currently (2026-06-28) live at: https://ideal-warmth-production.up.railway.app/
+
 A web app that aggregates upcoming live music events across Stockholm venues into a single, searchable feed.
 
 ## What it does
